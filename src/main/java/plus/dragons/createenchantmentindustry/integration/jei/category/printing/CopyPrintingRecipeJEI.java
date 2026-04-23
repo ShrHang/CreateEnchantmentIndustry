@@ -20,6 +20,7 @@ package plus.dragons.createenchantmentindustry.integration.jei.category.printing
 
 import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllDataComponents;
+import com.simibubi.create.AllItems;
 import com.simibubi.create.content.equipment.clipboard.ClipboardBlockItem;
 import com.simibubi.create.content.equipment.clipboard.ClipboardContent;
 import com.simibubi.create.content.equipment.clipboard.ClipboardOverrides;
@@ -53,6 +54,7 @@ public enum CopyPrintingRecipeJEI implements PrintingRecipeJEI {
                 slot.addItemLike(item);
             }
         }
+        slot.addItemLike(AllItems.EMPTY_SCHEMATIC);
     }
 
     @Override
@@ -67,6 +69,7 @@ public enum CopyPrintingRecipeJEI implements PrintingRecipeJEI {
                 slot.addItemLike(item);
             }
         }
+        slot.addItemLike(AllItems.SCHEMATIC);
         slot.addRichTooltipCallback((view, tooltip) -> tooltip.add(CEILang
                 .translate("recipe.printing.copy.template")
                 .style(ChatFormatting.GRAY)
@@ -86,6 +89,7 @@ public enum CopyPrintingRecipeJEI implements PrintingRecipeJEI {
                 slot.addItemLike(item);
             }
         }
+        slot.addItemLike(AllItems.SCHEMATIC);
         slot.addRichTooltipCallback((view, tooltip) -> tooltip.add(CEILang
                 .translate("recipe.printing.copy.template")
                 .style(ChatFormatting.GRAY)

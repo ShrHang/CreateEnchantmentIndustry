@@ -19,6 +19,8 @@
 package plus.dragons.createenchantmentindustry.common.fluids.printer.behaviour;
 
 import com.mojang.serialization.DataResult;
+import com.simibubi.create.AllItems;
+import com.simibubi.create.content.schematics.SchematicItem;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
 import com.simibubi.create.foundation.recipe.ItemCopyingRecipe.SupportsItemCopying;
 import com.simibubi.create.foundation.utility.CreateLang;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -52,11 +55,17 @@ public class CopyPrintingBehaviour implements PrintingBehaviour {
             return Optional.of(copiable.canCopyFromItem(stack)
                     ? DataResult.success(new CopyPrintingBehaviour(copiable, stack, tank))
                     : DataResult.error(() -> CEICommon.asLocalization("gui.printer.copy.invalid")));
+        else if (stack.is(AllItems.SCHEMATIC))
+            return Optional.of(DataResult.success(new CopyPrintingBehaviour(SchematicItemCopying.INSTANCE, stack, tank)));
         return Optional.empty();
     }
 
     @Override
     public int getRequiredItemCount(Level level, ItemStack stack) {
+        if (itemCopying == SchematicItemCopying.INSTANCE) {
+             if(stack.is(AllItems.EMPTY_SCHEMATIC)) return 1;
+             else return 0;
+        }
         if (ItemStack.isSameItem(original, stack) && itemCopying.canCopyToItem(stack))
             return 1;
         return 0;
@@ -101,5 +110,29 @@ public class CopyPrintingBehaviour implements PrintingBehaviour {
             CEILang.translate("gui.goggles.printing.incorrect_liquid").style(ChatFormatting.RED).forGoggles(tooltip);
         }
         return true;
+    }
+
+    private static class SchematicItemCopying implements SupportsItemCopying {
+        static SupportsItemCopying INSTANCE = new SchematicItemCopying();
+
+        @Override
+        public ItemStack createCopy(ItemStack original, int count) {
+            return original.copyWithCount(count);
+        }
+
+        @Override
+        public boolean canCopyFromItem(ItemStack item) {
+            throw new UnsupportedOperationException("this method should not be called!");
+        }
+
+        @Override
+        public boolean canCopyToItem(ItemStack item) {
+            throw new UnsupportedOperationException("this method should not be called!");
+        }
+
+        @Override
+        public DataComponentType<?> getComponentType() {
+            throw new UnsupportedOperationException("this method should not be called!");
+        }
     }
 }
