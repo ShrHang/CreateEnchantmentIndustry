@@ -40,6 +40,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -63,7 +64,7 @@ import plus.dragons.createenchantmentindustry.common.registry.CEIStats;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 @FieldsNullabilityUnknownByDefault
-public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity {
+public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implements Clearable {
     public static final int ENCHANTING_TIME = 200;
     protected EnchanterBehaviour enchanter;
     protected boolean special;
@@ -296,6 +297,11 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity {
         boolean added = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
         added |= enchanter.addToGoggleTooltip(tooltip, isPlayerSneaking);
         return added;
+    }
+
+    @Override
+    public void clearContent() {
+        heldItem = ItemStack.EMPTY;
     }
 
     private static class EnchanterTransform extends ValueBoxTransform.Sided {

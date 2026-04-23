@@ -140,6 +140,11 @@ public class BlazeForgerInventory extends ItemStackHandler {
         cost = 0;
     }
 
+    protected void clear() {
+        stacks.clear();
+        cost = 0;
+    }
+
     protected void applyResult() {
         stacks.set(2, stacks.get(4).copy());
         stacks.set(3, stacks.get(5).copy());

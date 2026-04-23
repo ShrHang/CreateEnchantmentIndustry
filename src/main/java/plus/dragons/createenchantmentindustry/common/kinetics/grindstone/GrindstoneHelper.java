@@ -26,6 +26,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
@@ -61,7 +62,7 @@ public class GrindstoneHelper {
                 experience = getGrindingExperience(level, top, bottom);
             }
         }
-        var take = NeoForge.EVENT_BUS.post(new GrindstoneEvent.OnTakeItem(top, bottom, experience));
+        var take = NeoForge.EVENT_BUS.post(new GrindstoneEvent.OnTakeItem(ContainerLevelAccess.NULL,null, top, bottom, experience));
         if (take.isCanceled()) {
             return Optional.of(new Result(top, bottom, output, 0));
         }

@@ -36,6 +36,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -58,7 +59,7 @@ import plus.dragons.createenchantmentindustry.config.CEIConfig;
 import plus.dragons.createenchantmentindustry.util.CEILang;
 
 @FieldsNullabilityUnknownByDefault
-public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity {
+public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity implements Clearable {
     public static final int FORGING_TIME = 200;
     protected boolean special;
     protected boolean cursed;
@@ -271,5 +272,10 @@ public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity {
             }
         }
         return added;
+    }
+
+    @Override
+    public void clearContent() {
+        inventory.clear();
     }
 }

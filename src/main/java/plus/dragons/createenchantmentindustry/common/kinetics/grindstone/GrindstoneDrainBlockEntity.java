@@ -40,6 +40,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.BlockItem;
@@ -67,7 +68,7 @@ import plus.dragons.createenchantmentindustry.common.registry.CEIStats;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 @FieldsNullabilityUnknownByDefault
-public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
+public class GrindstoneDrainBlockEntity extends KineticBlockEntity implements Clearable {
     public static final int GRINDING_TIME = 20;
     public ProcessingInventory inventory;
     private ItemStack processedItem = ItemStack.EMPTY;
@@ -439,5 +440,11 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
         boolean added = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
         added |= this.containedFluidTooltip(tooltip, isPlayerSneaking, tank.getCapability());
         return added;
+    }
+
+    @Override
+    public void clearContent() {
+        inventory.clear();
+        processedItem = ItemStack.EMPTY;
     }
 }
