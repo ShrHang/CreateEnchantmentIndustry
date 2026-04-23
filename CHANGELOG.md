@@ -1,14 +1,11 @@
-## Create: Enchantment Industry 2.3.0
+## Create: Enchantment Industry 2.3.1
 
-Update for Create 6.0.9
+Update for Create 6.0.10.
+
+If you cannot install mechanical grindstone when sable is installed, please wait for new version of sable releasing (which contains a fix to it)
 
 ### Update
-* Add Compat for Touhou Little Maid (Thanks @yabo083)
+* Support copying schematic
 
 ### Fix
-* Fix glitchy animation (Thanks @BMasta)
-* Fix Unlocalized text for attribute filter
-* Fix EXP is not required during forging in certain situation
-* Fix crash when rotate Blaze Enchanter
-* Fix breaking Printers destroys any EXP inside
-* Fix Sweeping Edge enchantment on deployer has extremely low damage on non-main targets
+* Fix item duplication with Sable.
