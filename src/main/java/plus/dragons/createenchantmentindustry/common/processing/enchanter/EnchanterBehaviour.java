@@ -213,9 +213,12 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
         if (!enchanter.heldItem.isEmpty() && enchanter.processingTime == -1) {
             if (!EnchantmentHelper.getEnchantmentsForCrafting(enchanter.heldItem).isEmpty()) {
                 CEILang.translate("gui.goggles.enchanting.completed").style(ChatFormatting.GREEN).forGoggles(tooltip);
-            } else if (cost > 0 && enchanter.tanks.getTank(0).getFluidAmount() < cost) {
-                CEILang.translate("gui.goggles.enchanting.insufficient_experience").style(ChatFormatting.RED).forGoggles(tooltip);
-            } else { 
+            } else if (cost > 0) {
+                int experience = enchanter.special ? enchanter.getSpecialExperience() : enchanter.getNormalExperience();
+                if (experience < cost) {
+                    CEILang.translate("gui.goggles.enchanting.insufficient_experience").style(ChatFormatting.RED).forGoggles(tooltip);
+                }
+            } else {
                 CEILang.translate("gui.goggles.enchanting.invalid_item").style(ChatFormatting.RED).forGoggles(tooltip);
             }
         }
