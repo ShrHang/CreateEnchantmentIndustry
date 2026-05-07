@@ -211,9 +211,13 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
             added = true;
         }
         if (!enchanter.heldItem.isEmpty() && enchanter.processingTime == -1) {
-            if (!EnchantmentHelper.getEnchantmentsForCrafting(enchanter.heldItem).isEmpty())
+            if (!EnchantmentHelper.getEnchantmentsForCrafting(enchanter.heldItem).isEmpty()) {
                 CEILang.translate("gui.goggles.enchanting.completed").style(ChatFormatting.GREEN).forGoggles(tooltip);
-            else CEILang.translate("gui.goggles.enchanting.invalid_item").style(ChatFormatting.RED).forGoggles(tooltip);
+            } else if (cost > 0 && enchanter.tanks.getTank(0).getFluidAmount() < cost) {
+                CEILang.translate("gui.goggles.enchanting.insufficient_experience").style(ChatFormatting.RED).forGoggles(tooltip);
+            } else { 
+                CEILang.translate("gui.goggles.enchanting.invalid_item").style(ChatFormatting.RED).forGoggles(tooltip);
+            }
         }
         return added;
     }
