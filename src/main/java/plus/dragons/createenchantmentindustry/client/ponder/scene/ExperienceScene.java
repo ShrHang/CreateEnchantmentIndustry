@@ -66,8 +66,10 @@ public class ExperienceScene {
                 .placeNearTarget()
                 .pointAt(util.vector().centerOf(9, 5, 9));
         for (int i = 0; i < 6; i++) {
-            scene.world().modifyBlockEntity(util.grid().at(9, 4, 9), FluidTankBlockEntity.class,
-                    be -> be.getControllerBE().getTankInventory().fill(new FluidStack(CEIFluids.EXPERIENCE.get(), 10000), IFluidHandler.FluidAction.EXECUTE));
+            scene.world().modifyBlockEntity(util.grid().at(9, 4, 9), FluidTankBlockEntity.class, be -> {
+                var ctrl = be.getControllerBE();
+                if (ctrl != null) ctrl.getTankInventory().fill(new FluidStack(CEIFluids.EXPERIENCE.get(), 10000), IFluidHandler.FluidAction.EXECUTE);
+            });
             scene.idle(10);
         }
         scene.idle(10);

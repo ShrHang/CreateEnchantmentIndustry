@@ -59,11 +59,15 @@ public class ForgerScene {
         scene.world().setKineticSpeed(util.select().position(4, 1, 2), 128);
         scene.world().setKineticSpeed(util.select().position(3, 2, 3), -128);
         scene.idle(20);
-        scene.world().modifyBlockEntity(util.grid().at(1, 1, 3), FluidTankBlockEntity.class,
-                be -> be.getControllerBE().getTankInventory().fill(new FluidStack(CEIFluids.EXPERIENCE.get(), 8000), IFluidHandler.FluidAction.EXECUTE));
+        scene.world().modifyBlockEntity(util.grid().at(1, 1, 3), FluidTankBlockEntity.class, be -> {
+            var ctrl = be.getControllerBE();
+            if (ctrl != null) ctrl.getTankInventory().fill(new FluidStack(CEIFluids.EXPERIENCE.get(), 8000), IFluidHandler.FluidAction.EXECUTE);
+        });
         scene.idle(20);
-        scene.world().modifyBlockEntity(util.grid().at(1, 1, 3), FluidTankBlockEntity.class,
-                be -> be.getControllerBE().getTankInventory().fill(new FluidStack(CEIFluids.EXPERIENCE.get(), 8000), IFluidHandler.FluidAction.EXECUTE));
+        scene.world().modifyBlockEntity(util.grid().at(1, 1, 3), FluidTankBlockEntity.class, be -> {
+            var ctrl = be.getControllerBE();
+            if (ctrl != null) ctrl.getTankInventory().fill(new FluidStack(CEIFluids.EXPERIENCE.get(), 8000), IFluidHandler.FluidAction.EXECUTE);
+        });
         scene.idle(30);
 
         scene.overlay().showText(60)
