@@ -11,6 +11,7 @@
   "create_enchantment_industry.gui.goggles.enchanting.cost": "Enchanting consumes: %1$s",
   "create_enchantment_industry.gui.goggles.enchanting.completed": "Enchanting Completed!",
   "create_enchantment_industry.gui.goggles.enchanting.invalid_item": "Invalid enchanting item!",
+  "create_enchantment_industry.gui.goggles.enchanting.insufficient_experience": "Not enough experience!",
   "create_enchantment_industry.gui.goggles.forging.cost": "Forging consumes: %1$s",
   "create_enchantment_industry.gui.goggles.forging.result": "Forging Result:",
   "create_enchantment_industry.gui.goggles.forging.invalid_template_type.normal": "Normal Enchanting Template can't be used in Super Enchanting mode!",
