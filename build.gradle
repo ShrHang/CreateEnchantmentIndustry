@@ -17,7 +17,54 @@ base {
     archivesName = project.mod_artifact_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
+
+var apotheoticModulars = ["enchanting", "spawning", "apotheosis"]
+
+apotheoticModulars.each { modular ->
+    sourceSets {
+        "${modular}" {
+            java {
+                srcDir "src/apotheotic/${modular}/java"
+            }
+            resources {
+                srcDir "src/apotheotic/${modular}/resources"
+            }
+            compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        }
+        main {
+            runtimeClasspath += sourceSets."${modular}".output
+        }
+    }
+
+    classes {
+        finalizedBy(tasks."${modular}Classes")
+    }
+
+    jar {
+        from sourceSets."${modular}".output
+    }
+
+    tasks.sourcesJar {
+        from sourceSets."${modular}".allJava
+    }
+
+    neoForge {
+        mods {
+            "${mod_id}" {
+                sourceSet(sourceSets."${modular}")
+            }
+        }
+        runs {
+            data {
+                programArguments.addAll '--existing', file("src/apotheotic/${modular}/resources/").getAbsolutePath()
+            }
+        }
+    }
+}
 
 neoForge {
     version = project.neo_version
@@ -92,6 +139,7 @@ repositories {
     maven { url "https://api.modrinth.com/maven" }
     maven { url "https://raw.githubusercontent.com/Fuzss/modresources/main/maven" } // NeoForge config api port, needed by ponder
     maven { url "https://maven.ryanhcode.dev/releases" } // RyanHCode Maven - Sable
+    maven { url "https://maven.shadowsoffire.dev/releases" } // Apotheosis mods Maven
 }
 
 dependencies {
@@ -103,6 +151,13 @@ dependencies {
 
     compileOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}+${curios_minecraft_version}:api")
     localRuntime("top.theillusivec4.curios:curios-neoforge:${curios_version}+${curios_minecraft_version}")
+
+    localImplementation("dev.shadowsoffire:Placebo:${minecraft_version}-${placebo_version}")
+    localImplementation("dev.shadowsoffire:ApothicAttributes:${minecraft_version}-${apothic_attributes_version}")
+    localImplementation("dev.shadowsoffire:ApothicEnchanting:${minecraft_version}-${apothic_enchanting_version}")
+    localImplementation("dev.shadowsoffire:ApothicSpawners:${minecraft_version}-${apothic_spawners_version}")
+    localImplementation("dev.shadowsoffire:Apotheosis:${minecraft_version}-${apotheosis_version}")
+    localImplementation("dev.shadowsoffire:GatewaysToEternity:${minecraft_version}-${gateway_to_eternity_version}") // Apotheosis needs this, datagen
 
     localImplementation("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
     localImplementation("dev.simulated_team.simulated:simulated-neoforge-${minecraft_version}:${create_aeronautics_version}")  { transitive false }
@@ -156,10 +211,6 @@ spotless {
 }
 
 build.dependsOn(spotlessApply)
-
-java {
-    withSourcesJar()
-}
 
 publishing {
     publications {
