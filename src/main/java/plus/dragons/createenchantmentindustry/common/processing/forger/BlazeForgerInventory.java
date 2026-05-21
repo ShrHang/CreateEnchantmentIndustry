@@ -200,7 +200,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
                             stacks.set(4, book);
                             stacks.set(5, addition);
                             var enchantment = baseEnchantments.entrySet().stream().findFirst().get();
-                            cost += Math.max(1, enchantment.getKey().value().getAnvilCost() * 2) * enchantment.getIntValue();
+                            cost += Math.max(1, enchantment.getKey().value().getAnvilCost() / 2) * enchantment.getIntValue();
                         } else if (!splitEnchantments(base, addition, baseEnchantments, additionEnchantments)) return;
                     } else {
                         if (applyEnchantments(base, baseEnchantments, additionEnchantments)) {
@@ -266,7 +266,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
             level = Math.min(level, CEIEnchantmentHelper.maxLevel(enchantment) + (CEIConfig.enchantments().splitEnchantmentRespectLevelExtension.get() ? CEIEnchantmentHelper.levelExtension(enchantment) : 0));
         addition.enchant(enchantment, level);
         var multiplier = enchantment.getData(CEIDataMaps.SPLITTING_COST_MULTIPLIER);
-        cost += (int) (Math.max(1, enchantment.value().getAnvilCost() * 2) * level * (multiplier != null ? multiplier : 1));
+        cost += (int) (Math.max(1, enchantment.value().getAnvilCost() / 2) * level * (multiplier != null ? multiplier : 1));
         return true;
     }
 
