@@ -1,2 +1,2 @@
-## Create: Enchantment Industry 2.3,0
+## Create: Enchantment Industry 2.4.0
 
