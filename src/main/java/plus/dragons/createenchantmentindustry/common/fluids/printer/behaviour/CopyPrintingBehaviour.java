@@ -20,7 +20,6 @@ package plus.dragons.createenchantmentindustry.common.fluids.printer.behaviour;
 
 import com.mojang.serialization.DataResult;
 import com.simibubi.create.AllItems;
-import com.simibubi.create.content.schematics.SchematicItem;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
 import com.simibubi.create.foundation.recipe.ItemCopyingRecipe.SupportsItemCopying;
 import com.simibubi.create.foundation.utility.CreateLang;
@@ -63,8 +62,8 @@ public class CopyPrintingBehaviour implements PrintingBehaviour {
     @Override
     public int getRequiredItemCount(Level level, ItemStack stack) {
         if (itemCopying == SchematicItemCopying.INSTANCE) {
-             if(stack.is(AllItems.EMPTY_SCHEMATIC)) return 1;
-             else return 0;
+            if (stack.is(AllItems.EMPTY_SCHEMATIC)) return 1;
+            else return 0;
         }
         if (ItemStack.isSameItem(original, stack) && itemCopying.canCopyToItem(stack))
             return 1;

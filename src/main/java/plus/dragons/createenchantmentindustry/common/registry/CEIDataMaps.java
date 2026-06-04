@@ -50,6 +50,7 @@ import plus.dragons.createdragonsplus.common.registry.CDPFluids;
 import plus.dragons.createdragonsplus.util.Pairs;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceFuel;
+import plus.dragons.createenchantmentindustry.util.CEIDyeFluids;
 import plus.dragons.createenchantmentindustry.util.CEIIntIntPair;
 
 public class CEIDataMaps {
@@ -188,7 +189,7 @@ public class CEIDataMaps {
                 .add(ResourceLocation.fromNamespaceAndPath("justdirethings", "xp_fluid_source"),
                         20, false,
                         new ModLoadedCondition("justdirethings"));
-        var blackDye = CDPFluids.COMMON_TAGS.dyesByColor.get(DyeColor.BLACK);
+        var blackDye = CEIDyeFluids.tag(DyeColor.BLACK);
         provider.builder(PRINTING_ADDRESS_INGREDIENT)
                 .add(blackDye, 10, false);
         provider.builder(PRINTING_PATTERN_INGREDIENT)
@@ -203,8 +204,9 @@ public class CEIDataMaps {
         provider.builder(PRINTING_BANNER_PATTERN_INGREDIENT)
                 .add(CDPFluids.COMMON_TAGS.dyes, 100, false);
         var customNameStyles = provider.builder(PRINTING_CUSTOM_NAME_STYLE);
-        CDPFluids.COMMON_TAGS.dyesByColor.forEach((color, tag) -> customNameStyles
-                .add(tag, Style.EMPTY.withColor(color.getTextColor()), false));
+        for (var color : DyeColor.values()) {
+            customNameStyles.add(CEIDyeFluids.tag(color), Style.EMPTY.withColor(color.getTextColor()), false);
+        }
         provider.builder(PRINTING_ENCHANTED_BOOK_COST);
         provider.builder(FORGING_COST_MULTIPLIER);
         provider.builder(SPLITTING_COST_MULTIPLIER);

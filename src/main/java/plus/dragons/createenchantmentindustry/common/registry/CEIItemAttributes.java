@@ -18,6 +18,8 @@
 
 package plus.dragons.createenchantmentindustry.common.registry;
 
+import static plus.dragons.createenchantmentindustry.common.CEICommon.REGISTRATE;
+
 import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.api.registry.CreateRegistries;
 import com.simibubi.create.content.logistics.item.filter.attribute.ItemAttributeType;
@@ -31,8 +33,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.kinetics.grindstone.GrindstoneHelper;
-
-import static plus.dragons.createenchantmentindustry.common.CEICommon.REGISTRATE;
 
 public class CEIItemAttributes {
     private static final DeferredRegister<ItemAttributeType> ITEM_ATTRIBUTES = DeferredRegister

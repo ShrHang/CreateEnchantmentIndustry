@@ -37,10 +37,10 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import net.neoforged.neoforge.fluids.FluidStack;
 import plus.dragons.createdragonsplus.common.fluids.dye.DyeFluidType;
-import plus.dragons.createdragonsplus.common.registry.CDPFluids;
 import plus.dragons.createdragonsplus.util.Pairs;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.registry.CEIDataMaps;
+import plus.dragons.createenchantmentindustry.util.CEIDyeFluids;
 import plus.dragons.createenchantmentindustry.util.CEILang;
 
 public enum BannerPatternPrintingRecipeJEI implements PrintingRecipeJEI {
@@ -96,13 +96,13 @@ public enum BannerPatternPrintingRecipeJEI implements PrintingRecipeJEI {
 
     @Override
     public void onDisplayedIngredientsUpdate(IRecipeSlotDrawable baseSlot, IRecipeSlotDrawable templateSlot, IRecipeSlotDrawable fluidSlot, IRecipeSlotDrawable outputSlot, IFocusGroup focuses) {
-        var fluid = fluidSlot.getDisplayedIngredient(NeoForgeTypes.FLUID_STACK).orElse(new FluidStack(CDPFluids.DYES_BY_COLOR.get(DyeColor.BLACK).get(), 100)); // Fallback
+        var fluid = fluidSlot.getDisplayedIngredient(NeoForgeTypes.FLUID_STACK).orElse(new FluidStack(CEIDyeFluids.get(DyeColor.BLACK), 100)); // Fallback
         var base = baseSlot.getDisplayedItemStack();
         var template = templateSlot.getDisplayedItemStack();
         var output = base.get().copy();
         ArrayList<BannerPatternLayers.Layer> l = new ArrayList<>();
         var pattern = template.get().get(DataComponents.BANNER_PATTERNS);
-        l.add(new BannerPatternLayers.Layer(pattern.layers().getFirst().pattern(), ((DyeFluidType) fluid.getFluidType()).getColor()));
+        l.add(new BannerPatternLayers.Layer(pattern.layers().getFirst().pattern(), CEIDyeFluids.color((DyeFluidType) fluid.getFluidType())));
         output.set(DataComponents.BANNER_PATTERNS, new BannerPatternLayers(l));
         outputSlot.createDisplayOverrides().addItemStack(output);
     }

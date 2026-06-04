@@ -35,7 +35,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.valueproviders.ConstantFloat;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.effects.PlaySoundEffect;
-import net.neoforged.neoforge.fluids.crafting.FluidIngredient;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import plus.dragons.createdragonsplus.util.FieldsNullabilityUnknownByDefault;
 

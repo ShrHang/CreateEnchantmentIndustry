@@ -62,7 +62,7 @@ public class GrindstoneHelper {
                 experience = getGrindingExperience(level, top, bottom);
             }
         }
-        var take = NeoForge.EVENT_BUS.post(new GrindstoneEvent.OnTakeItem(ContainerLevelAccess.NULL,null, top, bottom, experience));
+        var take = NeoForge.EVENT_BUS.post(new GrindstoneEvent.OnTakeItem(ContainerLevelAccess.NULL, null, top, bottom, experience));
         if (take.isCanceled()) {
             return Optional.of(new Result(top, bottom, output, 0));
         }

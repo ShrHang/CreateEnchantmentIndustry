@@ -40,10 +40,10 @@ public class MechanicalGrindStoneItem extends BlockItem {
     public static RecipeHolder<ManualApplicationRecipe> createRecipe() {
         return new RecipeHolder<>(CEICommon.asResource("mechanical_grindstone"),
                 new ManualApplicationRecipe.Builder<>(ManualApplicationRecipe::new, CEIBlocks.GRINDSTONE_DRAIN.getId())
-                .require(AllBlocks.ITEM_DRAIN)
-                .require(CEIBlocks.MECHANICAL_GRINDSTONE)
-                .output(CEIBlocks.GRINDSTONE_DRAIN)
-                .build());
+                        .require(AllBlocks.ITEM_DRAIN)
+                        .require(CEIBlocks.MECHANICAL_GRINDSTONE)
+                        .output(CEIBlocks.GRINDSTONE_DRAIN)
+                        .build());
     }
 
     @Override

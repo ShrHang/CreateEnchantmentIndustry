@@ -16,6 +16,8 @@ issueTrackerURL="${mod_github}/issues"
 [[mixins]]
     config="${mod_id}.mixins.json"
 
+${integration_mixin_blocks}
+
 #[[accessTransformers]]
     #file="META-INF/accesstransformer.cfg"
 
@@ -23,6 +25,7 @@ issueTrackerURL="${mod_github}/issues"
     "create_dragons_plus:fluid/dye"=true
     "create_dragons_plus:block/fluid_hatch"=true
     "create_dragons_plus:item/blaze_upgrade_smithing_template"=true
+    "create_dragons_plus:fluid/dragon_breath"=true
 
 [[dependencies.${mod_id}]]
     modId="neoforge"
@@ -49,7 +52,28 @@ issueTrackerURL="${mod_github}/issues"
     modId="create_dragons_plus"
     type="required"
     versionRange="${create_dragons_plus_version_range}"
-    ordering="NONE"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="apothic_enchanting"
+    type="optional"
+    versionRange="${apothic_enchanting_version_range}"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="apotheosis"
+    type="optional"
+    versionRange="${apotheosis_version_range}"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="apothic_spawners"
+    type="optional"
+    versionRange="${apothic_spawners_version_range}"
+    ordering="AFTER"
     side="BOTH"
 
 [[dependencies.${mod_id}]]

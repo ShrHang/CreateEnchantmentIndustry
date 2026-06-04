@@ -19,6 +19,7 @@
 package plus.dragons.createenchantmentindustry.integration.jei.category.printing;
 
 import com.mojang.serialization.MapCodec;
+import java.util.Arrays;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.helpers.ICodecHelper;
 import mezz.jei.api.neoforge.NeoForgeTypes;
@@ -27,8 +28,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.fluids.printer.PrintingRecipe;
-
-import java.util.Arrays;
 
 public class StandardPrintingRecipeJEI implements PrintingRecipeJEI {
     public static final PrintingRecipeJEI.Type TYPE = PrintingRecipeJEI

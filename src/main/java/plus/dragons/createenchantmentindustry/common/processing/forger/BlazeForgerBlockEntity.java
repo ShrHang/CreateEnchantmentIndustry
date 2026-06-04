@@ -216,7 +216,7 @@ public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity implement
             stack = inventory.insertItem(0, stack, simulate);
         if (!stack.isEmpty())
             stack = inventory.insertItem(1, stack, simulate);
-        if(!simulate && (original.getCount()!=stack.getCount() || !ItemStack.isSameItemSameComponents(original, stack))){
+        if (!simulate && (original.getCount() != stack.getCount() || !ItemStack.isSameItemSameComponents(original, stack))) {
             inventory.updateResult();
             notifyUpdate();
         }
@@ -226,8 +226,8 @@ public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity implement
     public ItemStack extractItem(boolean simulate) {
         for (int i = inventory.getSlots() - 1; i >= 0; i--) {
             ItemStack extracted = inventory.extractItem(i, 1, simulate);
-            if (!extracted.isEmpty()){
-                if(!simulate && i<2){
+            if (!extracted.isEmpty()) {
+                if (!simulate && i < 2) {
                     inventory.updateResult();
                     notifyUpdate();
                 }

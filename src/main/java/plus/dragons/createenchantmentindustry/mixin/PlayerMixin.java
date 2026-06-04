@@ -49,14 +49,12 @@ public abstract class PlayerMixin extends LivingEntity {
         return flag;
     }
 
-    @ModifyExpressionValue(
-            method = "attack",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;isAutoSpinAttack()Z")
-    )
+    @ModifyExpressionValue(method = "attack", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;isAutoSpinAttack()Z"))
     private boolean attack$notAutoSpinAttack(boolean original) {
         //noinspection ConstantValue
         if (((Object) this) instanceof DeployerFakePlayer && CEIConfig.kinetics().deployerSweepAttack.get()) {
             return false;
-        } return original;
+        }
+        return original;
     }
 }

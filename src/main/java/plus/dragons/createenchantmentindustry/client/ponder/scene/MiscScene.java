@@ -41,12 +41,12 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import plus.dragons.createdragonsplus.common.registry.CDPFluids;
 import plus.dragons.createdragonsplus.common.registry.CDPItems;
 import plus.dragons.createenchantmentindustry.client.ponder.CEIPonderScenes;
 import plus.dragons.createenchantmentindustry.common.fluids.printer.PrinterBehaviour;
 import plus.dragons.createenchantmentindustry.common.fluids.printer.PrinterBlockEntity;
 import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
+import plus.dragons.createenchantmentindustry.util.CEIDyeFluids;
 
 public class MiscScene {
     public static void experienceHatch(SceneBuilder builder, SceneBuildingUtil util) {
@@ -116,7 +116,7 @@ public class MiscScene {
 
         scene.world().modifyBlockEntity(util.grid().at(1, 1, 1), FluidTankBlockEntity.class, be -> {
             var ctrl = be.getControllerBE();
-            if (ctrl != null) ctrl.getTankInventory().fill(new FluidStack(CDPFluids.DYES_BY_COLOR.get(DyeColor.CYAN).get(), 36000), IFluidHandler.FluidAction.EXECUTE);
+            if (ctrl != null) ctrl.getTankInventory().fill(new FluidStack(CEIDyeFluids.get(DyeColor.CYAN), 36000), IFluidHandler.FluidAction.EXECUTE);
         });
         scene.idle(10);
         scene.overlay().showText(40)
@@ -128,7 +128,7 @@ public class MiscScene {
                 .text("Place Bucket of Cyan Dye in the filter slot")
                 .placeNearTarget()
                 .pointAt(util.vector().centerOf(0, 1, 1));
-        scene.overlay().showControls(util.vector().centerOf(0, 1, 1), Pointing.DOWN, 40).withItem(CDPFluids.DYES_BY_COLOR.get(DyeColor.CYAN).getBucket().get().getDefaultInstance());
+        scene.overlay().showControls(util.vector().centerOf(0, 1, 1), Pointing.DOWN, 40).withItem(CEIDyeFluids.bucket(DyeColor.CYAN));
         scene.idle(50);
 
         scene.overlay().showText(60)
@@ -138,7 +138,7 @@ public class MiscScene {
         for (int i = 0; i < 12; i++) {
             scene.world().modifyBlockEntity(util.grid().at(1, 1, 1), FluidTankBlockEntity.class, be -> {
                 var ctrl = be.getControllerBE();
-                if (ctrl != null) ctrl.getTankInventory().drain(new FluidStack(CDPFluids.DYES_BY_COLOR.get(DyeColor.CYAN).get(), 3000), IFluidHandler.FluidAction.EXECUTE);
+                if (ctrl != null) ctrl.getTankInventory().drain(new FluidStack(CEIDyeFluids.get(DyeColor.CYAN), 3000), IFluidHandler.FluidAction.EXECUTE);
             });
             scene.idle(10);
         }
@@ -188,7 +188,7 @@ public class MiscScene {
         scene.world().setKineticSpeed(util.select().position(3, 3, 2), 128f);
         scene.idle(20);
         scene.world().modifyBlockEntity(util.grid().at(2, 3, 2), PrinterBlockEntity.class,
-                be -> be.getFluidHandler(null).fill(new FluidStack(CDPFluids.DYES_BY_COLOR.get(DyeColor.BLACK), 3000), IFluidHandler.FluidAction.EXECUTE));
+                be -> be.getFluidHandler(null).fill(new FluidStack(CEIDyeFluids.get(DyeColor.BLACK), 3000), IFluidHandler.FluidAction.EXECUTE));
         scene.idle(40);
 
         scene.overlay().showText(80)

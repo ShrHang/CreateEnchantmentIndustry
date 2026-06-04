@@ -32,10 +32,8 @@ import static plus.dragons.createenchantmentindustry.common.registry.CEIBlocks.*
 import static plus.dragons.createenchantmentindustry.common.registry.CEIFluids.EXPERIENCE;
 import static plus.dragons.createenchantmentindustry.common.registry.CEIItems.*;
 
-import java.util.concurrent.CompletableFuture;
-
-import com.simibubi.create.AllItems;
 import com.simibubi.create.foundation.data.recipe.CommonMetal;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;

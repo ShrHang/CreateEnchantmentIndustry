@@ -40,6 +40,7 @@ import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.fluids.printer.PrinterBlockEntity;
 import plus.dragons.createenchantmentindustry.common.registry.CEIDataMaps;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
+import plus.dragons.createenchantmentindustry.util.CEIDyeFluids;
 import plus.dragons.createenchantmentindustry.util.CEILang;
 
 public class BannerPatternPrintingBehavior implements PrintingBehaviour {
@@ -86,7 +87,7 @@ public class BannerPatternPrintingBehavior implements PrintingBehaviour {
         BannerPatternLayers layers = stack.get(DataComponents.BANNER_PATTERNS);
         ArrayList<BannerPatternLayers.Layer> l = new ArrayList<>();
         l.addAll(layers.layers());
-        l.add(new BannerPatternLayers.Layer(pattern, ((DyeFluidType) fluidStack.getFluidType()).getColor()));
+        l.add(new BannerPatternLayers.Layer(pattern, CEIDyeFluids.color((DyeFluidType) fluidStack.getFluidType())));
         var result = stack.copy();
         result.set(DataComponents.BANNER_PATTERNS, new BannerPatternLayers(l));
         return result;
@@ -108,7 +109,8 @@ public class BannerPatternPrintingBehavior implements PrintingBehaviour {
         CEILang.translate("gui.goggles.printing.banner_pattern").forGoggles(tooltip);
         var amount = tank.getPrimaryHandler().getFluid().getFluidHolder().getData(CEIDataMaps.PRINTING_BANNER_PATTERN_INGREDIENT);
         if (amount != null) {
-            var p = Component.literal("→ ").append(Component.translatable(pattern.value().translationKey() + "." + ((DyeFluidType) tank.getPrimaryHandler().getFluid().getFluidType()).getColor().getName())).withStyle(ChatFormatting.GOLD);
+            var color = CEIDyeFluids.color((DyeFluidType) tank.getPrimaryHandler().getFluid().getFluidType());
+            var p = Component.literal("→ ").append(Component.translatable(pattern.value().translationKey() + "." + color.getName())).withStyle(ChatFormatting.GOLD);
             CEILang.builder().add(p).forGoggles(tooltip, 1);
             CEILang.translate("gui.goggles.printing.cost",
                     CEILang.number(amount)
