@@ -187,6 +187,28 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity implements Cl
         return false;
     }
 
+    private boolean applyGrindingFluidOperation(GrindingRecipe recipe) {
+        var fluidIngredients = recipe.getFluidIngredients();
+        if (!fluidIngredients.isEmpty())
+            return drain(fluidIngredients.getFirst());
+
+        var fluidResults = recipe.getFluidResults();
+        if (!fluidResults.isEmpty())
+            return fill(fluidResults.getFirst());
+
+        return true;
+    }
+
+    private void awardGrindingFluidStats(GrindingRecipe recipe) {
+        var fluidResults = recipe.getFluidResults();
+        if (fluidResults.isEmpty())
+            return;
+
+        var fluidResult = fluidResults.getFirst();
+        if (fluidResult.is(CEIFluids.EXPERIENCE))
+            advancement.awardStat(CEIStats.GRINDSTONE_EXPERIENCE.get(), fluidResult.getAmount());
+    }
+
     private void start(ItemStack inputStack) {
         assert level != null;
         if (inventory.isEmpty())
@@ -209,16 +231,8 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity implements Cl
             grinding = recipeManager.getRecipeFor(CEIRecipes.GRINDING.getType(), input, level);
         if (grinding.isPresent()) {
             var recipe = grinding.get().value();
-            var fluidIngredients = recipe.getFluidIngredients();
-            var fluidResults = recipe.getFluidResults();
-            boolean applicable = false;
-            if (!fluidIngredients.isEmpty())
-                applicable = drain(fluidIngredients.getFirst());
-            else if (!fluidResults.isEmpty())
-                applicable = fill(fluidResults.getFirst());
-            if (applicable) {
-                if (fluidResults.getFirst().is(CEIFluids.EXPERIENCE))
-                    advancement.awardStat(CEIStats.GRINDSTONE_EXPERIENCE.get(), fluidResults.getFirst().getAmount());
+            if (applyGrindingFluidOperation(recipe)) {
+                awardGrindingFluidStats(recipe);
                 inventory.clear();
                 var grinded = recipe.rollResults(level.random);
                 for (int i = 0; i < grinded.size(); i++)

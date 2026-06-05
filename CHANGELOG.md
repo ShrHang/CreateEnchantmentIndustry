@@ -1,7 +1,8 @@
 ## Create: Enchantment Industry 2.4.0
 
 ### Update
-* Add support for apotheosis mod series. It's still not *complete* in terms of "complete production line to make end game gears". But it's actually playable and complete. More appliance will come in the future.
+* Add support for **apotheosis mod series**. 
+> Support for apotheosis is still *not complete in terms of "complete production line to make end game gears"*. But its existing appliances are actually playable and complete. More appliance will come in the future.
 * Add Turkish Localization by @Mehmet Eymen Eskici
 
 ### Change
@@ -13,3 +14,4 @@
 * Fix The mobs couldn't drop experience nugget while in chunks that in offline forceloading mode.
 * Fix deployer drop more exp nuggets than it should in long run.
 * Fix opening JEI preview for enchanted book crafting leads to crash when Cold Sweat is installed.
+* Fix Mechanical Grinder ignores recipe with no fluid input and output.
