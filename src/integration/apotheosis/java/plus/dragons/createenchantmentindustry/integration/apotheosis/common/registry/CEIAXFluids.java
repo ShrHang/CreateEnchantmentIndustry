@@ -42,42 +42,44 @@ public class CEIAXFluids {
     public static final FluidEntry<BaseFlowingFluid.Source> APOTHEOTIC_ESSENCE = new FluidEntry<>(REGISTRATE,
             DeferredHolder.create(Registries.FLUID, REGISTRATE.asResource("apotheotic_essence")));
     public static final FluidEntry<BaseFlowingFluid.Flowing> APOTHEOTIC_ESSENCE_FLOWING = REGISTRATE
-            .fluid("apotheotic_essence", SolidRenderFluidType.create(new Color(0xf56f22).asVectorF(), () -> 1f)) // TODO need custom type
+            .fluid("apotheotic_essence", SolidRenderFluidType.create(new Color(0xf56f22).asVectorF(), () -> 1f)) // TODO need adjust
             .asOptional()
             .properties(builder -> builder
                     .rarity(Rarity.EPIC)
-                    .lightLevel(1)
+                    .lightLevel(15)
                     .pathType(PathType.BLOCKED)
                     .adjacentPathType(PathType.BLOCKED))
             .fluidProperties(p -> p.levelDecreasePerBlock(2).explosionResistance(100f))
             .source(BaseFlowingFluid.Source::new)
             .block()
+            .properties(properties -> properties
+                    .lightLevel((b)->15))
             .build()
             .bucket()
             .properties(properties -> properties
-                    .rarity(Rarity.EPIC)
-                    .component(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true))
+                    .rarity(Rarity.EPIC))
             .build()
             .register();
 
     public static final FluidEntry<BaseFlowingFluid.Source> CRYSTAL_ESSENCE = new FluidEntry<>(REGISTRATE,
             DeferredHolder.create(Registries.FLUID, REGISTRATE.asResource("crystal_essence")));
     public static final FluidEntry<BaseFlowingFluid.Flowing> CRYSTAL_ESSENCE_FLOWING = REGISTRATE
-            .fluid("crystal_essence", SolidRenderFluidType.create(new Color(0x8778fa).asVectorF(), () -> 1f)) // TODO need custom type
+            .fluid("crystal_essence", SolidRenderFluidType.create(new Color(0x8778fa).asVectorF(), () -> 1f)) // TODO need adjust
             .asOptional()
             .properties(builder -> builder
-                    .rarity(Rarity.EPIC)
-                    .lightLevel(1)
+                    .rarity(Rarity.RARE)
+                    .lightLevel(8)
                     .pathType(PathType.BLOCKED)
                     .adjacentPathType(PathType.BLOCKED))
             .fluidProperties(p -> p.levelDecreasePerBlock(2).explosionResistance(100f))
             .source(BaseFlowingFluid.Source::new)
             .block()
+            .properties(properties -> properties
+                    .lightLevel((b)->8))
             .build()
             .bucket()
             .properties(properties -> properties
-                    .rarity(Rarity.EPIC)
-                    .component(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true))
+                    .rarity(Rarity.RARE))
             .build()
             .register();
 

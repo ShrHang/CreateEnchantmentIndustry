@@ -57,6 +57,8 @@ public class CEIFluids {
             .tag(AllFluidTags.BOTTOMLESS_DENY.tag)
             .source(BaseFlowingFluid.Source::new)
             .block()
+            .properties(properties -> properties
+                    .lightLevel((b)->15))
             .lang("Liquid Experience")
             .build()
             .bucket()
