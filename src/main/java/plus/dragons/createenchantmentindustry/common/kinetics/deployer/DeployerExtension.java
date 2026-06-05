@@ -27,7 +27,6 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerXpEvent.XpChange;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
@@ -38,10 +37,12 @@ public class DeployerExtension {
     public static void onLivingExperienceDrop(final LivingExperienceDropEvent event) {
         if (!(event.getAttackingPlayer() instanceof DeployerFakePlayer deployer))
             return;
+        if (!CEIConfig.kinetics().deployerKillDropXp.get())
+            return;
         int experience = Mth.ceil(event.getDroppedExperience() * CEIConfig.kinetics().deployerKillXpScale.getF());
         event.setDroppedExperience(experience);
         if (CEIConfig.kinetics().deployerCollectXp.get()) {
-            deployer.giveExperiencePoints(experience);
+            collectExperience(deployer, experience);
             event.setCanceled(true);
         }
     }
@@ -51,12 +52,14 @@ public class DeployerExtension {
         if (!(event.getBreaker() instanceof DeployerFakePlayer deployer))
             return;
         boolean dropXp = CEIConfig.kinetics().deployerMineDropXp.get();
-        int experience = Mth.ceil(event.getDroppedExperience() * CEIConfig.kinetics().deployerMineXpScale.getF());
-        if (CEIConfig.kinetics().deployerCollectXp.get()) {
-            deployer.giveExperiencePoints(experience);
-            dropXp = false;
+        int experience = dropXp
+                ? Mth.ceil(event.getDroppedExperience() * CEIConfig.kinetics().deployerMineXpScale.getF())
+                : 0;
+        if (experience > 0 && CEIConfig.kinetics().deployerCollectXp.get()) {
+            collectExperience(deployer, experience);
+            experience = 0;
         }
-        if (dropXp) {
+        if (experience > 0) {
             event.getState().getBlock().popExperience(event.getLevel(), event.getPos(), experience);
         }
         event.getDrops().stream()
@@ -65,23 +68,21 @@ public class DeployerExtension {
         event.setCanceled(true);
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onXpChange(final XpChange event) {
-        if (!(event.getEntity() instanceof DeployerFakePlayer deployer))
+    private static void collectExperience(DeployerFakePlayer deployer, int experience) {
+        if (experience <= 0)
             return;
-        if (!CEIConfig.kinetics().deployerCollectXp.get())
-            return;
-        int total = deployer.totalExperience + event.getAmount();
-        int consumed = 0;
         if (CEIConfig.kinetics().deployerMendItem.get()) {
             ItemStack heldItem = deployer.getMainHandItem();
             if (ExperienceHelper.canRepairItem(heldItem))
-                consumed = ExperienceHelper.repairItem(total, deployer.serverLevel(), heldItem, false);
+                experience -= ExperienceHelper.repairItem(experience, deployer.serverLevel(), heldItem, false);
         }
-        int nuggets = (event.getAmount() - consumed) / 3;
+        if (experience <= 0)
+            return;
+        int nuggets = experience / 3;
+        if (deployer.serverLevel().random.nextFloat() < (experience % 3) / 3f)
+            nuggets++;
         if (nuggets > 0) {
             deployer.getInventory().placeItemBackInInventory(AllItems.EXP_NUGGET.asStack(nuggets));
         }
-        event.setAmount(total - consumed - nuggets * 3);
     }
 }
