@@ -213,10 +213,10 @@ public class CEIAXPonderScenes {
         scene.world().setKineticSpeed(util.select().fromTo(0, 2, 0, 0, 2, 2), -64);
         scene.idle(20);
         scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), FluidTankBlockEntity.class,
-                be -> be.getControllerBE().getTankInventory().fill(new FluidStack(CEIAXFluids.CRYSTAL_ESSENCE.get(), 4000), IFluidHandler.FluidAction.EXECUTE));
+                be -> be.getTankInventory().fill(new FluidStack(CEIAXFluids.CRYSTAL_ESSENCE.get(), 4000), IFluidHandler.FluidAction.EXECUTE));
         scene.idle(10);
         scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), FluidTankBlockEntity.class,
-                be -> be.getControllerBE().getTankInventory().fill(new FluidStack(CEIAXFluids.CRYSTAL_ESSENCE.get(), 8000), IFluidHandler.FluidAction.EXECUTE));
+                be -> be.getTankInventory().fill(new FluidStack(CEIAXFluids.CRYSTAL_ESSENCE.get(), 8000), IFluidHandler.FluidAction.EXECUTE));
         scene.world().modifyBlockEntity(util.grid().at(2, 3, 2), GemCutterBlockEntity.class, be -> be.powered = true);
         scene.idle(40);
 
@@ -306,13 +306,13 @@ public class CEIAXPonderScenes {
         scene.idle(4);
         scene.world().setKineticSpeed(util.select().layer(0), 256);
         scene.idle(20);
-        scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), FluidTankBlockEntity.class,
-                be -> be.getControllerBE().getTankInventory().fill(new FluidStack(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 36000), IFluidHandler.FluidAction.EXECUTE));
+        scene.world().modifyBlockEntity(util.grid().at(4, 2, 2), FluidTankBlockEntity.class,
+                be -> be.getTankInventory().fill(new FluidStack(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 36000), IFluidHandler.FluidAction.EXECUTE));
         scene.world().setKineticSpeed(util.select().layer(2), 64);
         scene.world().setKineticSpeed(util.select().layer(1), -32);
         scene.idle(10);
-        scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), FluidTankBlockEntity.class,
-                be -> be.getControllerBE().getTankInventory().fill(new FluidStack(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 72000), IFluidHandler.FluidAction.EXECUTE));
+        scene.world().modifyBlockEntity(util.grid().at(4, 2, 2), FluidTankBlockEntity.class,
+                be -> be.getTankInventory().fill(new FluidStack(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 72000), IFluidHandler.FluidAction.EXECUTE));
         scene.world().modifyBlockEntity(util.grid().at(2, 3, 2), AffixAugmentorBlockEntity.class, be -> be.powered = true);
         scene.idle(40);
 

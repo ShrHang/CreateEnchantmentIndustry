@@ -214,9 +214,9 @@ dependencies {
     }
 
     if (hasIntegration("apotheosis")) {
-        apotheosisLocalImplementation("dev.shadowsoffire:Placebo:${minecraft_version}-${placebo_version}")
-        apotheosisLocalImplementation("dev.shadowsoffire:ApothicAttributes:${minecraft_version}-${apothic_attributes_version}")
-        apotheosisLocalImplementation("dev.shadowsoffire:ApothicEnchanting:${minecraft_version}-${apothic_enchanting_version}")
+        apothic_enchantingLocalImplementation("dev.shadowsoffire:Placebo:${minecraft_version}-${placebo_version}")
+        apothic_enchantingLocalImplementation("dev.shadowsoffire:ApothicAttributes:${minecraft_version}-${apothic_attributes_version}")
+        apothic_enchantingLocalImplementation("dev.shadowsoffire:ApothicEnchanting:${minecraft_version}-${apothic_enchanting_version}")
         apotheosisLocalImplementation("dev.shadowsoffire:ApothicSpawners:${minecraft_version}-${apothic_spawners_version}")
         apotheosisLocalImplementation("dev.shadowsoffire:Apotheosis:${minecraft_version}-${apotheosis_version}")
         apotheosisLocalImplementation("dev.shadowsoffire:GatewaysToEternity:${minecraft_version}-${gateway_to_eternity_version}") // Apotheosis needs this, datagen
