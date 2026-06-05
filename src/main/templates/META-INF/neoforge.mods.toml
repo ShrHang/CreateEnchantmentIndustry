@@ -77,6 +77,13 @@ ${integration_mixin_blocks}
     side="BOTH"
 
 [[dependencies.${mod_id}]]
+    modId="sable"
+    type="optional"
+    versionRange="${sable_version_range}"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
     modId="touhou_little_maid"
     type="optional"
     versionRange="[1.2.0,)"

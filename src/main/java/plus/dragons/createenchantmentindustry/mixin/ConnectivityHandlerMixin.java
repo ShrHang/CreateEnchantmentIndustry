@@ -30,6 +30,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceFluidDropContext;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
 
 @Mixin(ConnectivityHandler.class)
@@ -37,6 +38,8 @@ public class ConnectivityHandlerMixin {
     @Inject(method = "splitMultiAndInvalidate", at = @At(value = "RETURN", ordinal = 2))
     private static <T extends BlockEntity & IMultiBlockEntityContainer> void splitMulti$dropExperienceFluidSingle(T be, @Coerce Object cache, boolean tryReconnect, CallbackInfo ci) {
         if (!(be.getLevel() instanceof ServerLevel level && be.isRemoved()))
+            return;
+        if (!ExperienceFluidDropContext.shouldDropExperienceFluid(level))
             return;
         if (!(be instanceof IMultiBlockEntityContainer.Fluid fluidContainer))
             return;
@@ -54,6 +57,8 @@ public class ConnectivityHandlerMixin {
     @Inject(method = "splitMultiAndInvalidate", at = @At("TAIL"))
     private static <T extends BlockEntity & IMultiBlockEntityContainer> void splitMulti$dropExperienceFluidMulti(T be, @Coerce Object cache, boolean tryReconnect, CallbackInfo ci, @Local FluidStack dropped) {
         if (!(be.getLevel() instanceof ServerLevel level))
+            return;
+        if (!ExperienceFluidDropContext.shouldDropExperienceFluid(level))
             return;
         if (!(be instanceof IMultiBlockEntityContainer.Fluid fluidContainer))
             return;

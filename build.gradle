@@ -25,6 +25,7 @@ java {
 def allIntegrationSourceSets = [
         "apothic_enchanting",
         "apotheosis",
+        "sable",
 ]
 
 def isIntegrationEnabled = { name ->
@@ -222,10 +223,12 @@ dependencies {
         apotheosisLocalImplementation("dev.shadowsoffire:GatewaysToEternity:${minecraft_version}-${gateway_to_eternity_version}") // Apotheosis needs this, datagen
     }
 
-    localImplementation("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
-    localImplementation("dev.simulated_team.simulated:simulated-neoforge-${minecraft_version}:${create_aeronautics_version}")  { transitive false }
-    localImplementation("dev.eriksonn.aeronautics:aeronautics-neoforge-${minecraft_version}:${create_aeronautics_version}")  { transitive false }
-    localImplementation("dev.ryanhcode.offroad:offroad-neoforge-${minecraft_version}:${create_aeronautics_version}")  { transitive false }
+    if (hasIntegration("sable")) {
+        sableLocalImplementation("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
+        localRuntime("dev.simulated_team.simulated:simulated-neoforge-${minecraft_version}:${create_aeronautics_version}")  { transitive false }
+        localRuntime("dev.eriksonn.aeronautics:aeronautics-neoforge-${minecraft_version}:${create_aeronautics_version}")  { transitive false }
+        localRuntime("dev.ryanhcode.offroad:offroad-neoforge-${minecraft_version}:${create_aeronautics_version}")  { transitive false }
+    }
 
     compileOnly("curse.maven:touhou-little-maid-355044:${tlm_file_id}")
 }
@@ -233,6 +236,7 @@ dependencies {
 def integrationMixinConfigs = [
         apothic_enchanting: "${mod_id}.apothic_enchanting.mixins.json",
         apotheosis        : "${mod_id}.apotheosis.mixins.json",
+        sable             : "${mod_id}.sable.mixins.json",
 ]
 
 def integrationMixinBlocks = enabledIntegrationSourceSets
@@ -262,6 +266,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             apothic_enchanting_version_range   : apothic_enchanting_version_range,
             apothic_spawners_version_range     : apothic_spawners_version_range,
             apotheosis_version_range            : apotheosis_version_range,
+            sable_version_range                 : sable_version_range,
             integration_mixin_blocks           : integrationMixinBlocks
     ]
     inputs.properties replaceProperties

@@ -36,6 +36,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import plus.dragons.createdragonsplus.common.fluids.tank.FluidTankBehaviour;
+import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceFluidDropContext;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
 
 @Mixin(SmartBlockEntity.class)
@@ -53,6 +54,8 @@ public abstract class SmartBlockEntityMixin extends CachedRenderBBBlockEntity {
     @Inject(method = "destroy", at = @At(value = "HEAD"))
     private void setRemoved$dropExperienceFluid(CallbackInfo ci) {
         if (!(this.level instanceof ServerLevel serverLevel))
+            return;
+        if (!ExperienceFluidDropContext.shouldDropExperienceFluid(serverLevel))
             return;
         var state = this.getBlockState();
         for (var behaviour : this.getAllBehaviours()) {
