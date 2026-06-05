@@ -24,7 +24,6 @@ import com.simibubi.create.AllTags;
 import com.tterrag.registrate.providers.RegistrateTagsProvider;
 import com.tterrag.registrate.util.entry.FluidEntry;
 import net.createmod.catnip.theme.Color;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Rarity;
@@ -53,7 +52,7 @@ public class CEIAXFluids {
             .source(BaseFlowingFluid.Source::new)
             .block()
             .properties(properties -> properties
-                    .lightLevel((b)->15))
+                    .lightLevel((b) -> 15))
             .build()
             .bucket()
             .properties(properties -> properties
@@ -75,7 +74,7 @@ public class CEIAXFluids {
             .source(BaseFlowingFluid.Source::new)
             .block()
             .properties(properties -> properties
-                    .lightLevel((b)->8))
+                    .lightLevel((b) -> 8))
             .build()
             .bucket()
             .properties(properties -> properties

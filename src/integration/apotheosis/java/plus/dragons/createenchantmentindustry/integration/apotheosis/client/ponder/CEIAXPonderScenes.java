@@ -306,12 +306,12 @@ public class CEIAXPonderScenes {
         scene.idle(4);
         scene.world().setKineticSpeed(util.select().layer(0), 256);
         scene.idle(20);
-        scene.world().modifyBlockEntity(util.grid().at(4, 2, 2), FluidTankBlockEntity.class,
+        scene.world().modifyBlockEntity(util.grid().at(1, 1, 1), FluidTankBlockEntity.class,
                 be -> be.getTankInventory().fill(new FluidStack(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 36000), IFluidHandler.FluidAction.EXECUTE));
         scene.world().setKineticSpeed(util.select().layer(2), 64);
         scene.world().setKineticSpeed(util.select().layer(1), -32);
         scene.idle(10);
-        scene.world().modifyBlockEntity(util.grid().at(4, 2, 2), FluidTankBlockEntity.class,
+        scene.world().modifyBlockEntity(util.grid().at(1, 1, 1), FluidTankBlockEntity.class,
                 be -> be.getTankInventory().fill(new FluidStack(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 72000), IFluidHandler.FluidAction.EXECUTE));
         scene.world().modifyBlockEntity(util.grid().at(2, 3, 2), AffixAugmentorBlockEntity.class, be -> be.powered = true);
         scene.idle(40);

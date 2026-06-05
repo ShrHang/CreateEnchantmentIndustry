@@ -26,6 +26,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLConstructModEvent;
+import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import plus.dragons.createdragonsplus.common.CDPRegistrate;
@@ -33,6 +34,7 @@ import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.processing.infuser.InfuserBlockEntity;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.*;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.config.CEIAConfig;
+import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.integration.CEIMaxEnchantmentLevel;
 
 @Mod(CEICommon.ID)
 public class CEIACommon {
@@ -72,6 +74,11 @@ public class CEIACommon {
 
         @SubscribeEvent
         public void setup(final FMLCommonSetupEvent event) {}
+
+        @SubscribeEvent
+        public void complete(final FMLLoadCompleteEvent event) {
+            CEIMaxEnchantmentLevel.register();
+        }
     }
 
     public static void addReloadListeners(AddReloadListenerEvent event) {

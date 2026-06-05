@@ -58,7 +58,7 @@ public class CEIFluids {
             .source(BaseFlowingFluid.Source::new)
             .block()
             .properties(properties -> properties
-                    .lightLevel((b)->15))
+                    .lightLevel((b) -> 15))
             .lang("Liquid Experience")
             .build()
             .bucket()
