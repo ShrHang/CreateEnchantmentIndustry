@@ -1,10 +1,11 @@
 ## Create: Enchantment Industry 2.4.0
 
 ### Update
-* Added support for **apotheosis mod series**. 
+* Added support for **apotheosis mod series**: Bulk Salvaging, Brass Bookshelf, Creative Bookshelf, Infuser, Ender Woven Bag, Gem Cutter and Affix Augmenter.
 > Support for apotheosis is still *not complete in terms of "complete production line to make end game gears"*. But its existing appliances are actually playable and complete. More appliance will come in the future.
 * Added Turkish Localization by @Mehmet Eymen Eskici
 * Added Bulgarian Localization by @Programstor
+* Added more Sable support: Experience Lantern and Ender Woven Bag pull direction when working from a Sable sub-level; charged lightning failing to transform experience blocks located inside Sable sub-levels; Added Sable physics properties for Create: Enchantment Industry blocks.
 
 ### Change
 * Forging cost is now more reasonable (by @Feiyang Wu)

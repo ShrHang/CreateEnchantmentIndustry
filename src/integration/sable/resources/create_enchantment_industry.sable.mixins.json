@@ -5,6 +5,9 @@
   "plugin": "plus.dragons.createdragonsplus.mixin.CDPMixinConfigPlugin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
+    "CaptureEntityBehaviourMixin",
+    "ExperienceLanternBlockEntityMixin",
+    "ExperienceLightningChargerMixin",
     "SubLevelAssemblyHelperMixin"
   ],
   "client": [],
