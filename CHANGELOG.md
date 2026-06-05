@@ -12,3 +12,4 @@
 * Display accurate message when experience cost is greater than available amount. (by @Mathias Dejerud Rådstam)
 * Fix The mobs couldn't drop experience nugget while in chunks that in offline forceloading mode.
 * Fix deployer drop more exp nuggets than it should in long run.
+* Fix opening JEI preview for enchanted book crafting leads to crash when Cold Sweat is installed.

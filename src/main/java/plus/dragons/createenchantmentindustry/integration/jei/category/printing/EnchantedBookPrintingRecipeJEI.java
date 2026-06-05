@@ -22,21 +22,23 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.helpers.ICodecHelper;
 import mezz.jei.api.recipe.IRecipeManager;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.EnchantedBookItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
-import net.neoforged.neoforge.common.CommonHooks;
 import plus.dragons.createdragonsplus.util.Pairs;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.CEIEnchantmentHelper;
@@ -50,40 +52,68 @@ public class EnchantedBookPrintingRecipeJEI implements PrintingRecipeJEI {
     public static final PrintingRecipeJEI.Type TYPE = PrintingRecipeJEI
             .register(CEICommon.asResource("enchanted_book"), EnchantedBookPrintingRecipeJEI::createCodec);
     private final ResourceLocation id;
-    private final EnchantmentInstance enchantment;
-    private final ItemStack enchantmentBook;
-    private final int cost;
+    private final ResourceKey<Enchantment> enchantmentKey;
+    private final int level;
 
-    public EnchantedBookPrintingRecipeJEI(EnchantmentInstance enchantment) {
+    public EnchantedBookPrintingRecipeJEI(ResourceKey<Enchantment> enchantmentKey, int level) {
         this.id = PrintingRecipeJEI.super.getRegistryName().withSuffix("/" +
-                enchantment.enchantment.getRegisteredName().replace(':', '/') +
-                enchantment.level);
-        this.enchantment = enchantment;
-        this.enchantmentBook = EnchantedBookItem.createForEnchantment(enchantment);
-        Optional<CEIIntIntPair> optional = Optional.empty();
-        var customCost = enchantment.enchantment.getData(CEIDataMaps.PRINTING_ENCHANTED_BOOK_COST);
-        if (customCost != null) {
-            optional = customCost.stream().filter(pair -> pair.level() == enchantment.level).findFirst();
-        }
-        this.cost = (int) (optional.map(CEIIntIntPair::value).orElseGet(() -> CEIEnchantmentHelper.getEnchantmentCost(enchantment.enchantment, enchantment.level)) * CEIConfig.fluids().printingEnchantedBookCostMultiplier.get());
+                enchantmentKey.location().getNamespace() + "/" +
+                enchantmentKey.location().getPath() + "/" +
+                level);
+        this.enchantmentKey = enchantmentKey;
+        this.level = level;
     }
 
     public static MapCodec<EnchantedBookPrintingRecipeJEI> createCodec(ICodecHelper codecHelper, IRecipeManager recipeManager) {
-        return RecordCodecBuilder.<EnchantmentInstance>mapCodec(instance -> instance.group(
-                Enchantment.CODEC.fieldOf("enchantment").forGetter(it -> it.enchantment),
-                Codec.INT.fieldOf("level").forGetter(it -> it.level)).apply(instance, EnchantmentInstance::new)).xmap(
-                        EnchantedBookPrintingRecipeJEI::new,
-                        recipe -> recipe.enchantment);
+        return RecordCodecBuilder.mapCodec(instance -> instance.group(
+                ResourceLocation.CODEC.fieldOf("enchantment")
+                        .forGetter((EnchantedBookPrintingRecipeJEI recipe) -> recipe.enchantmentKey.location()),
+                Codec.INT.fieldOf("level")
+                        .forGetter(recipe -> recipe.level))
+                .apply(instance, (enchantment, level) -> new EnchantedBookPrintingRecipeJEI(ResourceKey.create(Registries.ENCHANTMENT, enchantment), level)));
     }
 
     public static List<PrintingRecipeJEI> listAll() {
-        return Objects.requireNonNull(CommonHooks.resolveLookup(Registries.ENCHANTMENT))
+        var minecraft = Minecraft.getInstance();
+        if (minecraft.level == null)
+            return List.of();
+        return minecraft.level.registryAccess()
+                .lookupOrThrow(Registries.ENCHANTMENT)
                 .listElements()
                 .filter(enchantment -> !enchantment.is(CEIEnchantments.MOD_TAGS.printingDeny))
-                .flatMap(enchantment -> IntStream
-                        .rangeClosed(enchantment.value().getMinLevel(), CEIEnchantmentHelper.maxLevel(enchantment))
-                        .mapToObj(level -> new EnchantedBookPrintingRecipeJEI(new EnchantmentInstance(enchantment, level))))
+                .flatMap(enchantment -> enchantment.unwrapKey().stream()
+                        .flatMap(key -> IntStream
+                                .rangeClosed(enchantment.value().getMinLevel(), CEIEnchantmentHelper.maxLevel(enchantment))
+                                .mapToObj(level -> new EnchantedBookPrintingRecipeJEI(key, level))))
                 .collect(Collectors.toList());
+    }
+
+    private Optional<Holder.Reference<Enchantment>> resolveEnchantment() {
+        var minecraft = Minecraft.getInstance();
+        if (minecraft.level == null)
+            return Optional.empty();
+        return minecraft.level.registryAccess()
+                .lookupOrThrow(Registries.ENCHANTMENT)
+                .get(enchantmentKey);
+    }
+
+    private Optional<ItemStack> createEnchantmentBook() {
+        return resolveEnchantment()
+                .map(enchantment -> EnchantedBookItem.createForEnchantment(new EnchantmentInstance(enchantment, level)));
+    }
+
+    private OptionalInt getCost() {
+        return resolveEnchantment()
+                .map(enchantment -> {
+                    Optional<CEIIntIntPair> optional = Optional.empty();
+                    var customCost = enchantment.getData(CEIDataMaps.PRINTING_ENCHANTED_BOOK_COST);
+                    if (customCost != null) {
+                        optional = customCost.stream().filter(pair -> pair.level() == level).findFirst();
+                    }
+                    return (int) (optional.map(CEIIntIntPair::value).orElseGet(() -> CEIEnchantmentHelper.getEnchantmentCost(enchantment, level)) * CEIConfig.fluids().printingEnchantedBookCostMultiplier.get());
+                })
+                .map(OptionalInt::of)
+                .orElseGet(OptionalInt::empty);
     }
 
     @Override
@@ -93,19 +123,21 @@ public class EnchantedBookPrintingRecipeJEI implements PrintingRecipeJEI {
 
     @Override
     public void setTemplate(IRecipeSlotBuilder slot) {
-        slot.addItemStack(enchantmentBook);
+        createEnchantmentBook().ifPresent(slot::addItemStack);
     }
 
     @Override
     public void setFluid(IRecipeSlotBuilder slot) {
-        slot.addFluidStack(CEIFluids.EXPERIENCE.get(), cost);
-        CEIDataMaps.getSourceFluidEntries(CEIDataMaps.FLUID_UNIT_EXPERIENCE)
-                .forEach(Pairs.accept((fluid, unit) -> slot.addFluidStack(fluid, (long) unit * cost)));
+        getCost().ifPresent(cost -> {
+            slot.addFluidStack(CEIFluids.EXPERIENCE.get(), cost);
+            CEIDataMaps.getSourceFluidEntries(CEIDataMaps.FLUID_UNIT_EXPERIENCE)
+                    .forEach(Pairs.accept((fluid, unit) -> slot.addFluidStack(fluid, (long) unit * cost)));
+        });
     }
 
     @Override
     public void setOutput(IRecipeSlotBuilder slot) {
-        slot.addItemStack(enchantmentBook);
+        createEnchantmentBook().ifPresent(slot::addItemStack);
     }
 
     @Override

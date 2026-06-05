@@ -34,9 +34,9 @@ public class CEIAXCreativeModeTabs {
         if (event.getTabKey() == CEICreativeModeTabs.BASE.getKey()) {
             event.accept(CEIAXBlocks.GEM_CUTTER);
             event.accept(CEIAXBlocks.AFFIX_AUGMENTOR);
-            event.accept(CEIAXItems.BRASS_AFFIX_TEMPLATE);
-            event.accept(CEIAXItems.CRYSTAL_AFFIX_TEMPLATE);
-            event.accept(CEIAXItems.APOTHEOTIC_AFFIX_TEMPLATE);
+            //event.accept(CEIAXItems.BRASS_AFFIX_TEMPLATE); TODO: not implemented yet
+            //event.accept(CEIAXItems.CRYSTAL_AFFIX_TEMPLATE);
+            //event.accept(CEIAXItems.APOTHEOTIC_AFFIX_TEMPLATE);
             event.accept(CEIAXFluids.APOTHEOTIC_ESSENCE.getBucket().get());
             event.accept(CEIAXFluids.CRYSTAL_ESSENCE.getBucket().get());
         }
