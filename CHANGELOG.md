@@ -1,5 +1,7 @@
 ## Create: Enchantment Industry 2.4.0
 
+If you need any help with configuration, please check MODPACK-README.md.
+
 ### Update
 * Added support for **apotheosis mod series**: Bulk Salvaging, Brass Bookshelf, Creative Bookshelf, Infuser, Ender Woven Bag, Gem Cutter and Affix Augmenter.
 > Support for apotheosis is still *not complete in terms of "complete production line to make end game gears"*. But its existing appliances are actually playable and complete. More appliance will come in the future.

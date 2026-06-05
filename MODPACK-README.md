@@ -1,15 +1,213 @@
 ## Tags
-### Enchantment
-* `create_enchantment_industry:blaze_enchanter/enchanting` contains all enchantments available in Blaze Enchanter regular enchanting, which includes `minecraft:in_enchanting_table`
-* `create_enchantment_industry:blaze_enchanter/enchanting_exclusive` contains all enchantments exclusive to Blaze Enchanter regular enchanting
-* `create_enchantment_industry:blaze_enchanter/super_enchanting` contains all enchantments available in Blaze Enchanter Super enchanting, which includes `create_enchantment_industry:blaze_enchanter/super_enchanting_exclusive` and `minecraft:in_enchanting_table` and excludes `create_enchantment_industry:blaze_enchanter/enchanting_exclusive`
-* `create_enchantment_industry:blaze_enchanter/enchanting` contains all enchantments exclusive to Blaze Enchanter Super enchanting, which includes `minecraft:treasure` and excludes `minecraft:cures`. (Curse enchantments are still available when Blaze Forger is cursed)
-* `create_enchantment_industry:printer/deny` contains all enchantment uncopiable/denied by Printer.
 
-## Recipe
-###  Printing
-`Printing` of Printer supports custom printing recipe. It has similar format as the recipe of Create, with type `create_enchantment_industry:printing`. Printing recipe requires extra `sound` field as Printing-Finish-Sound, for example `"sound": "item.book.page_turn"`.   
-Template item is in 2nd position of input, printing material item is in 1st position of input.
+### Enchantment
+
+* `create_enchantment_industry:blaze_enchanter/enchanting` for enchantments available to regular Blaze Enchanter enchanting. It includes `minecraft:in_enchanting_table`.
+* `create_enchantment_industry:blaze_enchanter/enchanting_exclusive` for enchantments that should only appear in regular Blaze Enchanter enchanting.
+* `create_enchantment_industry:blaze_enchanter/super_enchanting` for enchantments available to Super Enchanting. It includes `create_enchantment_industry:blaze_enchanter/super_enchanting_exclusive` and `minecraft:in_enchanting_table`, and excludes `create_enchantment_industry:blaze_enchanter/enchanting_exclusive`.
+* `create_enchantment_industry:blaze_enchanter/super_enchanting_exclusive` for enchantments that should only appear in Super Enchanting. The generated tag includes `minecraft:treasure` and excludes `minecraft:curse`.
+* `create_enchantment_industry:printer/deny` for enchantments that the Printer should not copy onto Enchanted Books.
+
+### Fluid
+
+* `create_enchantment_industry:infusing/ingredients` for fluids that can power Infuser processing when Apothic Enchanting integration is active. The generated tag contains Liquid Experience.
+* `create_enchantment_industry:fan_processing_catalysts/salvaging` for fluid Bulk Salvaging catalysts when Apotheosis integration is active. The generated tag optionally includes Infused Dragon's Breath.
+* `c:dragon_breath` includes Infused Dragon's Breath when Apothic Enchanting integration is active.
+* `create:bottomless/deny` includes Liquid Experience and optional Apotheosis integration essence fluids.
+
+### Item
+
+* `c:buckets` includes Bucket o' Enchanting.
+* `c:nuggets` includes Nugget of Super Experience.
+* `c:storage_blocks` includes Block of Super Experience.
+* `create:upright_on_belt` includes Cake Base o' Enchanting, Cake o' Enchanting, and optional Apothic Enchanting Infused Breath.
+
+### Block
+
+* `create:fan_transparent` includes Blaze Enchanter, Blaze Forger, and Classic Blaze Enchanter.
+* `create:fan_processing_catalysts/smoking` includes Blaze Enchanter, Blaze Forger, and Classic Blaze Enchanter.
+* `create_enchantment_industry:fan_processing_catalysts/salvaging` for block Bulk Salvaging catalysts when Apotheosis integration is active.
+* `minecraft:mineable/pickaxe` includes Create: Enchantment Industry machinery and optional integration machinery.
+* `minecraft:beacon_base_blocks` includes Block of Super Experience.
+* `c:lightning_rods` can be used by datapacks and integrations that need to treat compatible blocks as lightning rods.
+
+### Sable Block (normally you won't need these)
+
+When the Sable integration source set is active, the mod provides Sable physics grouping tags:
+
+* `create_enchantment_industry:sable/light_machines`
+* `create_enchantment_industry:sable/medium_machines`
+* `create_enchantment_industry:sable/heavy_machines`
+* `create_enchantment_industry:sable/super_heavy_machines`
+
+## Data Maps
+
+### Experience Fuel
+
+`create_enchantment_industry:experience_fuel` is an item data map used by the Blaze Experience Workstation and related experience conversion logic.
+
+Entries can be written as a positive integer for normal experience fuel:
+
+```json
+{
+  "values": {
+    "examplemod:experience_shard": 3
+  }
+}
+```
+
+Entries can also use the full object form:
+
+```json
+{
+  "values": {
+    "examplemod:condensed_experience": {
+      "experience": 27,
+      "special": true,
+      "using_convert_to": {
+        "id": "minecraft:glass_bottle"
+      }
+    }
+  }
+}
+```
+
+Fields:
+
+* `experience` is the amount of Liquid Experience represented by one item.
+* `special` marks the fuel as Super Experience.
+* `using_convert_to` is optional and defines the item returned after the fuel item is consumed.
+
+The generated data map includes Create Experience Nuggets/Blocks, Super Experience items, the experience bucket, experience cake items, and optional entries for Create Stuff & Additions, Ars Nouveau, and Mystical Agriculture.
+
+### Fluid Experience Units
+
+`create_enchantment_industry:unit/experience` is a fluid data map that configures how much experience one mB of another mod's experience fluid represents.
+
+Example:
+
+```json
+{
+  "values": {
+    "examplemod:liquid_xp": 20
+  }
+}
+```
+
+The generated data map includes optional entries for CoFH Core, Cyclic, Ender IO, Industrial Foregoing, Just Dire Things, Mob Grinding Utils, PneumaticCraft, Reliquary, and Sophisticated Core.
+
+### Printing Ingredients
+
+The Printer uses fluid data maps to decide which fluids can power built-in printing behaviours and how much fluid each operation consumes:
+
+* `create_enchantment_industry:printing/address/ingredient`
+* `create_enchantment_industry:printing/pattern/ingredient`
+* `create_enchantment_industry:printing/copy/ingredient`
+* `create_enchantment_industry:printing/custom_name/ingredient`
+* `create_enchantment_industry:printing/written_book/ingredient`
+* `create_enchantment_industry:printing/banner_pattern/ingredient`
+
+Each entry maps a fluid or fluid tag to a positive integer mB cost:
+
+```json
+{
+  "values": {
+    "#c:dyes/black": 10,
+    "create_enchantment_industry:experience": 25
+  }
+}
+```
+
+### Custom Name Styles
+
+`create_enchantment_industry:printing/custom_name/style` is a fluid data map that controls the text style applied by custom-name printing.
+
+Example:
+
+```json
+{
+  "values": {
+    "#c:dyes/red": {
+      "color": "#FF0000"
+    },
+    "examplemod:royal_ink": {
+      "color": "#663399",
+      "bold": true
+    }
+  }
+}
+```
+
+The value uses Minecraft's `Style` codec. The generated entries provide text colors for common dye fluid tags.
+
+### Enchanted Book Printing Costs
+
+`create_enchantment_industry:printing/enchanted_book/custom_cost` is an enchantment data map that overrides Printer costs for specific enchantments and levels.
+
+Example:
+
+```json
+{
+  "values": {
+    "minecraft:mending": [
+      {
+        "level": 1,
+        "value": 100
+      }
+    ]
+  }
+}
+```
+
+If no custom entry exists, the Printer falls back to its normal cost formula and server config multiplier.
+
+### Blaze Forger Costs
+
+Blaze Forger cost tuning is controlled by enchantment data maps:
+
+* `create_enchantment_industry:forging/cost_multiplier` controls normal forging cost multipliers.
+* `create_enchantment_industry:forging/split_enchantment_cost_multiplier` controls enchantment splitting cost multipliers.
+
+Each entry maps an enchantment to a positive float:
+
+```json
+{
+  "values": {
+    "minecraft:mending": 2.0,
+    "minecraft:unbreaking": 0.75
+  }
+}
+```
+
+Missing entries use `1.0`.
+
+### Super Enchanting Level Extension
+
+`create_enchantment_industry:super_enchanting/custom_level_extension` is an enchantment data map that overrides the per-enchantment extra level cap used by Super Enchanting.
+
+Example:
+
+```json
+{
+  "values": {
+    "minecraft:sharpness": 2,
+    "minecraft:mending": 0
+  }
+}
+```
+
+Missing entries use the server config value `enchantmentMaxLevelExtension`. The generated data map sets Mending and Infinity to `0`.
+
+## Recipes
+
+### Printing
+
+`Printing` is the Printer recipe type `create_enchantment_industry:printing`.
+
+It follows Create processing recipe conventions, with one extra `sound` field for the sound played when printing completes. The first item ingredient is the base item. The second item ingredient is the template or printing material. The recipe may also require one fluid ingredient.
+
+Example:
+
 ```json
 {
   "type": "create_enchantment_industry:printing",
@@ -21,9 +219,9 @@ Template item is in 2nd position of input, printing material item is in 1st posi
       "item": "minecraft:cookie"
     },
     {
-      "type": "fluid_tag",
+      "type": "neoforge:single",
       "amount": 250,
-      "fluid_tag": "c:milk"
+      "fluid": "create_enchantment_industry:experience"
     }
   ],
   "results": [
@@ -34,34 +232,156 @@ Template item is in 2nd position of input, printing material item is in 1st posi
   "sound": "entity.generic.eat"
 }
 ```
+
+Printing recipes can also be used as Sequenced Assembly steps.
+
 ### Grinding
-`Grinding` of Mechanical Grindstone supports custom grinding recipe. It is the same format as the recipe of Create, with type `create_enchantment_industry:grinding`.   
-Grinding can have fluid as input. If recipe has fluid as input, corresponding fluid in Grindstone Drain will be consumed.
 
-## Data Maps
-### Item
-* `experience_fuel`: Item can be fed to Blaze Experience Workstation as Experience. `"special": true` indicates Super Experience
+`Grinding` is the Mechanical Grindstone recipe type `create_enchantment_industry:grinding`.
 
-### Fluid
-* `printing/[type]/ingredient`: Configure ingredient & consumption of builtin printing type
-* `printing/custom_name/style`: Configure ingredient of different Text-styles of custom name printing
-* `unit/experience`: Configure conversion ratio between experience fluid of other mods and Liquid Experience
+It follows Create standard processing recipe conventions:
 
-### Enchantment
-* `forging/cost_multiplier`: Configure cost multiplier of Blaze Forger's forging for each enchantment. Default value is 1.
-* `forging/split_enchantment_cost_multiplier`: Configure cost multiplier of Blaze Forger's Enchantment Splitting for each enchantment. Default value is 1.
-* `super_enchanting/custom_level_extension`: Configure exceeded level of enchantment can be produced by Super Enchanting for each enchantment. Default value is set in config.
-* `printing/enchanted_book/custom_cost`: Configure cost of Printer printing Enchanted Book for each enchantment. Example:
-````json
+* It accepts one item ingredient.
+* It can output up to four item results.
+* It can have either one fluid input or one fluid output.
+* It supports `processing_time`.
+* It can be used as a Sequenced Assembly step.
+
+Example with a fluid output:
+
+```json
 {
-  "values": {
-    "minecraft:mending": 
-    [
-      {
-        "level": 1,
-        "value": 100
-      }
-    ]
+  "type": "create_enchantment_industry:grinding",
+  "ingredients": [
+    {
+      "item": "create:experience_nugget"
+    }
+  ],
+  "results": [
+    {
+      "amount": 3,
+      "id": "create_enchantment_industry:experience"
+    }
+  ]
+}
+```
+
+Example with a fluid input:
+
+```json
+{
+  "type": "create_enchantment_industry:grinding",
+  "ingredients": [
+    {
+      "item": "examplemod:rough_gem"
+    },
+    {
+      "type": "neoforge:single",
+      "amount": 100,
+      "fluid": "create_enchantment_industry:experience"
+    }
+  ],
+  "results": [
+    {
+      "id": "examplemod:polished_gem"
+    }
+  ],
+  "processing_time": 100
+}
+```
+
+Grinding also automatically supports automatable Sandpaper Polishing recipes.
+
+### Infusing
+
+When Apothic Enchanting integration is enabled and Apothic Enchanting is loaded, Create: Enchantment Industry adds the Infuser recipe type `create_enchantment_industry:infusing`.
+
+Infusing recipes run through the Infuser and Basin. They follow Create processing recipe conventions and add a required `stats` object:
+
+```json
+{
+  "type": "create_enchantment_industry:infusing",
+  "ingredients": [
+    {
+      "type": "neoforge:single",
+      "amount": 250,
+      "fluid": "create_dragons_plus:dragon_breath"
+    }
+  ],
+  "results": [
+    {
+      "amount": 750,
+      "id": "create_enchantment_industry:infused_dragon_breath"
+    }
+  ],
+  "stats": {
+    "eterna": 80.0,
+    "quanta": 15.0,
+    "arcana": 60.0
   }
 }
-````
+```
+
+`stats` defines the minimum Apothic Enchanting table stats required from the Infuser setup. The Infuser consumes a reagent fluid from `create_enchantment_industry:infusing/ingredients`.
+
+Apothic Enchanting `apothic_enchanting:infusion` recipes are also converted into Infusing recipes.
+
+### Bulk Salvaging
+
+When Apotheosis integration is enabled and Apotheosis is loaded, Create: Enchantment Industry adds a fan processing type for Salvaging Table logic.
+
+* JEI name: `Bulk Salvaging`
+* Fan processing id: `create_enchantment_industry:salvaging`
+* Recipe type: `create_enchantment_industry:salvaging`
+* Catalysts: blocks in `create_enchantment_industry:fan_processing_catalysts/salvaging` and fluids in `create_enchantment_industry:fan_processing_catalysts/salvaging`
+
+Custom salvaging recipes follow Create standard processing recipe conventions:
+
+```json
+{
+  "type": "create_enchantment_industry:salvaging",
+  "ingredients": [
+    {
+      "item": "examplemod:salvageable_item"
+    }
+  ],
+  "results": [
+    {
+      "id": "examplemod:salvaged_material"
+    }
+  ]
+}
+```
+
+## Config
+
+### Feature Flags
+
+Feature flags are in the common config and require restart when changed.
+
+Notable feature flags:
+
+* `processing/classic_blaze_enchanter`
+* `classic_blaze_enchanter` as an alias for the same feature
+
+Mods depending on certain features may forcibly enable or disable them. In that case, the corresponding config value is ignored.
+
+### Apothic Enchanting Integration Server Config
+
+When the Apothic Enchanting integration is active, its server config provides:
+
+* Brass Bookshelf Eterna, Quanta, Arcana, and treasure settings
+* Multiple Brass Bookshelf max Eterna
+* Creative Bookshelf treasure setting
+* Infuser fluid capacity
+* Gem Cutter and Affix Enhancer fluid capacity placeholders used by integration machinery
+* Ender Woven Bag capacity, pull behaviour, boss pull toggle, pull radius, pull force, and contraption release cooldown
+* Integration stress values
+
+### Apotheosis Integration Server Config
+
+When the Apotheosis integration is active, its server config provides:
+
+* Gem Cutter conversion ratios for Gem Dust, cracked gems, and Apotheotic Essence into Crystal Essence processing cost
+* Affix Augmentor conversion ratios for experience and Sigil of Enhancement into Apotheotic Essence processing cost
+* Bulk Salvaging equipped-item destruction probability
