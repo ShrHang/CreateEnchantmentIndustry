@@ -18,55 +18,24 @@
 
 package plus.dragons.createenchantmentindustry.mixin;
 
-import com.simibubi.create.AllItems;
-import com.simibubi.create.content.kinetics.crusher.CrushingWheelControllerBlock;
 import com.simibubi.create.content.kinetics.crusher.CrushingWheelControllerBlockEntity;
-import net.createmod.catnip.math.VecHelper;
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import plus.dragons.createenchantmentindustry.config.CEIConfig;
+import plus.dragons.createenchantmentindustry.common.kinetics.crusher.CrushingWheelExperience;
 
 @Mixin(CrushingWheelControllerBlockEntity.class)
 public class CrushingWheelControllerBlockEntityMixin {
     @Shadow(remap = false)
     public Entity processingEntity;
 
-    @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setPos(DDD)V", shift = At.Shift.AFTER))
-    private void injected(CallbackInfo ci) {
-        if (CEIConfig.kinetics().crushingWheelKillDropXp.get() && !processingEntity.isAlive() && processingEntity instanceof LivingEntity livingEntity) {
-            if (!(processingEntity.level() instanceof ServerLevel serverLevel)) return;
-            int reward = Math.max((int) Math.floor(livingEntity.getExperienceReward(serverLevel, processingEntity) * CEIConfig.kinetics().crushingWheelKillDropXpScale.get()), 1);
-            if (reward >= 1000 || Math.random() < CEIConfig.kinetics().crushingWheelKillDropXpChance.get()) {
-                int count = reward / 3 + ((Math.random() < (reward % 3 / 3f)) ? 1 : 0);
-                if (count != 0) {
-                    var self = (CrushingWheelControllerBlockEntity) (Object) this;
-                    Vec3 centerPos = VecHelper.getCenterOf(self.getBlockPos());
-                    Direction facing = self.getBlockState().getValue(CrushingWheelControllerBlock.FACING);
-                    int offset = facing.getAxisDirection()
-                            .getStep();
-                    Vec3 outSpeed = new Vec3((facing.getAxis() == Direction.Axis.X ? 0.25D : 0.0D) * offset,
-                            offset == 1 ? (facing.getAxis() == Direction.Axis.Y ? 0.5D : 0.0D) : 0.0D,
-                            (facing.getAxis() == Direction.Axis.Z ? 0.25D : 0.0D) * offset);
-                    Vec3 outPos = centerPos.add((facing.getAxis() == Direction.Axis.X ? .55f * offset : 0f),
-                            (facing.getAxis() == Direction.Axis.Y ? .55f * offset : 0f), (facing.getAxis() == Direction.Axis.Z ? .55f * offset : 0f));
-                    var expItem = new ItemEntity(processingEntity.level(), outPos.x(), outPos.y(), outPos.z(), new ItemStack(AllItems.EXP_NUGGET.get(), count));
-                    expItem.setDeltaMovement(outSpeed);
-                    expItem.getPersistentData()
-                            .put("BypassCrushingWheel", NbtUtils.writeBlockPos(self.getBlockPos()));
-                    processingEntity.level().addFreshEntity(expItem);
-                }
-            }
-        }
+    @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z", shift = At.Shift.AFTER))
+    private void tick$dropExperienceNuggets(CallbackInfo ci) {
+        if (!processingEntity.isAlive() && processingEntity instanceof LivingEntity livingEntity)
+            CrushingWheelExperience.dropForCrushedEntity((CrushingWheelControllerBlockEntity) (Object) this, livingEntity);
     }
 }
