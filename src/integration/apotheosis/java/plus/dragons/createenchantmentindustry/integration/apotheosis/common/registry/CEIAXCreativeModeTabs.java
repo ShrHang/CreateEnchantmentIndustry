@@ -18,6 +18,7 @@
 
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry;
 
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
@@ -28,7 +29,7 @@ public class CEIAXCreativeModeTabs {
         modBus.addListener(CEIAXCreativeModeTabs::buildContents);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOW)
     public static void buildContents(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CEICreativeModeTabs.BASE.getKey()) {
             event.accept(CEIAXBlocks.GEM_CUTTER);
