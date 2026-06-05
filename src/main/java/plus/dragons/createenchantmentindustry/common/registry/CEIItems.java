@@ -53,6 +53,10 @@ public class CEIItems {
                     .rarity(Rarity.RARE)
                     .component(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY))
             .register();
+    public static final ItemEntry<Item> BLAZES_ENCHANTING_HANDBOOK = REGISTRATE
+            .item("blazes_enchanting_handbook", Item::new)
+            .lang("Blaze's Enchanting Handbook")
+            .register();
     public static final ItemEntry<Item> EXPERIENCE_CAKE_BASE = REGISTRATE
             .item("experience_cake_base", Item::new)
             .lang("Cake Base o' Enchanting")

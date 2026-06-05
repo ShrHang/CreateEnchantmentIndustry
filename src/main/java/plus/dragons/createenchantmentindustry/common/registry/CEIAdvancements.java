@@ -19,6 +19,9 @@
 package plus.dragons.createenchantmentindustry.common.registry;
 
 import com.google.common.collect.Sets;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.content.logistics.box.PackageStyles;
 import com.simibubi.create.foundation.advancement.AllTriggers;
@@ -126,6 +129,20 @@ public class CEIAdvancements implements DataProvider {
                     .whenStatReach(Stats.CUSTOM.get(CEIStats.ENCHANT.get()), MinMaxBounds.Ints.atLeast(1000))
                     .special(CDPAdvancement.TaskType.EXPERT)
                     .after(SIGIL_FORGING)),
+
+            // Classic Blaze Enchanter
+            LEGACY_IGNITION = create("legacy_ignition", b -> b.icon(CEIBlocks.CLASSIC_BLAZE_ENCHANTER)
+                    .title("Legacy Ignition")
+                    .description("It's from the last era. Obtain a Classic Blaze Enchanter")
+                    .whenIconCollected()
+                    .after(BLAZE_ENCHANTERY)),
+
+            THOUSANDFOLD_EVERCHANT = create("thousandfold_everchant", b -> b.icon(CEIBlocks.CLASSIC_BLAZE_ENCHANTER)
+                    .title("Thousandfold Everchant")
+                    .description("Classic Blaze Enchanter enchants 1,000 times")
+                    .whenStatReach(Stats.CUSTOM.get(CEIStats.CLASSIC_ENCHANT.get()), MinMaxBounds.Ints.atLeast(1000))
+                    .special(CDPAdvancement.TaskType.EXPERT)
+                    .after(LEGACY_IGNITION)),
 
             // Blaze Forger
             BORN_TALENT_OF_FIRE = create("born_talent_of_fire", b -> b.icon(CEIBlocks.BLAZE_FORGER)
@@ -253,7 +270,14 @@ public class CEIAdvancements implements DataProvider {
                     throw new IllegalStateException("Duplicate advancement " + id);
                 Path path = pathProvider.json(id);
                 LOGGER.info("Saving advancement {}", id);
-                futures.add(DataProvider.saveStable(cache, provider, Advancement.CODEC, advancement.value(), path));
+                if (isClassicBlazeEnchanterAdvancement(id)) {
+                    var result = Advancement.CODEC.encodeStart(provider.createSerializationContext(JsonOps.INSTANCE), advancement.value());
+                    var json = result.getOrThrow().getAsJsonObject();
+                    json.add("neoforge:conditions", classicBlazeEnchanterConditions());
+                    futures.add(DataProvider.saveStable(cache, json, path));
+                } else {
+                    futures.add(DataProvider.saveStable(cache, provider, Advancement.CODEC, advancement.value(), path));
+                }
             };
 
             for (CDPAdvancement advancement : ENTRIES)
@@ -261,6 +285,20 @@ public class CEIAdvancements implements DataProvider {
 
             return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
         });
+    }
+
+    private static boolean isClassicBlazeEnchanterAdvancement(ResourceLocation id) {
+        return id.getNamespace().equals("create_enchantment_industry") &&
+                (id.getPath().equals("legacy_ignition") || id.getPath().equals("thousandfold_everchant"));
+    }
+
+    private static JsonArray classicBlazeEnchanterConditions() {
+        var conditions = new JsonArray();
+        var condition = new JsonObject();
+        condition.addProperty("type", "create_dragons_plus:config_feature");
+        condition.addProperty("feature", "create_enchantment_industry:processing/classic_blaze_enchanter");
+        conditions.add(condition);
+        return conditions;
     }
 
     public static void provideLang(BiConsumer<String, String> consumer) {

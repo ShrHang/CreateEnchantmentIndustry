@@ -27,12 +27,18 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public class CEIConfig {
+    private static final CEICommonConfig COMMON_CONFIG = new CEICommonConfig();
     private static final CEIClientConfig CLIENT_CONFIG = new CEIClientConfig();
     private static final CEIServerConfig SERVER_CONFIG = new CEIServerConfig();
+    private static ModConfigSpec COMMON_SPEC;
     private static ModConfigSpec CLIENT_SPEC;
     private static ModConfigSpec SERVER_SPEC;
 
     public CEIConfig(ModContainer modContainer) {
+        COMMON_SPEC = Util.make(new ModConfigSpec.Builder().configure(builder -> {
+            COMMON_CONFIG.registerAll(builder);
+            return Unit.INSTANCE;
+        }).getValue(), spec -> modContainer.registerConfig(Type.COMMON, spec));
         CLIENT_SPEC = Util.make(new ModConfigSpec.Builder().configure(builder -> {
             CLIENT_CONFIG.registerAll(builder);
             return Unit.INSTANCE;
@@ -41,6 +47,10 @@ public class CEIConfig {
             SERVER_CONFIG.registerAll(builder);
             return Unit.INSTANCE;
         }).getValue(), spec -> modContainer.registerConfig(Type.SERVER, spec));
+    }
+
+    public static CEICommonConfig common() {
+        return COMMON_CONFIG;
     }
 
     public static CEIClientConfig client() {
@@ -71,10 +81,16 @@ public class CEIConfig {
         return SERVER_CONFIG.processing;
     }
 
+    public static CEIFeaturesConfig features() {
+        return COMMON_CONFIG.features;
+    }
+
     @SubscribeEvent
     public void onLoad(ModConfigEvent.Loading event) {
         var spec = event.getConfig().getSpec();
-        if (SERVER_SPEC == spec) {
+        if (COMMON_SPEC == spec) {
+            COMMON_CONFIG.onLoad();
+        } else if (SERVER_SPEC == spec) {
             SERVER_CONFIG.onLoad();
         } else if (CLIENT_SPEC == spec) {
             CLIENT_CONFIG.onLoad();
@@ -84,7 +100,9 @@ public class CEIConfig {
     @SubscribeEvent
     public void onReload(ModConfigEvent.Reloading event) {
         var spec = event.getConfig().getSpec();
-        if (SERVER_SPEC == spec) {
+        if (COMMON_SPEC == spec) {
+            COMMON_CONFIG.onReload();
+        } else if (SERVER_SPEC == spec) {
             SERVER_CONFIG.onReload();
         } else if (CLIENT_SPEC == spec) {
             CLIENT_CONFIG.onReload();

@@ -9,6 +9,8 @@
     "create_enchantment_industry.gui.goggles.enchanting.level":  "Enchanting at level: %1$s",
     "create_enchantment_industry.gui.goggles.enchanting.level.not_set":  "Enchanting level not set!",
     "create_enchantment_industry.gui.goggles.enchanting.cost":  "Enchanting consumes: %1$s",
+    "create_enchantment_industry.gui.goggles.classic_enchanting.available_target":  "Available enchanting target:",
+    "create_enchantment_industry.gui.goggles.classic_enchanting.available_targets":  "Available enchanting targets:",
     "create_enchantment_industry.gui.goggles.enchanting.completed":  "Enchanting Completed!",
     "create_enchantment_industry.gui.goggles.enchanting.invalid_item":  "Invalid enchanting item!",
     "create_enchantment_industry.gui.goggles.enchanting.insufficient_experience":  "Not enough experience!",

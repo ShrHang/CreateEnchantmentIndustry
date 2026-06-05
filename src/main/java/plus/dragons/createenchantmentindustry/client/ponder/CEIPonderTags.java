@@ -25,9 +25,11 @@ import com.simibubi.create.AllBlocks;
 import com.tterrag.registrate.util.entry.RegistryEntry;
 import net.createmod.ponder.api.registration.PonderTagRegistrationHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.data.loading.DatagenModLoader;
 import plus.dragons.createdragonsplus.common.registry.CDPBlockEntities;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.registry.CEIBlocks;
+import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 public class CEIPonderTags {
     public static final ResourceLocation EXPERIENCE_APPLIANCES = CEICommon.asResource("experience_appliances");
@@ -68,6 +70,15 @@ public class CEIPonderTags {
         entryHelper.addToTag(ARM_TARGETS)
                 .add(CEIBlocks.BLAZE_ENCHANTER)
                 .add(CEIBlocks.BLAZE_FORGER);
+
+        if (DatagenModLoader.isRunningDataGen() || CEIConfig.features().classicBlazeEnchanter.get()) {
+            entryHelper.addToTag(EXPERIENCE_APPLIANCES)
+                    .add(CEIBlocks.CLASSIC_BLAZE_ENCHANTER);
+            entryHelper.addToTag(SUPER_EXPERIENCE_APPLIANCES)
+                    .add(CEIBlocks.CLASSIC_BLAZE_ENCHANTER);
+            entryHelper.addToTag(ARM_TARGETS)
+                    .add(CEIBlocks.CLASSIC_BLAZE_ENCHANTER);
+        }
 
         entryHelper.addToTag(CONTRAPTION_ACTOR)
                 .add(CEIBlocks.EXPERIENCE_LANTERN);

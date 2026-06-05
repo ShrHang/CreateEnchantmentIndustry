@@ -37,6 +37,9 @@ import plus.dragons.createenchantmentindustry.common.fluids.printer.PrinterBlock
 import plus.dragons.createenchantmentindustry.common.fluids.printer.PrinterRenderer;
 import plus.dragons.createenchantmentindustry.common.kinetics.grindstone.GrindstoneDrainBlockEntity;
 import plus.dragons.createenchantmentindustry.common.kinetics.grindstone.GrindstoneDrainRenderer;
+import plus.dragons.createenchantmentindustry.common.processing.classic_enchanter.ClassicBlazeEnchanterBlockEntity;
+import plus.dragons.createenchantmentindustry.common.processing.classic_enchanter.ClassicBlazeEnchanterRenderer;
+import plus.dragons.createenchantmentindustry.common.processing.classic_enchanter.ClassicBlazeEnchanterVisual;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.BlazeEnchanterBlockEntity;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.BlazeEnchanterRenderer;
 import plus.dragons.createenchantmentindustry.common.processing.forger.BlazeForgerBlockEntity;
@@ -77,6 +80,12 @@ public class CEIBlockEntities {
             .renderer(() -> BlazeForgerRenderer::new)
             .validBlock(CEIBlocks.BLAZE_FORGER)
             .register();
+    public static final BlockEntityEntry<ClassicBlazeEnchanterBlockEntity> CLASSIC_BLAZE_ENCHANTER = REGISTRATE
+            .blockEntity("classic_blaze_enchanter", ClassicBlazeEnchanterBlockEntity::new)
+            .visual(() -> ClassicBlazeEnchanterVisual::new)
+            .renderer(() -> ClassicBlazeEnchanterRenderer::new)
+            .validBlock(CEIBlocks.CLASSIC_BLAZE_ENCHANTER)
+            .register();
     public static final BlockEntityEntry<ExperienceLanternBlockEntity> EXPERIENCE_LANTERN = REGISTRATE
             .blockEntity("experience_lantern", ExperienceLanternBlockEntity::new)
             .validBlock(CEIBlocks.EXPERIENCE_LANTERN)
@@ -98,6 +107,8 @@ public class CEIBlockEntities {
                 BLAZE_ENCHANTER.get(), BlazeEnchanterBlockEntity::getFluidHandler);
         event.registerBlockEntity(Capabilities.FluidHandler.BLOCK,
                 BLAZE_FORGER.get(), BlazeForgerBlockEntity::getFluidHandler);
+        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK,
+                CLASSIC_BLAZE_ENCHANTER.get(), ClassicBlazeEnchanterBlockEntity::getFluidHandler);
         event.registerBlockEntity(Capabilities.FluidHandler.BLOCK,
                 EXPERIENCE_LANTERN.get(), ExperienceLanternBlockEntity::getFluidHandler);
     }

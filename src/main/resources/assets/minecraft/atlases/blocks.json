@@ -31,6 +31,10 @@
                     {
                         "type":  "single",
                         "resource":  "create_enchantment_industry:fluid/apotheotic_essence_still"
+                    },
+                    {
+                        "type":  "single",
+                        "resource":  "create_enchantment_industry:block/blaze_enchanter_book"
                     }
                 ]
 }

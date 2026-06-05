@@ -34,17 +34,24 @@ import static plus.dragons.createenchantmentindustry.common.registry.CEIItems.*;
 
 import com.simibubi.create.foundation.data.recipe.CommonMetal;
 import java.util.concurrent.CompletableFuture;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.SmithingTransformRecipeBuilder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.Blocks;
+import net.neoforged.neoforge.common.conditions.ICondition;
+import org.jetbrains.annotations.Nullable;
 import plus.dragons.createdragonsplus.data.recipe.integration.IntegrationIngredient;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.kinetics.grindstone.GrindingRecipe;
+import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 public class CEIRecipeProvider extends RecipeProvider {
     private static final String ANDESITE = "andesite";
@@ -111,6 +118,14 @@ public class CEIRecipeProvider extends RecipeProvider {
                 BLAZE_FORGER.asItem())
                 .unlocks("has_blaze_burner", has(BLAZE_BURNER))
                 .save(output, BLAZE_FORGER.getId().withPrefix("smithing/"));
+        SmithingTransformRecipeBuilder.smithing(
+                Ingredient.of(BLAZE_UPGRADE_SMITHING_TEMPLATE),
+                Ingredient.of(BLAZE_BURNER),
+                Ingredient.of(BLAZES_ENCHANTING_HANDBOOK),
+                RecipeCategory.MISC,
+                CLASSIC_BLAZE_ENCHANTER.asItem())
+                .unlocks("has_blaze_burner", has(BLAZE_BURNER))
+                .save(withClassicBlazeEnchanterCondition(output), CLASSIC_BLAZE_ENCHANTER.getId().withPrefix("smithing/"));
     }
 
     private void buildMaterialRecipes(RecipeOutput output) {
@@ -131,6 +146,16 @@ public class CEIRecipeProvider extends RecipeProvider {
                 .require(SUPER_EXPERIENCE_BLOCK)
                 .output(SUPER_ENCHANTING_TEMPLATE)
                 .build(output);
+        shapeless().output(BLAZES_ENCHANTING_HANDBOOK)
+                .require(BLAZE_UPGRADE_SMITHING_TEMPLATE)
+                .require(STURDY_SHEET)
+                .require(STURDY_SHEET)
+                .require(EXPERIENCE_BOTTLE)
+                .require(EXPERIENCE_BOTTLE)
+                .require(MAGMA_BLOCK)
+                .unlockedBy("has_blaze_burner", has(BLAZE_BURNER))
+                .withCondition(CEIConfig.features().classicBlazeEnchanter)
+                .accept(output);
         compacting(EXPERIENCE_CAKE_BASE.getId())
                 .require(EGGS)
                 .require(SUGAR)
@@ -210,5 +235,23 @@ public class CEIRecipeProvider extends RecipeProvider {
                 .require(IntegrationIngredient.of("mysticalagriculture", "experience_droplet"))
                 .output(EXPERIENCE.get(), 10)
                 .build(output);
+    }
+
+    private static RecipeOutput withClassicBlazeEnchanterCondition(RecipeOutput output) {
+        return new RecipeOutput() {
+            @Override
+            public Advancement.Builder advancement() {
+                return output.advancement();
+            }
+
+            @Override
+            public void accept(ResourceLocation id, Recipe<?> recipe, @Nullable AdvancementHolder advancement, ICondition... conditions) {
+                var feature = CEIConfig.features().classicBlazeEnchanter;
+                var merged = new ICondition[conditions.length + 1];
+                merged[0] = feature;
+                System.arraycopy(conditions, 0, merged, 1, conditions.length);
+                output.accept(id, recipe, advancement, merged);
+            }
+        };
     }
 }

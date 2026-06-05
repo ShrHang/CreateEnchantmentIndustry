@@ -32,6 +32,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 import plus.dragons.createenchantmentindustry.client.ponder.scene.*;
 import plus.dragons.createenchantmentindustry.common.registry.CEIBlocks;
+import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 public class CEIPonderScenes {
     public static void register(PonderSceneRegistrationHelper<ResourceLocation> helper) {
@@ -59,6 +60,12 @@ public class CEIPonderScenes {
                 .addStoryBoard("forger", ForgerScene::basic, CEIPonderTags.EXPERIENCE_APPLIANCES)
                 .addStoryBoard("forger", ForgerScene::superEnchant, CEIPonderTags.SUPER_EXPERIENCE_APPLIANCES)
                 .addStoryBoard("automate_forger", ForgerScene::automate, AllCreatePonderTags.ARM_TARGETS);
+
+        if (DatagenModLoader.isRunningDataGen() || CEIConfig.features().classicBlazeEnchanter.get()) {
+            HELPER.forComponents(CEIBlocks.CLASSIC_BLAZE_ENCHANTER)
+                    .addStoryBoard("classic_blaze_enchanter", ClassicBlazeEnchanterScene::basic, CEIPonderTags.EXPERIENCE_APPLIANCES)
+                    .addStoryBoard("automate_classic_blaze_enchanter", ClassicBlazeEnchanterScene::automate, AllCreatePonderTags.ARM_TARGETS);
+        }
 
         HELPER.forComponents(CEIBlocks.PRINTER)
                 .addStoryBoard("printer", MiscScene::printer, CEIPonderTags.EXPERIENCE_APPLIANCES);

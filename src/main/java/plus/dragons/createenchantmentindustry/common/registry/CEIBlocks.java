@@ -54,6 +54,7 @@ import plus.dragons.createenchantmentindustry.common.fluids.printer.PrinterBlock
 import plus.dragons.createenchantmentindustry.common.kinetics.grindstone.GrindstoneDrainBlock;
 import plus.dragons.createenchantmentindustry.common.kinetics.grindstone.MechanicalGrindStoneItem;
 import plus.dragons.createenchantmentindustry.common.kinetics.grindstone.MechanicalGrindstoneBlock;
+import plus.dragons.createenchantmentindustry.common.processing.classic_enchanter.ClassicBlazeEnchanterBlock;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.BlazeEnchanterBlock;
 import plus.dragons.createenchantmentindustry.common.processing.forger.BlazeForgerBlock;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
@@ -119,6 +120,22 @@ public class CEIBlocks {
             .register();
     public static final BlockEntry<BlazeForgerBlock> BLAZE_FORGER = REGISTRATE
             .block("blaze_forger", BlazeForgerBlock::new)
+            .initialProperties(SharedProperties::softMetal)
+            .properties(p -> p.mapColor(MapColor.COLOR_GRAY).lightLevel(BlazeBlock::getLight))
+            .transform(pickaxeOnly())
+            .addLayer(() -> RenderType::cutoutMipped)
+            .onRegister(block -> MovementBehaviour.REGISTRY.register(block, new BlazeMovementBehaviour()))
+            .tag(AllBlockTags.FAN_TRANSPARENT.tag, AllBlockTags.FAN_PROCESSING_CATALYSTS_SMOKING.tag)
+            .blockstate((ctx, prov) -> prov.horizontalBlock(
+                    ctx.getEntry(),
+                    prov.models().getExistingFile(Create.asResource("block/blaze_burner/block"))))
+            .item()
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(),
+                    Create.asResource("block/blaze_burner/block_with_blaze")))
+            .build()
+            .register();
+    public static final BlockEntry<ClassicBlazeEnchanterBlock> CLASSIC_BLAZE_ENCHANTER = REGISTRATE
+            .block("classic_blaze_enchanter", ClassicBlazeEnchanterBlock::new)
             .initialProperties(SharedProperties::softMetal)
             .properties(p -> p.mapColor(MapColor.COLOR_GRAY).lightLevel(BlazeBlock::getLight))
             .transform(pickaxeOnly())

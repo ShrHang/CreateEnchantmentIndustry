@@ -48,6 +48,10 @@ public class CEIStats {
             .lang("Blaze Enchanter Used")
             .register();
 
+    public static final RegistryEntry<ResourceLocation, ResourceLocation> CLASSIC_ENCHANT = create("classic_enchant")
+            .lang("Classic Blaze Enchanter Used")
+            .register();
+
     private static CustomStatBuilder<CDPRegistrate> create(String id) {
         return REGISTRATE.customStat(id, () -> CEICommon.asResource(id));
     }

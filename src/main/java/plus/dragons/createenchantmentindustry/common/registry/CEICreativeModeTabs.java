@@ -32,6 +32,7 @@ import net.minecraft.world.item.CreativeModeTab.TabVisibility;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.config.CEIConfig;
 import plus.dragons.createenchantmentindustry.util.CEILang;
 
 public class CEICreativeModeTabs {
@@ -59,6 +60,8 @@ public class CEICreativeModeTabs {
         output.accept(PRINTER);
         output.accept(BLAZE_ENCHANTER);
         output.accept(BLAZE_FORGER);
+        if (CEIConfig.features().classicBlazeEnchanter.get())
+            output.accept(CLASSIC_BLAZE_ENCHANTER);
         output.accept(EXPERIENCE_BLOCK);
         output.accept(SUPER_EXPERIENCE_BLOCK);
         output.accept(EXP_NUGGET);
@@ -66,6 +69,8 @@ public class CEICreativeModeTabs {
         output.accept(ENCHANTING_TEMPLATE);
         output.accept(SUPER_ENCHANTING_TEMPLATE);
         output.accept(BLAZE_UPGRADE_SMITHING_TEMPLATE);
+        if (CEIConfig.features().classicBlazeEnchanter.get())
+            output.accept(BLAZES_ENCHANTING_HANDBOOK);
         output.accept(EXPERIENCE_CAKE_BASE, TabVisibility.SEARCH_TAB_ONLY);
         output.accept(EXPERIENCE_CAKE);
         output.accept(EXPERIENCE_CAKE_SLICE);

@@ -23,6 +23,7 @@ import static plus.dragons.createenchantmentindustry.common.CEICommon.REGISTRATE
 import com.simibubi.create.content.kinetics.mechanicalArm.ArmInteractionPointType;
 import com.tterrag.registrate.util.entry.RegistryEntry;
 import net.neoforged.bus.api.IEventBus;
+import plus.dragons.createenchantmentindustry.common.processing.classic_enchanter.ClassicBlazeEnchanterArmInteractionPoint;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.BlazeEnchanterArmInteractionPoint;
 import plus.dragons.createenchantmentindustry.common.processing.forger.BlazeForgerArmInteractionPoint;
 
@@ -32,6 +33,9 @@ public class CEIArmInterationPoints {
             .register();
     public static final RegistryEntry<ArmInteractionPointType, BlazeForgerArmInteractionPoint.Type> BLAZE_FORGER = REGISTRATE
             .armInteractionPoint("blaze_forger", BlazeForgerArmInteractionPoint.Type::new)
+            .register();
+    public static final RegistryEntry<ArmInteractionPointType, ClassicBlazeEnchanterArmInteractionPoint.Type> CLASSIC_BLAZE_ENCHANTER = REGISTRATE
+            .armInteractionPoint("classic_blaze_enchanter", ClassicBlazeEnchanterArmInteractionPoint.Type::new)
             .register();
 
     public static void register(IEventBus modBus) {}

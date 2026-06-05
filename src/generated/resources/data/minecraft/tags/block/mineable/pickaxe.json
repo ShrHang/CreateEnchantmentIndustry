@@ -6,6 +6,7 @@
         "create_enchantment_industry:printer",
         "create_enchantment_industry:blaze_enchanter",
         "create_enchantment_industry:blaze_forger",
+        "create_enchantment_industry:classic_blaze_enchanter",
         "create_enchantment_industry:super_experience_block",
         "create_enchantment_industry:experience_lantern",
         {
