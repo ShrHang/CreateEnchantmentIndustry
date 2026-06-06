@@ -16,26 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package plus.dragons.createenchantmentindustry.integration.tlm;
+package plus.dragons.createenchantmentindustry.integration.touhou_little_maid.common;
 
-import net.neoforged.fml.ModList;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
+import plus.dragons.createenchantmentindustry.integration.touhou_little_maid.config.CEITouhouLittleMaidConfig;
 
-/**
- * Compatibility utility class for Touhou Little Maid mod.
- */
-public class TLMCompat {
-    public static final String MOD_ID = "touhou_little_maid";
-    private static Boolean loaded = null;
-
-    /**
-     * Check if Touhou Little Maid mod is loaded.
-     *
-     * @return true if TLM is present
-     */
-    public static boolean isLoaded() {
-        if (loaded == null) {
-            loaded = ModList.get().isLoaded(MOD_ID);
-        }
-        return loaded;
+@Mod(CEICommon.ID)
+public class CEITouhouLittleMaidCommon {
+    public CEITouhouLittleMaidCommon(IEventBus modBus, ModContainer modContainer) {
+        if (ModIntegration.TOUHOU_LITTLE_MAID.enabled())
+            modBus.register(new CEITouhouLittleMaidConfig(modContainer));
     }
 }

@@ -28,6 +28,7 @@ def allIntegrationSourceSets = [
         "apotheosis",
         "sable",
         "sable_apotheosis",
+        "touhou_little_maid",
 ]
 
 def isIntegrationEnabled = { name ->
@@ -244,13 +245,16 @@ dependencies {
         localRuntime("dev.ryanhcode.offroad:offroad-neoforge-${minecraft_version}:${create_aeronautics_version}")  { transitive false }
     }
 
-    compileOnly("curse.maven:touhou-little-maid-355044:${tlm_file_id}")
+    if (hasIntegration("touhou_little_maid")) {
+        touhou_little_maidLocalImplementation("curse.maven:touhou-little-maid-355044:${tlm_file_id}")
+    }
 }
 
 def integrationMixinConfigs = [
-        apothic_enchanting: "${mod_id}.apothic_enchanting.mixins.json",
-        apotheosis        : "${mod_id}.apotheosis.mixins.json",
-        sable             : "${mod_id}.sable.mixins.json",
+        apothic_enchanting : "${mod_id}.apothic_enchanting.mixins.json",
+        apotheosis         : "${mod_id}.apotheosis.mixins.json",
+        sable              : "${mod_id}.sable.mixins.json",
+        touhou_little_maid : "${mod_id}.touhou_little_maid.mixins.json",
 ]
 
 def integrationMixinBlocks = enabledIntegrationSourceSets

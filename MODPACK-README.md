@@ -388,3 +388,10 @@ When the Apotheosis integration is active, its server config provides:
 * Affix Augmentor conversion ratios for experience and Sigil of Enhancement into Apotheotic Essence processing cost
 * Bulk Salvaging equipped-item destruction probability
 * Infused Dragon's Breath Fragile Fluid Tank impact settings for salvaging dropped items and equipped items
+
+### Touhou Little Maid Integration Server Config
+
+When the Touhou Little Maid integration is active, its server config provides:
+
+* Whether Experience Lanterns drain experience from nearby maids
+* The maximum experience drained from each maid per operation
