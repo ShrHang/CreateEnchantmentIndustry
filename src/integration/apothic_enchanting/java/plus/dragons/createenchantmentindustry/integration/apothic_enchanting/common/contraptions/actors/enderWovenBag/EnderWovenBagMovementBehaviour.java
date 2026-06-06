@@ -19,13 +19,11 @@
 package plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.contraptions.actors.enderWovenBag;
 
 import com.simibubi.create.api.behaviour.movement.MovementBehaviour;
-import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
 import com.simibubi.create.content.contraptions.render.ContraptionMatrices;
 import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 import net.createmod.catnip.math.VecHelper;
 import net.createmod.catnip.nbt.NBTHelper;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.NbtUtils;
@@ -183,17 +181,5 @@ public class EnderWovenBagMovementBehaviour implements MovementBehaviour {
     @OnlyIn(Dist.CLIENT)
     static boolean renderFull(MovementContext context) {
         return context.data.contains("RenderFull");
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    static void handlePacket(ContraptionEnderWovenBagPocketChangePacket packet) {
-        if (Minecraft.getInstance().level.getEntity(packet.entityId()) instanceof AbstractContraptionEntity ce) {
-            var m = ce.getContraption().getActorAt(packet.localPos());
-            if (m == null) return;
-            ;
-            var data = m.right.data;
-            if (packet.open()) data.remove("RenderFull");
-            else data.putInt("RenderFull", 0);
-        }
     }
 }

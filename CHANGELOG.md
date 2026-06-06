@@ -6,3 +6,4 @@
 
 ### Fix
 * Fixed Bulk Salvaging equipped-item selection to choose from salvageable equipment instead of effectively checking a fixed slot.
+* Fixed a dedicated server startup crash caused by Ender Woven Bag's clientbound packet handler being stripped from the server runtime.

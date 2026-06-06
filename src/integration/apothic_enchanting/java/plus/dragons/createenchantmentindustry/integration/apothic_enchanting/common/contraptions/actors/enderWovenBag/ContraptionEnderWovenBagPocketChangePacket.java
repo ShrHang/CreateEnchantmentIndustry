@@ -24,8 +24,9 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.client.contraptions.actors.enderWovenBag.EnderWovenBagClientPacketHandler;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public record ContraptionEnderWovenBagPocketChangePacket(int entityId, BlockPos localPos, boolean open) implements CustomPacketPayload {
@@ -37,9 +38,11 @@ public record ContraptionEnderWovenBagPocketChangePacket(int entityId, BlockPos 
             ContraptionEnderWovenBagPocketChangePacket::new);
 
     public static final CustomPacketPayload.Type<ContraptionEnderWovenBagPocketChangePacket> TYPE = new CustomPacketPayload.Type<>(CEIACommon.asResource("contraption_ewb_change"));
-    @OnlyIn(Dist.CLIENT)
     public static void handle(ContraptionEnderWovenBagPocketChangePacket packet, IPayloadContext context) {
-        EnderWovenBagMovementBehaviour.handlePacket(packet);
+        context.enqueueWork(() -> {
+            if (FMLLoader.getDist() == Dist.CLIENT)
+                EnderWovenBagClientPacketHandler.handle(packet);
+        });
     }
 
     @Override
