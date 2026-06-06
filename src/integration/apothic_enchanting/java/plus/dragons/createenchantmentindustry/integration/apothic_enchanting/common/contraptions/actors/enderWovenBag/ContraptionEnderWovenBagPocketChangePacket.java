@@ -26,8 +26,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.client.contraptions.actors.enderWovenBag.EnderWovenBagClientPacketHandler;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public record ContraptionEnderWovenBagPocketChangePacket(int entityId, BlockPos localPos, boolean open) implements CustomPacketPayload {
 
@@ -37,7 +37,7 @@ public record ContraptionEnderWovenBagPocketChangePacket(int entityId, BlockPos 
             ByteBufCodecs.BOOL, ContraptionEnderWovenBagPocketChangePacket::open,
             ContraptionEnderWovenBagPocketChangePacket::new);
 
-    public static final CustomPacketPayload.Type<ContraptionEnderWovenBagPocketChangePacket> TYPE = new CustomPacketPayload.Type<>(CEIACommon.asResource("contraption_ewb_change"));
+    public static final CustomPacketPayload.Type<ContraptionEnderWovenBagPocketChangePacket> TYPE = new CustomPacketPayload.Type<>(CEICommon.asResource("contraption_ewb_change"));
     public static void handle(ContraptionEnderWovenBagPocketChangePacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (FMLLoader.getDist() == Dist.CLIENT)

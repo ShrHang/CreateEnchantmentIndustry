@@ -25,11 +25,11 @@ import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.ModList;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 
 @JeiPlugin
 public class CEIAJeiPlugin implements IModPlugin {
-    public static final ResourceLocation ID = CEIACommon.asResource("jei_plugin");
+    public static final ResourceLocation ID = CEICommon.asResource("ceia_jei_plugin");
 
     @Override
     public ResourceLocation getPluginUid() {

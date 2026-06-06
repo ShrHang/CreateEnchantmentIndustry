@@ -33,8 +33,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.BlazeExperienceBlockEntity;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceLightningCharger;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 
-@Restriction(require = @Condition("sable"))
+@Restriction(require = @Condition(ModIntegration.Constants.SABLE))
 @Mixin(ExperienceLightningCharger.class)
 public class ExperienceLightningChargerMixin {
     @Inject(method = "findChargeableBlock", at = @At("HEAD"), cancellable = true)

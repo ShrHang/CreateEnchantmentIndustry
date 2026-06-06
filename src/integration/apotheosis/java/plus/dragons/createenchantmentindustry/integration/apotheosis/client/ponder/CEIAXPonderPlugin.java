@@ -24,13 +24,13 @@ import com.tterrag.registrate.util.entry.RegistryEntry;
 import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper;
 import net.createmod.ponder.api.registration.PonderTagRegistrationHelper;
 import net.minecraft.resources.ResourceLocation;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXBlocks;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.client.ponder.CEIAPonderPlugin;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIABlocks;
 
 public class CEIAXPonderPlugin {
-    public static final ResourceLocation APOTHEOTIC_CREATION_COMPONENTS = CEIACommon.asResource("apotheotic_creation_components");
+    public static final ResourceLocation APOTHEOTIC_CREATION_COMPONENTS = CEICommon.asResource("apotheotic_creation_components");
 
     public static void register() {
         CEIAPonderPlugin.SCENES.add(CEIAXPonderPlugin::registerScenes);

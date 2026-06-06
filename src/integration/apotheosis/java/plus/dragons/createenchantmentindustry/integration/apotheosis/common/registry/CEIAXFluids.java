@@ -34,6 +34,7 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import plus.dragons.createdragonsplus.common.fluids.SolidRenderFluidType;
 import plus.dragons.createdragonsplus.data.tag.IntrinsicTagRegistry;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAXFluids {
@@ -98,12 +99,12 @@ public class CEIAXFluids {
         public void generate(RegistrateTagsProvider.IntrinsicImpl<Fluid> provider) {
             super.generate(provider);
             provider.addTag(fanSalvagingCatalysts)
-                    .addOptional(CEIACommon.asResource("infused_dragon_breath"));
+                    .addOptional(CEICommon.asResource("infused_dragon_breath"));
             provider.addTag(AllTags.AllFluidTags.BOTTOMLESS_DENY.tag)
-                    .addOptional(CEIACommon.asResource("apotheotic_essence"))
-                    .addOptional(CEIACommon.asResource("flowing_apotheotic_essence"))
-                    .addOptional(CEIACommon.asResource("crystal_essence"))
-                    .addOptional(CEIACommon.asResource("flowing_crystal_essence"));
+                    .addOptional(CEICommon.asResource("apotheotic_essence"))
+                    .addOptional(CEICommon.asResource("flowing_apotheotic_essence"))
+                    .addOptional(CEICommon.asResource("crystal_essence"))
+                    .addOptional(CEICommon.asResource("flowing_crystal_essence"));
         }
     }
 }

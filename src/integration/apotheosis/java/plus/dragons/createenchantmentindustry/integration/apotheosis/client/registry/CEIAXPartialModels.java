@@ -19,7 +19,7 @@
 package plus.dragons.createenchantmentindustry.integration.apotheosis.client.registry;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 
 public class CEIAXPartialModels {
     public static final PartialModel SPECIAL_CASING = block("belt_casing/special");
@@ -44,6 +44,6 @@ public class CEIAXPartialModels {
     public static void register() {}
 
     private static PartialModel block(String path) {
-        return PartialModel.of(CEIACommon.asResource("block/" + path));
+        return PartialModel.of(CEICommon.asResource("block/" + path));
     }
 }

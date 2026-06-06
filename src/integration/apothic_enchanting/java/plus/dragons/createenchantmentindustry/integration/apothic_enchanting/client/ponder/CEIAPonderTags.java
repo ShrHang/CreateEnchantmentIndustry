@@ -23,11 +23,11 @@ import static com.simibubi.create.infrastructure.ponder.AllCreatePonderTags.*;
 import com.tterrag.registrate.util.entry.RegistryEntry;
 import net.createmod.ponder.api.registration.PonderTagRegistrationHelper;
 import net.minecraft.resources.ResourceLocation;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIABlocks;
 
 public class CEIAPonderTags {
-    public static final ResourceLocation APOTHEOTIC_STATS_COMPONENTS = CEIACommon.asResource("apotheotic_stats_components");
+    public static final ResourceLocation APOTHEOTIC_STATS_COMPONENTS = CEICommon.asResource("apotheotic_stats_components");
 
     public static void register(PonderTagRegistrationHelper<ResourceLocation> helper) {
         PonderTagRegistrationHelper<RegistryEntry<?, ?>> entryHelper = helper.withKeyFunction(RegistryEntry::getId);

@@ -32,58 +32,55 @@ import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
-import net.neoforged.neoforge.common.conditions.ICondition;
-import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 import plus.dragons.createdragonsplus.data.recipe.CreateRecipeBuilders;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAXRecipeProvider extends RecipeProvider {
-    private final ICondition APOTHEOSIS_LOADED = new ModLoadedCondition("apotheosis");
-
     public CEIAXRecipeProvider(PackOutput output, CompletableFuture<Provider> registries) {
         super(output, registries);
     }
 
     @Override
     protected void buildRecipes(RecipeOutput output) {
-        CreateRecipeBuilders.mixing(CEIACommon.asResource("dissolve_common_material"))
-                .withCondition(APOTHEOSIS_LOADED)
+        CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_common_material"))
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
                 .require(Apoth.Items.COMMON_MATERIAL.value())
                 .output(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 1)
                 .duration(5)
                 .build(output);
 
-        CreateRecipeBuilders.mixing(CEIACommon.asResource("dissolve_uncommon_material"))
-                .withCondition(APOTHEOSIS_LOADED)
+        CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_uncommon_material"))
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
                 .require(Apoth.Items.UNCOMMON_MATERIAL.value())
                 .output(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 3)
                 .duration(6)
                 .build(output);
 
-        CreateRecipeBuilders.mixing(CEIACommon.asResource("dissolve_rare_material"))
-                .withCondition(APOTHEOSIS_LOADED)
+        CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_rare_material"))
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
                 .require(Apoth.Items.RARE_MATERIAL.value())
                 .output(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 9)
                 .duration(7)
                 .build(output);
 
-        CreateRecipeBuilders.mixing(CEIACommon.asResource("dissolve_epic_material"))
-                .withCondition(APOTHEOSIS_LOADED)
+        CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_epic_material"))
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
                 .require(Apoth.Items.EPIC_MATERIAL.value())
                 .output(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 27)
                 .duration(8)
                 .build(output);
 
-        CreateRecipeBuilders.mixing(CEIACommon.asResource("dissolve_mythic_material"))
-                .withCondition(APOTHEOSIS_LOADED)
+        CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_mythic_material"))
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
                 .require(Apoth.Items.MYTHIC_MATERIAL.value())
                 .output(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 81)
                 .duration(8)
                 .build(output);
 
-        CreateRecipeBuilders.mixing(CEIACommon.asResource("dissolve_gem_dust"))
-                .withCondition(APOTHEOSIS_LOADED)
+        CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_gem_dust"))
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
                 .require(Apoth.Items.GEM_DUST.value())
                 .output(CEIAXFluids.CRYSTAL_ESSENCE.get(), 10)
                 .duration(8)
@@ -98,7 +95,7 @@ public class CEIAXRecipeProvider extends RecipeProvider {
                 .pattern(" - ")
                 .pattern("S=S")
                 .output(AFFIX_AUGMENTOR)
-                .withCondition(APOTHEOSIS_LOADED)
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
                 .unlockedBy("nether_star", has(NETHER_STAR))
                 .accept(output);
 
@@ -109,7 +106,7 @@ public class CEIAXRecipeProvider extends RecipeProvider {
                 .pattern("oSo")
                 .pattern("xxx")
                 .output(GEM_CUTTER)
-                .withCondition(APOTHEOSIS_LOADED)
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
                 .unlockedBy("amethyst_shard", has(AMETHYST_SHARD))
                 .accept(output);
     }

@@ -27,8 +27,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.spongepowered.asm.mixin.Mixin;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceFluidDropContext;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 
-@Restriction(require = @Condition("sable"))
+@Restriction(require = @Condition(ModIntegration.Constants.SABLE))
 @Mixin(SubLevelAssemblyHelper.class)
 public class SubLevelAssemblyHelperMixin {
     @WrapMethod(method = "moveBlocks")

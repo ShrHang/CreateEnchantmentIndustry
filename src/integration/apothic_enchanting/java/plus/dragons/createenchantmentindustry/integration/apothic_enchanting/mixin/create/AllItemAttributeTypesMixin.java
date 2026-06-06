@@ -26,8 +26,9 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 
-@Restriction(require = @Condition("apothic_enchanting"))
+@Restriction(require = @Condition(ModIntegration.Constants.APOTHIC_ENCHANTING))
 @Mixin(AllItemAttributeTypes.class)
 public class AllItemAttributeTypesMixin {
     @Redirect(method = "maxEnchanted", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/enchantment/Enchantment;getMaxLevel()I"))

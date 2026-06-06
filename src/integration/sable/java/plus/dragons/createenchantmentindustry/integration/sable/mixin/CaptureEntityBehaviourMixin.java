@@ -28,11 +28,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.sable.SablePositions;
 
 @Restriction(require = {
-        @Condition("sable"),
-        @Condition("apothic_enchanting"),
+        @Condition(ModIntegration.Constants.SABLE),
+        @Condition(ModIntegration.Constants.APOTHIC_ENCHANTING),
 })
 @Mixin(targets = "plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.contraptions.actors.enderWovenBag.CaptureEntityBehaviour")
 public abstract class CaptureEntityBehaviourMixin extends BlockEntityBehaviour {

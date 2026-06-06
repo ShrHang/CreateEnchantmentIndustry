@@ -27,6 +27,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.Tags;
 import plus.dragons.createdragonsplus.common.registry.CDPItems;
 import plus.dragons.createdragonsplus.data.tag.ItemTagRegistry;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAItems {
@@ -43,8 +44,8 @@ public class CEIAItems {
         public ModTags() {
             super(CEIACommon.ID);
             addOptional(AllTags.AllItemTags.UPRIGHT_ON_BELT.tag, ResourceLocation.fromNamespaceAndPath("apothic_enchanting", "infused_breath"));
-            addOptional(Tags.Items.BUCKETS, CEIACommon.asResource("infused_dragon_breath_bucket"));
-            addOptional(CDPItems.COMMON_TAGS.dragonBreathBuckets, CEIACommon.asResource("infused_dragon_breath_bucket"));
+            addOptional(Tags.Items.BUCKETS, CEICommon.asResource("infused_dragon_breath_bucket"));
+            addOptional(CDPItems.COMMON_TAGS.dragonBreathBuckets, CEICommon.asResource("infused_dragon_breath_bucket"));
         }
     }
 

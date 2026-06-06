@@ -28,9 +28,10 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.processing.infuser.InfuserBlockEntity;
 
-@Restriction(require = @Condition("apothic_enchanting"))
+@Restriction(require = @Condition(ModIntegration.Constants.APOTHIC_ENCHANTING))
 @Mixin(BasinBlock.class)
 public class BasinBlockMixin {
     @WrapMethod(method = "canSurvive")

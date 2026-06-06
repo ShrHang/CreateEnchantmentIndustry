@@ -24,6 +24,7 @@ import com.tterrag.registrate.util.entry.ItemEntry;
 import net.minecraft.world.item.Rarity;
 import net.neoforged.neoforge.common.Tags;
 import plus.dragons.createdragonsplus.data.tag.ItemTagRegistry;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.affixComposer.AffixTemplateItem;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
@@ -59,8 +60,8 @@ public class CEIAXItems {
     public static class ModTags extends ItemTagRegistry {
         public ModTags() {
             super(CEIACommon.ID);
-            addOptional(Tags.Items.BUCKETS, CEIACommon.asResource("apotheotic_essence_bucket"));
-            addOptional(Tags.Items.BUCKETS, CEIACommon.asResource("crystal_essence_bucket"));
+            addOptional(Tags.Items.BUCKETS, CEICommon.asResource("apotheotic_essence_bucket"));
+            addOptional(Tags.Items.BUCKETS, CEICommon.asResource("crystal_essence_bucket"));
         }
     }
 }

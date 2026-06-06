@@ -33,23 +33,18 @@ import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
-import net.neoforged.neoforge.common.conditions.ICondition;
-import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import plus.dragons.createdragonsplus.common.registry.CDPFluids;
 import plus.dragons.createdragonsplus.data.recipe.CreateRecipeBuilders;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.processing.infuser.InfusingRecipe;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.processing.infuser.InfusionStats;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIAFluids;
 
 public class CEIARecipeProvider extends RecipeProvider {
-    private static final String ANDESITE = "andesite";
-    private static final String COPPER = "copper";
     private static final String BRASS = "brass";
-    private static final String TRAIN = "train";
-    private static final ICondition APOTHIC_ENCHANTING_LOADED = new ModLoadedCondition("apothic_enchanting");
 
     public CEIARecipeProvider(PackOutput output, CompletableFuture<Provider> registries) {
         super(output, registries);
@@ -64,7 +59,7 @@ public class CEIARecipeProvider extends RecipeProvider {
                 .pattern(" o ")
                 .pattern("===")
                 .output(INFUSER)
-                .withCondition(APOTHIC_ENCHANTING_LOADED)
+                .withCondition(ModIntegration.APOTHIC_ENCHANTING.condition())
                 .unlockedBy(BRASS, has(BRASS_INGOT))
                 .accept(output);
 
@@ -76,12 +71,12 @@ public class CEIARecipeProvider extends RecipeProvider {
                 .pattern("o=o")
                 .pattern("o-o")
                 .output(ENDER_WOVEN_BAG)
-                .withCondition(APOTHIC_ENCHANTING_LOADED)
+                .withCondition(ModIntegration.APOTHIC_ENCHANTING.condition())
                 .unlockedBy(BRASS, has(BRASS_INGOT))
                 .accept(output);
 
-        new InfusingRecipe.Builder(CEIACommon.asResource("infused_dragon_breath"), new InfusionStats(80, 15, 60))
-                .withCondition(APOTHIC_ENCHANTING_LOADED)
+        new InfusingRecipe.Builder(CEICommon.asResource("infused_dragon_breath"), new InfusionStats(80, 15, 60))
+                .withCondition(ModIntegration.APOTHIC_ENCHANTING.condition())
                 .require(SizedFluidIngredient.of(CDPFluids.DRAGON_BREATH.get().getSource(), 250))
                 .output(new FluidStack(CEIAFluids.INFUSED_DRAGON_BREATH, 750))
                 .build(output);
@@ -96,7 +91,7 @@ public class CEIARecipeProvider extends RecipeProvider {
                 .addStep(FillingRecipe::new, rb -> rb.require(CEIAFluids.MOD_TAGS.infusing_ingredients, 250))
                 .addStep(DeployerApplicationRecipe::new,
                         rb -> rb.require(PRECISION_MECHANISM))
-                .build(output.withConditions(APOTHIC_ENCHANTING_LOADED));
+                .build(output.withConditions(ModIntegration.APOTHIC_ENCHANTING.condition()));
     }
 
     @Override

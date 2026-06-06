@@ -32,9 +32,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.kinetics.belt.lowerProcessingAppliance.LowerBeltProcessingBehaviour;
 
-@Restriction(require = @Condition("apotheosis"))
+@Restriction(require = @Condition(ModIntegration.Constants.APOTHEOSIS))
 @Mixin(DepotBehaviour.class)
 public abstract class DepotBehaviourMixin extends BlockEntityBehaviour {
     public DepotBehaviourMixin(SmartBlockEntity be) {

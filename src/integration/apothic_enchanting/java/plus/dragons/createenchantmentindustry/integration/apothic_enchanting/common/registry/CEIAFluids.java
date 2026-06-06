@@ -51,7 +51,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.common.SoundActions;
-import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidInteractionRegistry;
 import net.neoforged.neoforge.fluids.FluidType;
@@ -61,7 +60,9 @@ import plus.dragons.createdragonsplus.common.fluids.dragonBreath.DragondBreathLi
 import plus.dragons.createdragonsplus.common.fluids.dragonBreath.DragonsBreathOpenPipeEffect;
 import plus.dragons.createdragonsplus.common.registry.CDPFluids;
 import plus.dragons.createdragonsplus.data.tag.IntrinsicTagRegistry;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAFluids {
@@ -104,13 +105,13 @@ public class CEIAFluids {
             .build()
             .setData(ProviderType.RECIPE, (ctx, prov) -> {
                 new StandardProcessingRecipe.Builder<>(EmptyingRecipe::new, ctx.getId().withPath("infused_dragon_breath"))
-                        .withCondition(new ModLoadedCondition("apothic_enchanting"))
+                        .withCondition(ModIntegration.APOTHIC_ENCHANTING.condition())
                         .require(Ench.Items.INFUSED_BREATH.value())
                         .output(ctx.get(), 250)
                         .output(Items.GLASS_BOTTLE)
                         .build(prov);
                 new StandardProcessingRecipe.Builder<>(FillingRecipe::new, ctx.getId().withPath("infused_dragon_breath"))
-                        .withCondition(new ModLoadedCondition("apothic_enchanting"))
+                        .withCondition(ModIntegration.APOTHIC_ENCHANTING.condition())
                         .require(ctx.get(), 250)
                         .require(Items.GLASS_BOTTLE)
                         .output(Ench.Items.INFUSED_BREATH.value())
@@ -129,8 +130,8 @@ public class CEIAFluids {
         public void generate(RegistrateTagsProvider.IntrinsicImpl<Fluid> provider) {
             super.generate(provider);
             provider.addTag(COMMON_TAGS.dragonBreath)
-                    .addOptional(CEIACommon.asResource("infused_dragon_breath"))
-                    .addOptional(CEIACommon.asResource("flowing_infused_dragon_breath"));
+                    .addOptional(CEICommon.asResource("infused_dragon_breath"))
+                    .addOptional(CEICommon.asResource("flowing_infused_dragon_breath"));
             provider.addTag(infusing_ingredients)
                     .add(CEIFluids.EXPERIENCE.get())
                     .add(CEIFluids.EXPERIENCE_FLOWING.get());

@@ -30,9 +30,10 @@ import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import plus.dragons.createenchantmentindustry.common.fluids.lantern.ExperienceLanternBlockEntity;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.sable.SablePositions;
 
-@Restriction(require = @Condition("sable"))
+@Restriction(require = @Condition(ModIntegration.Constants.SABLE))
 @Mixin(ExperienceLanternBlockEntity.class)
 public abstract class ExperienceLanternBlockEntityMixin extends SmartBlockEntity {
     public ExperienceLanternBlockEntityMixin(BlockEntityType<?> type, BlockPos pos, BlockState state) {

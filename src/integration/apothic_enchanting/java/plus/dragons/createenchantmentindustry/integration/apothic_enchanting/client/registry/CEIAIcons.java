@@ -33,7 +33,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 import plus.dragons.createdragonsplus.util.CodeReference;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 
 @CodeReference(value = AllIcons.class, source = "create", license = "mit")
 public class CEIAIcons extends AllIcons {
@@ -41,7 +41,7 @@ public class CEIAIcons extends AllIcons {
             I_QUANTA = new CEIAIcons(1, 0),
             I_ARCANA = new CEIAIcons(2, 0);
 
-    private static final ResourceLocation ATLAS = CEIACommon.asResource("textures/gui/icons.png");
+    private static final ResourceLocation ATLAS = CEICommon.asResource("textures/gui/icons.png");
 
     protected final int iconX;
     protected final int iconY;

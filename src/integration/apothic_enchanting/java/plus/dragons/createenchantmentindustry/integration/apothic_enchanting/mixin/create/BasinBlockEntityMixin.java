@@ -34,9 +34,10 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.processing.infuser.InfuserBlockEntity;
 
-@Restriction(require = @Condition("apothic_enchanting"))
+@Restriction(require = @Condition(ModIntegration.Constants.APOTHIC_ENCHANTING))
 @Mixin(BasinBlockEntity.class)
 public abstract class BasinBlockEntityMixin extends SmartBlockEntity {
     public BasinBlockEntityMixin(BlockEntityType<?> type, BlockPos pos, BlockState state) {

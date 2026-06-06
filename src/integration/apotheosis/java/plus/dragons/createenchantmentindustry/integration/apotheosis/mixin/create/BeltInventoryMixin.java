@@ -35,9 +35,10 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.kinetics.belt.lowerProcessingAppliance.LowerBeltProcessingBehaviour;
 
-@Restriction(require = @Condition("apotheosis"))
+@Restriction(require = @Condition(ModIntegration.Constants.APOTHEOSIS))
 @Mixin(BeltInventory.class)
 public abstract class BeltInventoryMixin {
     @Shadow

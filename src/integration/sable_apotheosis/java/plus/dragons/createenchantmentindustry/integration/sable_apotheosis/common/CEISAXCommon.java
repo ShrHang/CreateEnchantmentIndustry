@@ -21,18 +21,16 @@ package plus.dragons.createenchantmentindustry.integration.sable_apotheosis.comm
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.sable_apotheosis.common.fluids.tank.CEISAXFragileFluidTankBreakEffectHandlers;
 
 @Mod(CEICommon.ID)
 public class CEISAXCommon {
     public CEISAXCommon(IEventBus modBus, ModContainer modContainer) {
-        if (ModList.get().isLoaded("apothic_enchanting")
-                && ModList.get().isLoaded("apotheosis")
-                && ModList.get().isLoaded("sable")) {
+        if (ModIntegration.APOTHIC_ENCHANTING.enabled() && ModIntegration.APOTHEOSIS.enabled() && ModIntegration.SABLE.enabled()) {
             modBus.register(new Common());
         }
     }

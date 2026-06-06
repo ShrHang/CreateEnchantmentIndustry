@@ -22,12 +22,12 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLConstructModEvent;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.client.ponder.CEIAXPonderPlugin;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.client.registry.CEIAXPartialModels;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.*;
@@ -36,10 +36,8 @@ import plus.dragons.createenchantmentindustry.integration.apotheosis.data.CEIAXR
 
 @Mod(CEICommon.ID)
 public class CEIAXCommon {
-    public static final String PERSISTENT_DATA_KEY = "CreateEnchantmentIndustryApotheosisData";
-
     public CEIAXCommon(IEventBus modBus, ModContainer modContainer) {
-        if (ModList.get().isLoaded("apothic_enchanting") && ModList.get().isLoaded("apotheosis")) {
+        if (ModIntegration.APOTHEOSIS.enabled() && ModIntegration.APOTHIC_ENCHANTING.enabled()) {
             modBus.register(new Common(modBus, modContainer));
             if (FMLLoader.getDist() == Dist.CLIENT)
                 modBus.register(new Client());
