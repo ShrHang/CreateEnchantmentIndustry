@@ -335,6 +335,8 @@ When Apotheosis integration is enabled and Apotheosis is loaded, Create: Enchant
 * Recipe type: `create_enchantment_industry:salvaging`
 * Catalysts: blocks in `create_enchantment_industry:fan_processing_catalysts/salvaging` and fluids in `create_enchantment_industry:fan_processing_catalysts/salvaging`
 
+When Sable, Apothic Enchanting, and Apotheosis are all loaded, Fragile Fluid Tanks filled with Infused Dragon's Breath release a Bulk Salvaging burst on impact. This burst can salvage nearby dropped items and may salvage equipped items from nearby living entities. Equipped-item salvaging uses the Apotheosis integration server config and scales with tank fullness.
+
 Custom salvaging recipes follow Create standard processing recipe conventions:
 
 ```json
@@ -385,3 +387,4 @@ When the Apotheosis integration is active, its server config provides:
 * Gem Cutter conversion ratios for Gem Dust, cracked gems, and Apotheotic Essence into Crystal Essence processing cost
 * Affix Augmentor conversion ratios for experience and Sigil of Enhancement into Apotheotic Essence processing cost
 * Bulk Salvaging equipped-item destruction probability
+* Infused Dragon's Breath Fragile Fluid Tank impact settings for salvaging dropped items and equipped items

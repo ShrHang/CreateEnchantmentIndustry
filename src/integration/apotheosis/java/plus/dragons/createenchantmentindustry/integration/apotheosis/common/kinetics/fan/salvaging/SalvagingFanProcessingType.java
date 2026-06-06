@@ -19,30 +19,21 @@
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.kinetics.fan.salvaging;
 
 import com.simibubi.create.content.kinetics.fan.processing.FanProcessingType;
-import com.simibubi.create.foundation.recipe.RecipeApplier;
-import dev.shadowsoffire.apotheosis.Apoth;
-import dev.shadowsoffire.apotheosis.affix.salvaging.SalvagingMenu;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import net.createmod.catnip.theme.Color;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.Containers;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXBlocks;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
-import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXRecipes;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
 
 public class SalvagingFanProcessingType implements FanProcessingType {
@@ -64,24 +55,12 @@ public class SalvagingFanProcessingType implements FanProcessingType {
 
     @Override
     public boolean canProcess(ItemStack stack, Level level) {
-        var recipeManager = level.getRecipeManager();
-        var input = new SingleRecipeInput(stack);
-        if (recipeManager
-                .getRecipeFor(CEIAXRecipes.SALVAGING.getType(), input, level)
-                .isPresent())
-            return true;
-        return canProcessByOriginal(stack, level);
+        return SalvagingHelper.canSalvage(stack, level);
     }
 
     @Override
     public @Nullable List<ItemStack> process(ItemStack stack, Level level) {
-        var recipeManager = level.getRecipeManager();
-        var input = new SingleRecipeInput(stack);
-        return recipeManager
-                .getRecipeFor(CEIAXRecipes.SALVAGING.getType(), input, level)
-                .map(recipe -> RecipeApplier.applyRecipeOn(level, stack, recipe.value(), true))
-                .or(() -> processByOriginal(stack, level))
-                .orElse(null);
+        return SalvagingHelper.salvage(stack, level);
     }
 
     @Override
@@ -109,34 +88,11 @@ public class SalvagingFanProcessingType implements FanProcessingType {
         if (level.isClientSide)
             return;
         if (entity instanceof LivingEntity livingEntity) {
-            if (entity.getRandom().nextFloat() < CEIAXConfig.server().utility().bulkSalvagingSalvageEquippedItemProbability.get()) {
-                {
-                    var slot = Arrays.stream(EquipmentSlot.values()).findAny().orElseThrow();
-                    ItemStack stack = livingEntity.getItemBySlot(slot);
-                    if (!stack.isEmpty()) {
-                        var result = process(stack, level);
-                        if (result != null) {
-                            livingEntity.setItemSlot(slot, ItemStack.EMPTY);
-                            result.forEach(s -> Containers.dropItemStack(level, entity.getX(), entity.getY(), entity.getZ(), s));
-                        }
-
-                    }
-                }
-            }
+            SalvagingHelper.salvageEquippedItems(livingEntity, level, entity.getRandom(), CEIAXConfig.server().utility().bulkSalvagingSalvageEquippedItemProbability.getF(), 1);
             if (livingEntity.isAffectedByPotions() && entity.tickCount % 5 == 0) {
                 livingEntity.addEffect(new MobEffectInstance(MobEffects.HARM, 1, 1));
             }
 
         }
-    }
-
-    private boolean canProcessByOriginal(ItemStack stack, Level level) {
-        return level.getRecipeManager()
-                .getRecipeFor(Apoth.RecipeTypes.SALVAGING, new SingleRecipeInput(stack), level)
-                .isPresent();
-    }
-
-    private Optional<List<ItemStack>> processByOriginal(ItemStack stack, Level level) {
-        return Optional.of(SalvagingMenu.getSalvageResults(level, stack));
     }
 }

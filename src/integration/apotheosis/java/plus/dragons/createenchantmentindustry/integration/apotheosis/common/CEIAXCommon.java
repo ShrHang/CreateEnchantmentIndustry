@@ -24,7 +24,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLConstructModEvent;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
@@ -68,9 +67,6 @@ public class CEIAXCommon {
             CEIAXFanProcessingTypes.register(modBus);
             modBus.register(new CEIAXConfig(modContainer));
         }
-
-        @SubscribeEvent
-        public void commonSetup(final FMLCommonSetupEvent event) {}
 
         @SubscribeEvent
         public void generate(final GatherDataEvent event) {

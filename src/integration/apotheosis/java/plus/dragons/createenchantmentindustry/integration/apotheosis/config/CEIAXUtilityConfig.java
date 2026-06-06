@@ -24,6 +24,21 @@ public class CEIAXUtilityConfig extends ConfigBase {
     public final ConfigFloat bulkSalvagingSalvageEquippedItemProbability = f(0.02f, 0, 1,
             "bulkSalvagingSalvageEquippedItemProbability",
             Comments.bulkSalvagingSalvageEquippedItemProbability);
+    public final ConfigBool fragileFluidTankInfusedDragonBreathSalvageDroppedItems = b(true,
+            "fragileFluidTankInfusedDragonBreathSalvageDroppedItems",
+            Comments.fragileFluidTankInfusedDragonBreathSalvageDroppedItems);
+    public final ConfigFloat fragileFluidTankInfusedDragonBreathDroppedItemSalvageChance = f(1.0f, 0, 1,
+            "fragileFluidTankInfusedDragonBreathDroppedItemSalvageChance",
+            Comments.fragileFluidTankInfusedDragonBreathDroppedItemSalvageChance);
+    public final ConfigBool fragileFluidTankInfusedDragonBreathSalvageEquippedItems = b(true,
+            "fragileFluidTankInfusedDragonBreathSalvageEquippedItems",
+            Comments.fragileFluidTankInfusedDragonBreathSalvageEquippedItems);
+    public final ConfigFloat fragileFluidTankInfusedDragonBreathEquippedItemSalvageChance = f(0.25f, 0, 1,
+            "fragileFluidTankInfusedDragonBreathEquippedItemSalvageChance",
+            Comments.fragileFluidTankInfusedDragonBreathEquippedItemSalvageChance);
+    public final ConfigInt fragileFluidTankInfusedDragonBreathMaxEquippedItemsPerEntity = i(1, 0,
+            "fragileFluidTankInfusedDragonBreathMaxEquippedItemsPerEntity",
+            Comments.fragileFluidTankInfusedDragonBreathMaxEquippedItemsPerEntity);
 
     @Override
     public String getName() {
@@ -32,5 +47,10 @@ public class CEIAXUtilityConfig extends ConfigBase {
 
     static class Comments {
         static final String bulkSalvagingSalvageEquippedItemProbability = "The probability of Bulk Salvaging air current destroying equipped items.";
+        static final String fragileFluidTankInfusedDragonBreathSalvageDroppedItems = "Whether Fragile Fluid Tanks filled with Infused Dragon's Breath salvage dropped items on impact.";
+        static final String fragileFluidTankInfusedDragonBreathDroppedItemSalvageChance = "The probability of each dropped item being salvaged by a Fragile Fluid Tank impact with Infused Dragon's Breath.";
+        static final String fragileFluidTankInfusedDragonBreathSalvageEquippedItems = "Whether Fragile Fluid Tanks filled with Infused Dragon's Breath can salvage equipped items on impact.";
+        static final String fragileFluidTankInfusedDragonBreathEquippedItemSalvageChance = "The max probability of each living entity having equipped items salvaged by a full Fragile Fluid Tank of Infused Dragon's Breath. Actual probability scales with tank fullness.";
+        static final String fragileFluidTankInfusedDragonBreathMaxEquippedItemsPerEntity = "The maximum equipped items a Fragile Fluid Tank impact with Infused Dragon's Breath can salvage from each living entity.";
     }
 }

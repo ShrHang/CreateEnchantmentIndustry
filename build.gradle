@@ -1,9 +1,10 @@
 plugins {
     id "java-library"
     id "maven-publish"
-    id "net.neoforged.moddev" version "1.0.21"
+    id 'net.neoforged.moddev' version '2.0.141'
     id "me.modmuss50.mod-publish-plugin" version "2.0.0-beta.2"
     id "com.diffplug.spotless" version "7.0.2"
+    id 'idea'
 }
 
 tasks.named("wrapper", Wrapper).configure {
@@ -26,6 +27,7 @@ def allIntegrationSourceSets = [
         "apothic_enchanting",
         "apotheosis",
         "sable",
+        "sable_apotheosis",
 ]
 
 def isIntegrationEnabled = { name ->
@@ -35,8 +37,15 @@ def isIntegrationEnabled = { name ->
             .get()
 }
 
-def enabledIntegrationSourceSets = allIntegrationSourceSets.findAll { name ->
+def requestedIntegrationSourceSets = allIntegrationSourceSets.findAll { name ->
     isIntegrationEnabled(name)
+}
+
+def enabledIntegrationSourceSets = requestedIntegrationSourceSets.findAll { name ->
+    if (name == "sable_apotheosis") {
+        return ["apothic_enchanting", "apotheosis", "sable"].every { requestedIntegrationSourceSets.contains(it) }
+    }
+    return true
 }
 
 def hasIntegration = { name ->
@@ -44,7 +53,7 @@ def hasIntegration = { name ->
 }
 
 if (hasIntegration("apotheosis") && !hasIntegration("apothic_enchanting")) {
-    throw GradleException("The apotheosis integration requires the apothic_enchanting integration")
+    throw new org.gradle.api.GradleException("The apotheosis integration requires the apothic_enchanting integration")
 }
 
 sourceSets {
@@ -59,6 +68,11 @@ sourceSets {
             compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
             if (name == "apotheosis" && hasIntegration("apothic_enchanting")) {
                 compileClasspath += sourceSets.apothic_enchanting.output + sourceSets.apothic_enchanting.compileClasspath
+            }
+            if (name == "sable_apotheosis") {
+                compileClasspath += sourceSets.apothic_enchanting.output + sourceSets.apothic_enchanting.compileClasspath
+                compileClasspath += sourceSets.apotheosis.output + sourceSets.apotheosis.compileClasspath
+                compileClasspath += sourceSets.sable.output + sourceSets.sable.compileClasspath
             }
         }
     }
@@ -321,7 +335,7 @@ publishMods {
     additionalFiles.from sourcesJar.archiveFile
     changelog = project.file("CHANGELOG.md").text
     version = mod_version
-    type = BETA
+    type = STABLE
     displayName = "Create: Enchantment Industry ${mod_version} for Create ${minecraft_version}-${create_version_production}"
     modLoaders.add("neoforge")
 
