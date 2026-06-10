@@ -46,5 +46,6 @@ public class CEIAData {
         var client = event.includeClient();
         var server = event.includeServer();
         generator.addProvider(server, new CEIARecipeProvider(output, lookupProvider));
+        generator.addProvider(server, new CEIAConditionalLootTableProvider(output, lookupProvider));
     }
 }

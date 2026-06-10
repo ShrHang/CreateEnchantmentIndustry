@@ -24,6 +24,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public class CEIAXServerConfig extends ConfigBase {
     private final CEIAXFluidConfig fluids = nested(0, CEIAXFluidConfig::new, Comments.fluids);
     private final CEIAXUtilityConfig utility = nested(0, CEIAXUtilityConfig::new, Comments.utility);
+    private final CEIAXAffixConfig affixes = nested(0, CEIAXAffixConfig::new, Comments.affixes);
 
     @Override
     public void registerAll(ModConfigSpec.Builder builder) {
@@ -43,8 +44,13 @@ public class CEIAXServerConfig extends ConfigBase {
         return utility;
     }
 
+    public CEIAXAffixConfig affixes() {
+        return affixes;
+    }
+
     static class Comments {
         static final String fluids = "Parameters and abilities of fluids and fluid operating components";
         static final String utility = "Parameters and abilities of various utility components";
+        static final String affixes = "Parameters and rules of Apotheosis affix composing";
     }
 }

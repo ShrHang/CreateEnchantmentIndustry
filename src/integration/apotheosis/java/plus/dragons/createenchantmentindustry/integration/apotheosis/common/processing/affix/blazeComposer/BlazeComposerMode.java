@@ -16,27 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.affixComposer;
+package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer;
 
-import net.minecraft.world.item.Item;
+import java.util.function.IntFunction;
+import net.minecraft.util.ByIdMap;
+import net.minecraft.util.StringRepresentable;
 
-public class AffixTemplateItem extends Item { // TODO
-    private final boolean apotheotic;
+public enum BlazeComposerMode implements StringRepresentable {
+    EXTRACT("extract"),
+    APPLY("apply"),
+    MERGE("merge");
 
-    public AffixTemplateItem(Properties properties, boolean apotheotic) {
-        super(properties);
-        this.apotheotic = apotheotic;
+    public static final IntFunction<BlazeComposerMode> BY_ID = ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.CLAMP);
+
+    private final String name;
+
+    BlazeComposerMode(String name) {
+        this.name = name;
     }
 
-    public static AffixTemplateItem normal(Properties properties) {
-        return new AffixTemplateItem(properties, false);
-    }
-
-    public static AffixTemplateItem apotheotic(Properties properties) {
-        return new AffixTemplateItem(properties, true);
-    }
-
-    public boolean isApotheotic() {
-        return apotheotic;
+    @Override
+    public String getSerializedName() {
+        return name;
     }
 }

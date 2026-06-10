@@ -1,0 +1,38 @@
+{
+    "neoforge:conditions": [
+        {
+            "type": "neoforge:mod_loaded",
+            "modid": "apotheosis"
+        }
+    ],
+    "criteria": {
+        "has_the_recipe": {
+            "conditions": {
+                "recipe": "create_enchantment_industry:apotheotic_affix_template"
+            },
+            "trigger": "minecraft:recipe_unlocked"
+        },
+        "mythic_material": {
+            "conditions": {
+                "items": [
+                    {
+                        "items": "apotheosis:mythic_material"
+                    }
+                ]
+            },
+            "trigger": "minecraft:inventory_changed"
+        }
+    },
+    "requirements": [
+        [
+            "has_the_recipe",
+            "mythic_material"
+        ]
+    ],
+    "rewards": {
+        "recipes": [
+            "create_enchantment_industry:apotheotic_affix_template"
+        ]
+    },
+    "sends_telemetry_event": true
+}

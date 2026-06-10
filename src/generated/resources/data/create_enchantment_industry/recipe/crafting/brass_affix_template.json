@@ -1,0 +1,33 @@
+{
+    "neoforge:conditions": [
+        {
+            "type": "neoforge:mod_loaded",
+            "modid": "apotheosis"
+        }
+    ],
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "key": {
+        "P": {
+            "item": "minecraft:paper"
+        },
+        "S": {
+            "item": "apotheosis:common_material"
+        },
+        "o": {
+            "item": "create:brass_sheet"
+        },
+        "x": {
+            "item": "minecraft:amethyst_shard"
+        }
+    },
+    "pattern": [
+        "oxo",
+        "PSP",
+        "oxo"
+    ],
+    "result": {
+        "count": 1,
+        "id": "create_enchantment_industry:brass_affix_template"
+    }
+}

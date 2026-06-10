@@ -22,8 +22,14 @@ import static plus.dragons.createenchantmentindustry.integration.apothic_enchant
 
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import plus.dragons.createdragonsplus.common.processing.blaze.BlazeBlockVisual;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.affixEnhancer.AffixAugmentorBlockEntity;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.affixEnhancer.AffixAugmentorRenderer;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.BlazeComposerBlockEntity;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.BlazeComposerRenderer;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.socket.gem.gemCutter.GemCutterBlockEntity;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.socket.gem.gemCutter.GemCutterRenderer;
 
@@ -40,5 +46,20 @@ public class CEIAXBlockEntities {
             .validBlock(CEIAXBlocks.AFFIX_AUGMENTOR)
             .register();
 
-    public static void register(IEventBus modBus) {}
+    public static final BlockEntityEntry<BlazeComposerBlockEntity> BLAZE_COMPOSER = REGISTRATE
+            .blockEntity("blaze_composer", BlazeComposerBlockEntity::new)
+            .visual(() -> BlazeBlockVisual::new)
+            .renderer(() -> BlazeComposerRenderer::new)
+            .validBlock(CEIAXBlocks.BLAZE_COMPOSER)
+            .register();
+
+    public static void register(IEventBus modBus) {
+        modBus.register(CEIAXBlockEntities.class);
+    }
+
+    @SubscribeEvent
+    public static void registerCapabilities(final RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK,
+                BLAZE_COMPOSER.get(), BlazeComposerBlockEntity::getFluidHandler);
+    }
 }

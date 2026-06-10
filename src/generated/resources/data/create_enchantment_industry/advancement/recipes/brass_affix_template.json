@@ -1,0 +1,38 @@
+{
+    "neoforge:conditions": [
+        {
+            "type": "neoforge:mod_loaded",
+            "modid": "apotheosis"
+        }
+    ],
+    "criteria": {
+        "common_material": {
+            "conditions": {
+                "items": [
+                    {
+                        "items": "apotheosis:common_material"
+                    }
+                ]
+            },
+            "trigger": "minecraft:inventory_changed"
+        },
+        "has_the_recipe": {
+            "conditions": {
+                "recipe": "create_enchantment_industry:brass_affix_template"
+            },
+            "trigger": "minecraft:recipe_unlocked"
+        }
+    },
+    "requirements": [
+        [
+            "has_the_recipe",
+            "common_material"
+        ]
+    ],
+    "rewards": {
+        "recipes": [
+            "create_enchantment_industry:brass_affix_template"
+        ]
+    },
+    "sends_telemetry_event": true
+}

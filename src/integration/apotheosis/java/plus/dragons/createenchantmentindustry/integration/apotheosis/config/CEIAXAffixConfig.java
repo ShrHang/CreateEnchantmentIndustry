@@ -1,0 +1,134 @@
+/*
+ * Copyright (C) 2025  DragonsPlus
+ * SPDX-License-Identifier: LGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package plus.dragons.createenchantmentindustry.integration.apotheosis.config;
+
+import net.createmod.catnip.config.ConfigBase;
+import net.createmod.catnip.config.ui.ConfigAnnotations;
+
+public class CEIAXAffixConfig extends ConfigBase {
+    public final ConfigInt blazeComposerFluidCapacity = i(8000, 1000,
+            "blazeComposerFluidCapacity",
+            Comments.blazeComposerFluidCapacity);
+    public final ConfigInt blazeComposerHyperFluidCapacity = i(8000, 1000,
+            "blazeComposerHyperFluidCapacity",
+            Comments.blazeComposerHyperFluidCapacity);
+    public final ConfigInt blazeComposerProcessingTime = i(200, 1,
+            "blazeComposerProcessingTime",
+            Comments.blazeComposerProcessingTime);
+
+    public final ConfigFloat brassAffixTemplateMaxLevel = f(1.0f, 0.01f,
+            "brassAffixTemplateMaxLevel",
+            Comments.brassAffixTemplateMaxLevel);
+    public final ConfigFloat crystalAffixTemplateMaxLevel = f(2.0f, 0.01f,
+            "crystalAffixTemplateMaxLevel",
+            Comments.crystalAffixTemplateMaxLevel);
+    public final ConfigFloat apotheoticAffixTemplateMaxLevel = f(4.0f, 0.01f,
+            "apotheoticAffixTemplateMaxLevel",
+            Comments.apotheoticAffixTemplateMaxLevel);
+
+    public final ConfigFloat affixTemplateMergeStep = f(0.25f, 0.01f,
+            "affixTemplateMergeStep",
+            Comments.affixTemplateMergeStep);
+
+    public final ConfigInt blazeComposerExtractBaseCost = i(250, 1,
+            "blazeComposerExtractBaseCost",
+            Comments.blazeComposerExtractBaseCost);
+    public final ConfigInt blazeComposerApplyBaseCost = i(350, 1,
+            "blazeComposerApplyBaseCost",
+            Comments.blazeComposerApplyBaseCost);
+    public final ConfigInt blazeComposerMergeBaseCost = i(500, 1,
+            "blazeComposerMergeBaseCost",
+            Comments.blazeComposerMergeBaseCost);
+
+    public final ConfigInt blazeComposerCostPerLevel = i(600, 1,
+            "blazeComposerCostPerLevel",
+            Comments.blazeComposerCostPerLevel);
+    public final ConfigFloat blazeComposerCrystalLevelMultiplier = f(1.8f, 0.01f,
+            "blazeComposerCrystalLevelMultiplier",
+            Comments.blazeComposerCrystalLevelMultiplier);
+    public final ConfigFloat blazeComposerHyperLevelMultiplier = f(3.5f, 0.01f,
+            "blazeComposerHyperLevelMultiplier",
+            Comments.blazeComposerHyperLevelMultiplier);
+    public final ConfigFloat blazeComposerHyperLevelExponent = f(1.65f, 1.0f,
+            "blazeComposerHyperLevelExponent",
+            Comments.blazeComposerHyperLevelExponent);
+
+    public final ConfigFloat brassAffixTemplateCostMultiplier = f(1.0f, 0.01f,
+            "brassAffixTemplateCostMultiplier",
+            Comments.brassAffixTemplateCostMultiplier);
+    public final ConfigFloat crystalAffixTemplateCostMultiplier = f(1.8f, 0.01f,
+            "crystalAffixTemplateCostMultiplier",
+            Comments.crystalAffixTemplateCostMultiplier);
+    public final ConfigFloat apotheoticAffixTemplateCostMultiplier = f(3.0f, 0.01f,
+            "apotheoticAffixTemplateCostMultiplier",
+            Comments.apotheoticAffixTemplateCostMultiplier);
+    public final ConfigFloat statAffixTypeCostMultiplier = f(1.0f, 0.01f,
+            "statAffixTypeCostMultiplier",
+            Comments.statAffixTypeCostMultiplier);
+    public final ConfigFloat basicEffectAffixTypeCostMultiplier = f(1.2f, 0.01f,
+            "basicEffectAffixTypeCostMultiplier",
+            Comments.basicEffectAffixTypeCostMultiplier);
+    public final ConfigFloat abilityAffixTypeCostMultiplier = f(1.6f, 0.01f,
+            "abilityAffixTypeCostMultiplier",
+            Comments.abilityAffixTypeCostMultiplier);
+
+    public final ConfigBool allowRarityMismatchApplying = b(false,
+            "allowRarityMismatchApplying",
+            Comments.allowRarityMismatchApplying);
+    public final ConfigBool allowExclusiveSetBypassInHyperMode = b(false,
+            "allowExclusiveSetBypassInHyperMode",
+            Comments.allowExclusiveSetBypassInHyperMode);
+    public final ConfigBool allowLevelIndependentAffixUpgrade = b(false,
+            "allowLevelIndependentAffixUpgrade",
+            Comments.allowLevelIndependentAffixUpgrade);
+
+    @Override
+    public String getName() {
+        return "ex-affix";
+    }
+
+    static class Comments {
+        static final String[] blazeComposerFluidCapacity = { "The amount of Apotheotic Essence (mB) the Blaze Composer can hold.",
+                ConfigAnnotations.RequiresRestart.SERVER.asComment() };
+        static final String[] blazeComposerHyperFluidCapacity = { "The amount of Hyper Apotheotic Essence (mB) the Blaze Composer can hold after its normal tank is full.",
+                ConfigAnnotations.RequiresRestart.SERVER.asComment() };
+        static final String[] blazeComposerProcessingTime = { "The processing time, in ticks, of one Blaze Composer operation.",
+                ConfigAnnotations.RequiresRestart.SERVER.asComment() };
+        static final String brassAffixTemplateMaxLevel = "The maximum affix level a Brass Affix Template can hold. Default: 1.0, matching standard Apotheosis affixes.";
+        static final String crystalAffixTemplateMaxLevel = "The maximum affix level a Crystal Affix Template can hold. Default: 2.0, matching Apotheosis' native upper range.";
+        static final String apotheoticAffixTemplateMaxLevel = "The maximum affix level an Apotheotic Affix Template can hold. The implementation supports very high values; this config is the balancing cap.";
+        static final String affixTemplateMergeStep = "The level gained when merging two templates with the same affix and level.";
+        static final String blazeComposerExtractBaseCost = "The base Apotheotic Essence cost (mB) of extracting an affix into a blank template.";
+        static final String blazeComposerApplyBaseCost = "The base Apotheotic Essence cost (mB) of applying a filled template to equipment.";
+        static final String blazeComposerMergeBaseCost = "The base Apotheotic Essence cost (mB) of merging two matching affix templates.";
+        static final String blazeComposerCostPerLevel = "The added Apotheotic Essence cost (mB) per effective affix level.";
+        static final String blazeComposerCrystalLevelMultiplier = "Multiplier applied to the 1.0-2.0 level segment.";
+        static final String blazeComposerHyperLevelMultiplier = "Multiplier applied to the Hyper level segment above 2.0.";
+        static final String blazeComposerHyperLevelExponent = "Exponential growth applied to Hyper levels above 2.0. Use 1.0 for linear Hyper costs.";
+        static final String brassAffixTemplateCostMultiplier = "Cost multiplier for operations using Brass Affix Templates.";
+        static final String crystalAffixTemplateCostMultiplier = "Cost multiplier for operations using Crystal Affix Templates.";
+        static final String apotheoticAffixTemplateCostMultiplier = "Cost multiplier for operations using Apotheotic Affix Templates.";
+        static final String statAffixTypeCostMultiplier = "Cost multiplier for STAT affixes.";
+        static final String basicEffectAffixTypeCostMultiplier = "Cost multiplier for BASIC_EFFECT affixes.";
+        static final String abilityAffixTypeCostMultiplier = "Cost multiplier for ABILITY affixes.";
+        static final String allowRarityMismatchApplying = "Whether filled templates can be applied to equipment with a different existing rarity.";
+        static final String allowExclusiveSetBypassInHyperMode = "Whether Hyper Mode may ignore Apotheosis affix exclusive sets when applying Apotheotic templates.";
+        static final String allowLevelIndependentAffixUpgrade = "Whether affixes marked as level-independent by Apotheosis may be upgraded by template merging.";
+    }
+}

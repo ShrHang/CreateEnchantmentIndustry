@@ -25,22 +25,21 @@ import net.minecraft.world.item.Rarity;
 import net.neoforged.neoforge.common.Tags;
 import plus.dragons.createdragonsplus.data.tag.ItemTagRegistry;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
-import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.affixComposer.AffixTemplateItem;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.AffixTemplateItem;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAXItems {
     public static final ModTags MOD_TAGS = new ModTags();
 
     public static final ItemEntry<AffixTemplateItem> BRASS_AFFIX_TEMPLATE = REGISTRATE
-            .item("brass_affix_template", AffixTemplateItem::normal)
+            .item("brass_affix_template", AffixTemplateItem::brass)
             .asOptional()
             .properties(prop -> prop
                     .rarity(Rarity.COMMON))
-            //.component()
             .register();
 
     public static final ItemEntry<AffixTemplateItem> CRYSTAL_AFFIX_TEMPLATE = REGISTRATE
-            .item("crystal_affix_template", AffixTemplateItem::normal)
+            .item("crystal_affix_template", AffixTemplateItem::crystal)
             .asOptional()
             .properties(prop -> prop
                     .rarity(Rarity.UNCOMMON))

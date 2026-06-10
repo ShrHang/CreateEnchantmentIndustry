@@ -22,7 +22,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import plus.dragons.createenchantmentindustry.common.registry.CEICreativeModeTabs;
+import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIACreativeModeTabs;
 
 public class CEIAXCreativeModeTabs {
     public static void register(IEventBus modBus) {
@@ -31,12 +31,13 @@ public class CEIAXCreativeModeTabs {
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void buildContents(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == CEICreativeModeTabs.BASE.getKey()) {
+        if (event.getTabKey() == CEIACreativeModeTabs.APOTHEOTIC.getKey()) {
             event.accept(CEIAXBlocks.GEM_CUTTER);
             event.accept(CEIAXBlocks.AFFIX_AUGMENTOR);
-            //event.accept(CEIAXItems.BRASS_AFFIX_TEMPLATE); TODO: not implemented yet
-            //event.accept(CEIAXItems.CRYSTAL_AFFIX_TEMPLATE);
-            //event.accept(CEIAXItems.APOTHEOTIC_AFFIX_TEMPLATE);
+            event.accept(CEIAXBlocks.BLAZE_COMPOSER);
+            event.accept(CEIAXItems.BRASS_AFFIX_TEMPLATE);
+            event.accept(CEIAXItems.CRYSTAL_AFFIX_TEMPLATE);
+            event.accept(CEIAXItems.APOTHEOTIC_AFFIX_TEMPLATE);
             event.accept(CEIAXFluids.APOTHEOTIC_ESSENCE.getBucket().get());
             event.accept(CEIAXFluids.CRYSTAL_ESSENCE.getBucket().get());
         }

@@ -22,9 +22,14 @@ import static com.simibubi.create.AllBlocks.*;
 import static com.simibubi.create.AllItems.*;
 import static net.minecraft.world.item.Items.AMETHYST_SHARD;
 import static net.minecraft.world.item.Items.NETHER_STAR;
+import static net.minecraft.world.item.Items.PAPER;
 import static plus.dragons.createdragonsplus.data.recipe.VanillaRecipeBuilders.shaped;
 import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXBlocks.AFFIX_AUGMENTOR;
+import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXBlocks.BLAZE_COMPOSER;
 import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXBlocks.GEM_CUTTER;
+import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems.APOTHEOTIC_AFFIX_TEMPLATE;
+import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems.BRASS_AFFIX_TEMPLATE;
+import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems.CRYSTAL_AFFIX_TEMPLATE;
 
 import dev.shadowsoffire.apotheosis.Apoth;
 import java.util.concurrent.CompletableFuture;
@@ -108,6 +113,52 @@ public class CEIAXRecipeProvider extends RecipeProvider {
                 .output(GEM_CUTTER)
                 .withCondition(ModIntegration.APOTHEOSIS.condition())
                 .unlockedBy("amethyst_shard", has(AMETHYST_SHARD))
+                .accept(output);
+
+        shaped().define('o', BRASS_SHEET)
+                .define('x', AMETHYST_SHARD)
+                .define('S', Apoth.Items.COMMON_MATERIAL.value())
+                .define('P', PAPER)
+                .pattern("oxo")
+                .pattern("PSP")
+                .pattern("oxo")
+                .output(BRASS_AFFIX_TEMPLATE)
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
+                .unlockedBy("common_material", has(Apoth.Items.COMMON_MATERIAL.value()))
+                .accept(output);
+
+        shaped().define('o', BRASS_AFFIX_TEMPLATE)
+                .define('x', AMETHYST_SHARD)
+                .define('S', Apoth.Items.GEM_DUST.value())
+                .pattern(" x ")
+                .pattern("xox")
+                .pattern(" S ")
+                .output(CRYSTAL_AFFIX_TEMPLATE)
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
+                .unlockedBy("gem_dust", has(Apoth.Items.GEM_DUST.value()))
+                .accept(output);
+
+        shaped().define('o', CRYSTAL_AFFIX_TEMPLATE)
+                .define('x', Apoth.Items.MYTHIC_MATERIAL.value())
+                .define('S', NETHER_STAR)
+                .pattern("xSx")
+                .pattern("SoS")
+                .pattern("xSx")
+                .output(APOTHEOTIC_AFFIX_TEMPLATE)
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
+                .unlockedBy("mythic_material", has(Apoth.Items.MYTHIC_MATERIAL.value()))
+                .accept(output);
+
+        shaped().define('o', BRASS_CASING)
+                .define('x', PRECISION_MECHANISM)
+                .define('S', Apoth.Items.SIGIL_OF_ENHANCEMENT.value())
+                .define('B', BLAZE_BURNER)
+                .pattern("xSx")
+                .pattern("oBo")
+                .pattern("xSx")
+                .output(BLAZE_COMPOSER)
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
+                .unlockedBy("sigil_of_enhancement", has(Apoth.Items.SIGIL_OF_ENHANCEMENT.value()))
                 .accept(output);
     }
 

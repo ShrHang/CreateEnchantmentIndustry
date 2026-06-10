@@ -61,6 +61,7 @@ public class CEIAXPonderPlugin {
                 .add(CEIABlocks.INFUSER)
                 .add(CEIAXBlocks.GEM_CUTTER)
                 .add(CEIAXBlocks.AFFIX_AUGMENTOR)
+                .add(CEIAXBlocks.BLAZE_COMPOSER)
                 .add(AllBlocks.ENCASED_FAN);
     }
 }

@@ -1,10 +1,7 @@
-## Create: Enchantment Industry 2.4.2
+## Create: Enchantment Industry 2.5.0
 
 ### Update
-* Added Copper Age Backport compat.
+* Add Blaze Composer & Affix Templates for handling apotheosis affixes.
 
 ### Change
-* TML compat config is now independent.
-
-### Fix
-* Fixed inappropriate class loading.
+* Apotheotic Content has an independent CreativeTab.
