@@ -40,6 +40,7 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import plus.dragons.createdragonsplus.common.processing.blaze.BlazeBlock;
 import plus.dragons.createenchantmentindustry.client.ponder.CEIPonderScenes;
 import plus.dragons.createenchantmentindustry.common.processing.forger.BlazeForgerBlockEntity;
+import plus.dragons.createenchantmentindustry.common.processing.forger.BlazeForgerMode;
 import plus.dragons.createenchantmentindustry.common.registry.CEIBlocks;
 import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
 import plus.dragons.createenchantmentindustry.common.registry.CEIItems;
@@ -123,16 +124,27 @@ public class ForgerScene {
                 be -> be.extractItem(false));
         scene.idle(10);
 
+        var slotVec = util.vector().of(2, 2.5, 1.5);
+        scene.overlay().showFilterSlotInput(slotVec, Direction.WEST, 70);
         scene.overlay().showText(60)
-                .text("Most importantly, Blaze Forger is able to apply Enchanting Templates to items!")
+                .text("Work Mode can be changed via side panel")
+                .placeNearTarget()
+                .attachKeyFrame()
+                .pointAt(slotVec);
+        scene.idle(70);
+
+        scene.overlay().showText(80)
+                .text("Switch Blaze Forger to Application Mode, and it can apply Enchanting Templates to items!")
                 .attachKeyFrame()
                 .placeNearTarget()
                 .pointAt(util.vector().topOf(2, 2, 1));
-        scene.idle(70);
+        scene.idle(40);
         var sword3 = Items.DIAMOND_SWORD.getDefaultInstance();
         var template3 = CEIItems.ENCHANTING_TEMPLATE.asStack();
         CEIPonderScenes.enchant(scene, sword3, Enchantments.SWEEPING_EDGE, 1);
         CEIPonderScenes.enchant(scene, template3, Enchantments.SWEEPING_EDGE, 2);
+        scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
+                be -> be.setMode(BlazeForgerMode.APPLY));
         scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
                 be -> be.insertItem(sword3, false));
         scene.idle(40);
@@ -144,14 +156,16 @@ public class ForgerScene {
         scene.idle(10);
 
         scene.overlay().showText(80)
-                .text("Also, Blaze Forger is able to strip enchantment from equipment, book or Enchanting Template to a blank Enchanting Template!")
+                .text("Switch it to Splitting Mode, and it can strip an enchantment from equipment, books or templates into a blank Enchanting Template!")
                 .attachKeyFrame()
                 .placeNearTarget()
                 .pointAt(util.vector().topOf(2, 2, 1));
-        scene.idle(90);
+        scene.idle(40);
         var sword4 = Items.DIAMOND_SWORD.getDefaultInstance();
         CEIPonderScenes.enchant(scene, sword4, Enchantments.SWEEPING_EDGE, 2);
         CEIPonderScenes.enchant(scene, sword4, Enchantments.BANE_OF_ARTHROPODS, 2);
+        scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
+                be -> be.setMode(BlazeForgerMode.SPLIT));
         scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
                 be -> be.insertItem(sword4, false));
         scene.idle(40);
@@ -218,6 +232,8 @@ public class ForgerScene {
         CEIPonderScenes.enchant(scene, sword, Enchantments.SWEEPING_EDGE, 3);
         CEIPonderScenes.enchant(scene, template, Enchantments.SWEEPING_EDGE, 4);
         scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
+                be -> be.setMode(BlazeForgerMode.APPLY));
+        scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
                 be -> be.insertItem(sword, false));
         scene.idle(40);
         scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
@@ -270,6 +286,7 @@ public class ForgerScene {
         scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
                 be -> {
                     be.getSpecialTank().setFluid(new FluidStack(CEIFluids.EXPERIENCE.get(), 4000));
+                    be.setMode(BlazeForgerMode.APPLY);
                     be.insertItem(sword, false);
                 });
         scene.idle(40);
@@ -308,6 +325,8 @@ public class ForgerScene {
         CEIPonderScenes.enchant(scene, template, Enchantments.SWEEPING_EDGE, 3);
         scene.world().modifyBlockEntity(input2, DepotBlockEntity.class,
                 depot -> depot.setHeldItem(template));
+        scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), BlazeForgerBlockEntity.class,
+                be -> be.setMode(BlazeForgerMode.APPLY));
 
         scene.world().showSection(arm.add(inputDepot).add(inputDepot2), Direction.DOWN);
         scene.idle(10);

@@ -26,6 +26,8 @@ import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.ItemStack;
@@ -40,21 +42,21 @@ import plus.dragons.createenchantmentindustry.common.processing.enchanter.CEIEnc
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.EnchantingTemplateItem;
 import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
 import plus.dragons.createenchantmentindustry.common.registry.CEIDataMaps;
-import plus.dragons.createenchantmentindustry.common.registry.CEIItems;
 import plus.dragons.createenchantmentindustry.common.registry.CEIStats;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 public class BlazeForgerInventory extends ItemStackHandler {
     private final BlazeForgerBlockEntity forger;
     private int cost;
-    private int mode; // Advancement Flag. 0 = merge item 1 = apply template 2 = strip down enchantment
-    private boolean conflicting; // Advancement Flag
-    private boolean overCap; // Advancement Flag
+    private BlazeForgerMode operation;
+    private boolean conflicting;
+    private boolean overCap;
+    private Result result = Result.emptyInput();
 
     public BlazeForgerInventory(BlazeForgerBlockEntity forger) {
         super(6);
         this.forger = forger;
-        this.mode = 0;
+        this.operation = BlazeForgerMode.MERGE;
         this.conflicting = false;
         this.overCap = false;
     }
@@ -71,8 +73,10 @@ public class BlazeForgerInventory extends ItemStackHandler {
 
     @Override
     public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-        if (slot > 1) return stack;
-        if (!stacks.get(2).isEmpty() || !stacks.get(3).isEmpty()) return stack;
+        if (slot > 1)
+            return stack;
+        if (hasRemainingOutput())
+            return stack;
         return super.insertItem(slot, stack, simulate);
     }
 
@@ -94,7 +98,12 @@ public class BlazeForgerInventory extends ItemStackHandler {
     public void deserializeNBT(Provider provider, CompoundTag nbt) {
         super.deserializeNBT(provider, nbt);
         cost = nbt.getInt("Cost");
-        mode = nbt.getInt("Mode");
+        if (nbt.contains("Operation", Tag.TAG_INT)) {
+            operation = BlazeForgerMode.BY_ID.apply(nbt.getInt("Operation"));
+        } else {
+            // TODO Remove this legacy fallback after pre-mode-panel Blaze Forger inventory data is no longer supported.
+            operation = BlazeForgerMode.fromLegacyOperation(nbt.getInt("Mode"));
+        }
         conflicting = nbt.getBoolean("Conflicting");
         overCap = nbt.getBoolean("OverCap");
     }
@@ -103,10 +112,14 @@ public class BlazeForgerInventory extends ItemStackHandler {
     public CompoundTag serializeNBT(Provider provider) {
         var nbt = super.serializeNBT(provider);
         nbt.putInt("Cost", cost);
-        nbt.putInt("Mode", mode);
+        nbt.putInt("Operation", operation.ordinal());
         nbt.putBoolean("Conflicting", conflicting);
         nbt.putBoolean("OverCap", overCap);
         return nbt;
+    }
+
+    public Result getLastResult() {
+        return result;
     }
 
     public boolean hasRemainingOutput() {
@@ -137,116 +150,180 @@ public class BlazeForgerInventory extends ItemStackHandler {
     protected void clearInput() {
         stacks.set(0, ItemStack.EMPTY);
         stacks.set(1, ItemStack.EMPTY);
+        stacks.set(4, ItemStack.EMPTY);
+        stacks.set(5, ItemStack.EMPTY);
         cost = 0;
+        result = Result.emptyInput();
     }
 
     protected void clear() {
-        stacks.clear();
+        for (int i = 0; i < stacks.size(); i++) {
+            stacks.set(i, ItemStack.EMPTY);
+        }
         cost = 0;
+        result = Result.emptyInput();
     }
 
     protected void applyResult() {
-        stacks.set(2, stacks.get(4).copy());
-        stacks.set(3, stacks.get(5).copy());
+        Result finalResult = calculateResult(stacks.get(0), stacks.get(1));
+        if (!finalResult.valid())
+            return;
+        BlazeForgerMode completedOperation = finalResult.operation();
+        boolean completedConflicting = finalResult.conflicting();
+        boolean completedOverCap = finalResult.overCap();
+
+        stacks.set(2, finalResult.primaryOutput().copy());
+        stacks.set(3, finalResult.secondaryOutput().copy());
         clearInput();
 
         forger.advancement.awardStat(CEIStats.FORGE.get(), 1);
         if (forger.special) {
             forger.advancement.awardStat(CEIStats.SUPER_ENCHANT.get(), 1);
-            if (overCap) forger.advancement.trigger(CEIAdvancements.TRANSCENDENT_OVERCLOCK.builtinTrigger());
-            if (conflicting) forger.advancement.trigger(CEIAdvancements.PARADOX_FUSION.builtinTrigger());
+            if (completedOverCap)
+                forger.advancement.trigger(CEIAdvancements.TRANSCENDENT_OVERCLOCK.builtinTrigger());
+            if (completedConflicting)
+                forger.advancement.trigger(CEIAdvancements.PARADOX_FUSION.builtinTrigger());
         }
-        forger.advancement.trigger(mode == 0 ? CEIAdvancements.BLAZING_FUSION.builtinTrigger() : mode == 1 ? CEIAdvancements.SIGIL_CASTING.builtinTrigger() : CEIAdvancements.MAGIC_UNBINDING.builtinTrigger());
-        forger.advancement.awardStat(CEIStats.FORGE.get(), 1);
+        forger.advancement.trigger(switch (completedOperation) {
+            case MERGE -> CEIAdvancements.BLAZING_FUSION.builtinTrigger();
+            case APPLY -> CEIAdvancements.SIGIL_CASTING.builtinTrigger();
+            case SPLIT -> CEIAdvancements.MAGIC_UNBINDING.builtinTrigger();
+        });
     }
 
     protected void updateResult() {
-        var base = stacks.get(0).copy();
-        var addition = stacks.get(1).copy();
-        stacks.set(4, base);
-        stacks.set(5, addition);
-        if (base.isEmpty() || addition.isEmpty()) {
-            cost = 0;
+        stacks.set(4, ItemStack.EMPTY);
+        stacks.set(5, ItemStack.EMPTY);
+        result = calculateResult(stacks.get(0), stacks.get(1));
+        cost = result.valid() ? result.levelCost() : 0;
+        operation = result.operation();
+        conflicting = result.conflicting();
+        overCap = result.overCap();
+        if (!result.valid())
             return;
-        }
-        var baseType = EnchantmentHelper.getComponentType(base);
-        var baseEnchantments = base.getOrDefault(baseType, ItemEnchantments.EMPTY);
-        var additionType = EnchantmentHelper.getComponentType(addition);
-        var additionEnchantments = addition.getOrDefault(additionType, ItemEnchantments.EMPTY);
-        mode = 0;
-        conflicting = false;
-        overCap = false;
-        if (baseType == DataComponents.STORED_ENCHANTMENTS) {
-            if (base.getItem() instanceof EnchantingTemplateItem baseTemplate) {
-                if (addition.getItem() instanceof EnchantingTemplateItem addTemplate) {
-                    if (forger.special && (!baseTemplate.isSpecial() || !addTemplate.isSpecial())) return;
-                    else {
-                        if (additionEnchantments.isEmpty()) {
-                            if (!splitEnchantments(base, addition, baseEnchantments, additionEnchantments)) return;
-                        } else {
-                            if (combineEnchantments(base, addition, baseEnchantments, additionEnchantments))
-                                stacks.set(5, ItemStack.EMPTY);
-                            else return;
-                        }
-                    }
-                }
-            } else if (base.is(Items.ENCHANTED_BOOK)) {
-                if (addition.getItem() instanceof EnchantingTemplateItem template) {
-                    if (forger.special && !template.isSpecial()) return;
-                    if (additionEnchantments.isEmpty()) {
-                        if (baseEnchantments.size() == 1) {
-                            var book = Items.BOOK.getDefaultInstance();
-                            EnchantmentHelper.setEnchantments(addition, baseEnchantments);
-                            stacks.set(4, book);
-                            stacks.set(5, addition);
-                            var enchantment = baseEnchantments.entrySet().stream().findFirst().get();
-                            cost += Math.max(1, enchantment.getKey().value().getAnvilCost() / 2) * enchantment.getIntValue();
-                        } else if (!splitEnchantments(base, addition, baseEnchantments, additionEnchantments)) return;
-                    } else {
-                        if (applyEnchantments(base, baseEnchantments, additionEnchantments)) {
-                            stacks.set(5, ItemStack.EMPTY);
-                        } else return;
-                    }
-                } else if (addition.is(Items.ENCHANTED_BOOK)) {
-                    if (combineEnchantments(base, addition, baseEnchantments, additionEnchantments)) {
-                        stacks.set(5, ItemStack.EMPTY);
-                    } else return;
-                } else return;
-            }
-        } else if (base.is(Items.BOOK) && addition.getItem() instanceof EnchantingTemplateItem template) {
-            if (forger.special && (!template.isSpecial())) return;
-            if (additionEnchantments.isEmpty()) return;
-            else {
-                if (applyEnchantmentsToBook(base, additionEnchantments))
-                    stacks.set(5, ItemStack.EMPTY);
-                else return;
-            }
-        } else {
-            if (addition.getItem() instanceof EnchantingTemplateItem template) {
-                if (forger.special && !template.isSpecial()) return;
-                if (additionEnchantments.isEmpty()) {
-                    if (baseEnchantments.isEmpty()) return;
-                    if (!splitEnchantments(base, addition, baseEnchantments, additionEnchantments)) return;
-                } else {
-                    if (applyEnchantments(base, baseEnchantments, additionEnchantments)) {
-                        stacks.set(5, ItemStack.EMPTY);
-                    } else return;
-                }
-            } else if (addition.is(Items.ENCHANTED_BOOK)) {
-                if (applyEnchantments(base, baseEnchantments, additionEnchantments)) {
-                    stacks.set(5, ItemStack.EMPTY);
-                } else return;
-            } else if (ItemStack.isSameItem(base, addition)) {
-                if (combineEnchantments(base, addition, baseEnchantments, additionEnchantments)) {
-                    stacks.set(5, ItemStack.EMPTY);
-                } else return;
-            } else return;
-        }
-        applyRepairCost(base, addition);
+        stacks.set(4, result.primaryOutput().copy());
+        stacks.set(5, result.secondaryOutput().copy());
     }
 
-    protected boolean splitEnchantments(ItemStack base, ItemStack addition, ItemEnchantments baseEnchantments, ItemEnchantments additionEnchantments) {
-        mode = 2;
+    private Result calculateResult(ItemStack baseInput, ItemStack additionInput) {
+        resetComputation();
+        BlazeForgerMode mode = forger.getMode();
+        operation = mode;
+        if (baseInput.isEmpty() && additionInput.isEmpty())
+            return Result.emptyInput(mode);
+        if (baseInput.isEmpty())
+            return incomplete(mode, FailureReason.MISSING_FIRST_INPUT);
+        if (additionInput.isEmpty())
+            return incomplete(mode, FailureReason.MISSING_SECOND_INPUT);
+
+        Result templateFailure = validateTemplateMode(baseInput, mode);
+        if (templateFailure != null)
+            return templateFailure;
+        templateFailure = validateTemplateMode(additionInput, mode);
+        if (templateFailure != null)
+            return templateFailure;
+
+        ItemStack base = single(baseInput);
+        ItemStack addition = single(additionInput);
+        Result modeResult = switch (mode) {
+            case MERGE -> calculateMerge(base, addition);
+            case APPLY -> calculateApply(base, addition);
+            case SPLIT -> calculateSplit(base, addition);
+        };
+        if (!modeResult.valid())
+            return modeResult;
+
+        ItemStack primaryOutput = modeResult.primaryOutput().copy();
+        ItemStack secondaryOutput = modeResult.secondaryOutput().copy();
+        int repairCostBefore = primaryOutput.getOrDefault(DataComponents.REPAIR_COST, 0);
+        applyRepairCost(primaryOutput, secondaryOutput);
+        int repairCostAfter = primaryOutput.getOrDefault(DataComponents.REPAIR_COST, 0);
+        return Result.ready(
+                mode,
+                primaryOutput,
+                secondaryOutput,
+                cost,
+                conflicting,
+                overCap,
+                repairCostAfter > repairCostBefore,
+                repairCostBefore,
+                repairCostAfter);
+    }
+
+    private Result calculateMerge(ItemStack base, ItemStack addition) {
+        ItemEnchantments baseEnchantments = getEnchantments(base);
+        ItemEnchantments additionEnchantments = getEnchantments(addition);
+        if (isTemplate(base) || isTemplate(addition)) {
+            if (!isFilledTemplate(base) || !isFilledTemplate(addition))
+                return invalid(BlazeForgerMode.MERGE, FailureReason.MERGE_REQUIRES_FILLED_TEMPLATES);
+            if (!ItemStack.isSameItem(base, addition))
+                return invalid(BlazeForgerMode.MERGE, FailureReason.TEMPLATE_TYPE_MISMATCH);
+        } else if (base.is(Items.ENCHANTED_BOOK) || addition.is(Items.ENCHANTED_BOOK)) {
+            if (!base.is(Items.ENCHANTED_BOOK) || !addition.is(Items.ENCHANTED_BOOK))
+                return invalid(BlazeForgerMode.MERGE, FailureReason.MERGE_REQUIRES_MATCHING_CARRIERS);
+        } else if (!ItemStack.isSameItem(base, addition)) {
+            return invalid(BlazeForgerMode.MERGE, FailureReason.MERGE_REQUIRES_MATCHING_CARRIERS);
+        }
+        if (!combineEnchantments(base, addition, baseEnchantments, additionEnchantments))
+            return invalid(BlazeForgerMode.MERGE, FailureReason.WOULD_NOT_IMPROVE);
+        return Result.ready(BlazeForgerMode.MERGE, base, ItemStack.EMPTY, cost, conflicting, overCap, false, 0, 0);
+    }
+
+    private Result calculateApply(ItemStack base, ItemStack addition) {
+        ItemEnchantments baseEnchantments = getEnchantments(base);
+        ItemEnchantments additionEnchantments = getEnchantments(addition);
+        if (addition.getItem() instanceof EnchantingTemplateItem) {
+            if (!isFilledTemplate(addition))
+                return invalid(BlazeForgerMode.APPLY, FailureReason.REQUIRES_FILLED_TEMPLATE);
+            if (base.getItem() instanceof EnchantingTemplateItem)
+                return invalid(BlazeForgerMode.APPLY, FailureReason.APPLY_REQUIRES_TARGET_ITEM);
+            if (base.is(Items.BOOK)) {
+                ItemStack book = applyEnchantmentsToBook(additionEnchantments);
+                if (book.isEmpty())
+                    return invalid(BlazeForgerMode.APPLY, FailureReason.ENCHANTMENT_CANNOT_APPLY);
+                return Result.ready(BlazeForgerMode.APPLY, book, ItemStack.EMPTY, cost, conflicting, overCap, false, 0, 0);
+            }
+            if (!applyEnchantments(base, baseEnchantments, additionEnchantments))
+                return invalid(BlazeForgerMode.APPLY, FailureReason.ENCHANTMENT_CANNOT_APPLY);
+            return Result.ready(BlazeForgerMode.APPLY, base, ItemStack.EMPTY, cost, conflicting, overCap, false, 0, 0);
+        }
+        if (addition.is(Items.ENCHANTED_BOOK)) {
+            if (additionEnchantments.isEmpty())
+                return invalid(BlazeForgerMode.APPLY, FailureReason.REQUIRES_ENCHANTED_ADDITION);
+            if (base.is(Items.BOOK) || base.getItem() instanceof EnchantingTemplateItem)
+                return invalid(BlazeForgerMode.APPLY, FailureReason.APPLY_REQUIRES_TARGET_ITEM);
+            if (!applyEnchantments(base, baseEnchantments, additionEnchantments))
+                return invalid(BlazeForgerMode.APPLY, FailureReason.ENCHANTMENT_CANNOT_APPLY);
+            return Result.ready(BlazeForgerMode.APPLY, base, ItemStack.EMPTY, cost, conflicting, overCap, false, 0, 0);
+        }
+        return invalid(BlazeForgerMode.APPLY, FailureReason.APPLY_REQUIRES_ENCHANTED_ADDITION);
+    }
+
+    private Result calculateSplit(ItemStack base, ItemStack addition) {
+        ItemEnchantments baseEnchantments = getEnchantments(base);
+        ItemEnchantments additionEnchantments = getEnchantments(addition);
+        if (!isTemplate(addition) || !additionEnchantments.isEmpty())
+            return invalid(BlazeForgerMode.SPLIT, FailureReason.REQUIRES_BLANK_TEMPLATE);
+        if (baseEnchantments.isEmpty())
+            return invalid(BlazeForgerMode.SPLIT, FailureReason.SOURCE_HAS_NO_ENCHANTMENTS);
+        if (!forger.special && baseEnchantments.keySet().stream().allMatch(holder -> holder.is(EnchantmentTags.CURSE)))
+            return invalid(BlazeForgerMode.SPLIT, FailureReason.CURSE_SPLITTING_REQUIRES_SUPER_MODE);
+        if (base.is(Items.ENCHANTED_BOOK) && baseEnchantments.size() == 1) {
+            ItemStack book = Items.BOOK.getDefaultInstance();
+            var enchantment = baseEnchantments.entrySet().stream().findFirst().get();
+            int level = getSplitLevel(enchantment.getKey(), baseEnchantments);
+            var extractedEnchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+            extractedEnchantments.set(enchantment.getKey(), level);
+            EnchantmentHelper.setEnchantments(addition, extractedEnchantments.toImmutable());
+            cost += Math.max(1, enchantment.getKey().value().getAnvilCost() / 2) * level;
+            return Result.ready(BlazeForgerMode.SPLIT, book, addition, cost, conflicting, overCap, false, 0, 0);
+        }
+        if (!splitEnchantments(base, addition, baseEnchantments))
+            return invalid(BlazeForgerMode.SPLIT, FailureReason.SOURCE_HAS_NO_EXTRACTABLE_ENCHANTMENTS);
+        return Result.ready(BlazeForgerMode.SPLIT, base, addition, cost, conflicting, overCap, false, 0, 0);
+    }
+
+    protected boolean splitEnchantments(ItemStack base, ItemStack addition, ItemEnchantments baseEnchantments) {
         if (baseEnchantments.isEmpty())
             return false;
         var registry = Objects.requireNonNull(forger.getLevel()).registryAccess().registryOrThrow(Registries.ENCHANTMENT);
@@ -261,17 +338,24 @@ public class BlazeForgerInventory extends ItemStackHandler {
         var removedEnchantments = new ItemEnchantments.Mutable(baseEnchantments);
         removedEnchantments.set(enchantment, 0);
         EnchantmentHelper.setEnchantments(base, removedEnchantments.toImmutable());
-        int level = baseEnchantments.getLevel(enchantment);
-        if (!forger.special)
-            level = Math.min(level, CEIEnchantmentHelper.maxLevel(enchantment) + (CEIConfig.enchantments().splitEnchantmentRespectLevelExtension.get() ? CEIEnchantmentHelper.levelExtension(enchantment) : 0));
+        int level = getSplitLevel(enchantment, baseEnchantments);
         addition.enchant(enchantment, level);
         var multiplier = enchantment.getData(CEIDataMaps.SPLITTING_COST_MULTIPLIER);
         cost += (int) (Math.max(1, enchantment.value().getAnvilCost() / 2) * level * (multiplier != null ? multiplier : 1));
         return true;
     }
 
+    private int getSplitLevel(Holder<Enchantment> enchantment, ItemEnchantments enchantments) {
+        int level = enchantments.getLevel(enchantment);
+        if (forger.special)
+            return level;
+        int maxLevel = CEIEnchantmentHelper.maxLevel(enchantment);
+        if (CEIConfig.enchantments().splitEnchantmentRespectLevelExtension.get())
+            maxLevel += CEIEnchantmentHelper.levelExtension(enchantment);
+        return Math.min(level, maxLevel);
+    }
+
     protected boolean applyEnchantments(ItemStack base, ItemEnchantments baseEnchantments, ItemEnchantments additionEnchantments) {
-        mode = 1;
         int cost = 0;
         var resultEnchantments = new Mutable(baseEnchantments);
         boolean applied = false;
@@ -285,7 +369,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
             for (Holder<Enchantment> holder1 : resultEnchantments.keySet()) {
                 if (!holder1.equals(holder) && !Enchantment.areCompatible(holder, holder1)) {
                     applicable = forger.special && CEIConfig.enchantments().ignoreEnchantmentCompatibility.get();
-                    conflicting = true;
+                    conflicting = applicable;
                     cost++;
                 }
             }
@@ -300,7 +384,8 @@ public class BlazeForgerInventory extends ItemStackHandler {
                 } else if (resultLevel > maxLevel && !forger.special) {
                     resultLevel = maxLevel;
                 }
-                if (resultLevel > maxLevel) overCap = true;
+                if (resultLevel > maxLevel)
+                    overCap = true;
 
                 resultEnchantments.set(holder, resultLevel);
                 int anvilCost = enchantment.getAnvilCost();
@@ -317,8 +402,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
         return true;
     }
 
-    protected boolean applyEnchantmentsToBook(ItemStack base, ItemEnchantments additionEnchantments) {
-        mode = 1;
+    protected ItemStack applyEnchantmentsToBook(ItemEnchantments additionEnchantments) {
         int cost = 0;
         var resultEnchantments = new Mutable(ItemEnchantments.EMPTY);
         boolean applied = false;
@@ -343,12 +427,11 @@ public class BlazeForgerInventory extends ItemStackHandler {
             }
         }
         if (!applied)
-            return false;
-        base = Items.ENCHANTED_BOOK.getDefaultInstance();
-        EnchantmentHelper.setEnchantments(base, resultEnchantments.toImmutable());
-        stacks.set(4, base);
+            return ItemStack.EMPTY;
+        ItemStack book = Items.ENCHANTED_BOOK.getDefaultInstance();
+        EnchantmentHelper.setEnchantments(book, resultEnchantments.toImmutable());
         this.cost += cost;
-        return true;
+        return book;
     }
 
     protected boolean combineEnchantments(ItemStack base, ItemStack addition, ItemEnchantments baseEnchantments, ItemEnchantments additionEnchantments) {
@@ -370,7 +453,6 @@ public class BlazeForgerInventory extends ItemStackHandler {
             }
         }
         applied |= applyEnchantments(base, baseEnchantments, additionEnchantments);
-        mode = 0;
         return applied;
     }
 
@@ -383,19 +465,133 @@ public class BlazeForgerInventory extends ItemStackHandler {
         base.set(DataComponents.REPAIR_COST, resultCost);
     }
 
-    boolean forgingCompleted() {
-        return !stacks.get(2).isEmpty() && forger.processingTime == -1;
+    private Result validateTemplateMode(ItemStack stack, BlazeForgerMode mode) {
+        if (!(stack.getItem() instanceof EnchantingTemplateItem template))
+            return null;
+        if (template.isSpecial() == forger.special)
+            return null;
+        return template.isSpecial()
+                ? invalid(mode, FailureReason.SUPER_TEMPLATE_REQUIRES_SUPER_MODE)
+                : invalid(mode, FailureReason.NORMAL_TEMPLATE_REQUIRES_NORMAL_MODE);
     }
 
-    boolean notEnoughItemToForge() {
-        return stacks.get(0).isEmpty() || stacks.get(1).isEmpty();
+    private void resetComputation() {
+        cost = 0;
+        operation = forger.getMode();
+        conflicting = false;
+        overCap = false;
     }
 
-    boolean incompatibleEnchantingTemplateType() {
-        var base = stacks.get(0);
-        var addition = stacks.get(1);
-        if (!forger.special && (base.is(CEIItems.SUPER_ENCHANTING_TEMPLATE) || addition.is(CEIItems.SUPER_ENCHANTING_TEMPLATE)))
-            return true;
-        else return forger.special && (base.is(CEIItems.ENCHANTING_TEMPLATE) || addition.is(CEIItems.ENCHANTING_TEMPLATE));
+    private static ItemEnchantments getEnchantments(ItemStack stack) {
+        return stack.getOrDefault(EnchantmentHelper.getComponentType(stack), ItemEnchantments.EMPTY);
+    }
+
+    private static boolean isTemplate(ItemStack stack) {
+        return stack.getItem() instanceof EnchantingTemplateItem;
+    }
+
+    private static boolean isFilledTemplate(ItemStack stack) {
+        return isTemplate(stack) && !getEnchantments(stack).isEmpty();
+    }
+
+    private static ItemStack single(ItemStack stack) {
+        ItemStack copy = stack.copy();
+        copy.setCount(1);
+        return copy;
+    }
+
+    private static Result incomplete(BlazeForgerMode mode, FailureReason reason, Object... args) {
+        return Result.incomplete(mode, reason.message(args));
+    }
+
+    private static Result invalid(BlazeForgerMode mode, FailureReason reason, Object... args) {
+        return Result.invalid(mode, reason.message(args));
+    }
+
+    public enum Status {
+        EMPTY_INPUT,
+        INCOMPLETE_INPUT,
+        INVALID,
+        READY
+    }
+
+    public record Result(
+            Status status,
+            Component failure,
+            ItemStack primaryOutput,
+            ItemStack secondaryOutput,
+            int levelCost,
+            BlazeForgerMode operation,
+            boolean conflicting,
+            boolean overCap,
+            boolean repairCostPenalty,
+            int repairCostBefore,
+            int repairCostAfter) {
+        public static Result emptyInput() {
+            return emptyInput(BlazeForgerMode.MERGE);
+        }
+
+        public static Result emptyInput(BlazeForgerMode mode) {
+            return new Result(Status.EMPTY_INPUT, Component.empty(), ItemStack.EMPTY, ItemStack.EMPTY, 0, mode, false, false, false, 0, 0);
+        }
+
+        public static Result incomplete(BlazeForgerMode mode, Component failure) {
+            return new Result(Status.INCOMPLETE_INPUT, failure, ItemStack.EMPTY, ItemStack.EMPTY, 0, mode, false, false, false, 0, 0);
+        }
+
+        public static Result invalid(BlazeForgerMode mode, Component failure) {
+            return new Result(Status.INVALID, failure, ItemStack.EMPTY, ItemStack.EMPTY, 0, mode, false, false, false, 0, 0);
+        }
+
+        public static Result ready(
+                BlazeForgerMode mode,
+                ItemStack primaryOutput,
+                ItemStack secondaryOutput,
+                int cost,
+                boolean conflicting,
+                boolean overCap,
+                boolean repairCostPenalty,
+                int repairCostBefore,
+                int repairCostAfter) {
+            return new Result(Status.READY, Component.empty(), primaryOutput, secondaryOutput, cost, mode, conflicting, overCap, repairCostPenalty, repairCostBefore, repairCostAfter);
+        }
+
+        public int experienceCost() {
+            return levelCost == 0 ? 0 : ExperienceHelper.getExperienceForTotalLevel(levelCost);
+        }
+
+        public boolean valid() {
+            return status == Status.READY && levelCost > 0 && (!primaryOutput.isEmpty() || !secondaryOutput.isEmpty());
+        }
+    }
+
+    private enum FailureReason {
+        MISSING_FIRST_INPUT("missing_first_input"),
+        MISSING_SECOND_INPUT("missing_second_input"),
+        NORMAL_TEMPLATE_REQUIRES_NORMAL_MODE("normal_template_requires_normal_mode"),
+        SUPER_TEMPLATE_REQUIRES_SUPER_MODE("super_template_requires_super_mode"),
+        MERGE_REQUIRES_MATCHING_CARRIERS("merge_requires_matching_carriers"),
+        MERGE_REQUIRES_FILLED_TEMPLATES("merge_requires_filled_templates"),
+        TEMPLATE_TYPE_MISMATCH("template_type_mismatch"),
+        APPLY_REQUIRES_TARGET_ITEM("apply_requires_target_item"),
+        APPLY_REQUIRES_ENCHANTED_ADDITION("apply_requires_enchanted_addition"),
+        REQUIRES_FILLED_TEMPLATE("requires_filled_template"),
+        REQUIRES_BLANK_TEMPLATE("requires_blank_template"),
+        REQUIRES_ENCHANTED_ADDITION("requires_enchanted_addition"),
+        SOURCE_HAS_NO_ENCHANTMENTS("source_has_no_enchantments"),
+        SOURCE_HAS_NO_EXTRACTABLE_ENCHANTMENTS("source_has_no_extractable_enchantments"),
+        CURSE_SPLITTING_REQUIRES_SUPER_MODE("curse_splitting_requires_super_mode"),
+        ENCHANTMENT_CANNOT_APPLY("enchantment_cannot_apply"),
+        WOULD_NOT_IMPROVE("would_not_improve");
+
+        private final String key;
+
+        FailureReason(String key) {
+            this.key = key;
+        }
+
+        public Component message(Object... args) {
+            return Component.translatable("create_enchantment_industry.gui.goggles.forging.failure." + key, args);
+        }
     }
 }

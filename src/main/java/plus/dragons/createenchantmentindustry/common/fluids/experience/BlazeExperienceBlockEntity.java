@@ -50,6 +50,7 @@ import plus.dragons.createdragonsplus.common.processing.blaze.BlazeBlockEntity;
 import plus.dragons.createdragonsplus.util.FieldsNullabilityUnknownByDefault;
 import plus.dragons.createenchantmentindustry.common.processing.blaze.BlazeLightningHelper;
 import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
+import plus.dragons.createenchantmentindustry.util.CEILang;
 
 @FieldsNullabilityUnknownByDefault
 public abstract class BlazeExperienceBlockEntity extends BlazeBlockEntity implements IHaveGoggleInformation {
@@ -224,18 +225,21 @@ public abstract class BlazeExperienceBlockEntity extends BlazeBlockEntity implem
         CreateLang.builder().add(CEIFluids.EXPERIENCE.getType().getDescription())
                 .style(ChatFormatting.GRAY)
                 .forGoggles(tooltip, 1);
-        boolean speical = false;
+        boolean special = false;
         for (var tank : tanks.getHandlers()) {
+            CEILang.translate(special ? "gui.goggles.blaze_experience.super_experience" : "gui.goggles.blaze_experience.experience")
+                    .style(ChatFormatting.GRAY)
+                    .forGoggles(tooltip, 1);
             CreateLang.builder()
                     .add(CreateLang.number(tank.getFluid().getAmount())
                             .add(mb)
-                            .style(speical ? ChatFormatting.BLUE : ChatFormatting.GOLD))
+                            .style(special ? ChatFormatting.BLUE : ChatFormatting.GOLD))
                     .text(ChatFormatting.GRAY, " / ")
                     .add(CreateLang.number(tank.getCapacity())
                             .add(mb)
                             .style(ChatFormatting.DARK_GRAY))
-                    .forGoggles(tooltip, 1);
-            speical = true;
+                    .forGoggles(tooltip, 2);
+            special = true;
         }
         return true;
     }

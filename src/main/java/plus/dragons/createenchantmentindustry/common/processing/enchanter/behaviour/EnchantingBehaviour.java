@@ -100,4 +100,8 @@ public class EnchantingBehaviour {
         }
         return experienceCost;
     }
+
+    public List<EnchantmentInstance> getPreviewEnchantments() {
+        return List.copyOf(enchantments);
+    }
 }

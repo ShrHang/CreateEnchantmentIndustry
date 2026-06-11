@@ -58,6 +58,7 @@ import plus.dragons.createdragonsplus.common.fluids.tank.ConfigurableFluidTank;
 import plus.dragons.createdragonsplus.util.FieldsNullabilityUnknownByDefault;
 import plus.dragons.createenchantmentindustry.client.model.CEIPartialModels;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.BlazeExperienceBlockEntity;
+import plus.dragons.createenchantmentindustry.common.processing.blaze.BlazeLightningHelper;
 import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
 import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
 import plus.dragons.createenchantmentindustry.common.registry.CEIStats;
@@ -163,7 +164,7 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
             update = true;
         }
         var strikePos = getStrikePos();
-        boolean cursed = special && !worldPosition.equals(strikePos);
+        boolean cursed = special && BlazeLightningHelper.isStrikeBlocked(worldPosition, strikePos);
         if (this.cursed != cursed) {
             this.cursed = cursed;
             update = true;
