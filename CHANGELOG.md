@@ -4,7 +4,8 @@
 * Add Blaze Composer & Affix Templates for handling apotheosis affixes.
 * Apotheotic Content now has an independent CreativeTab.
 * Improved goggle tooltips of Blaze Forger & Enchanter.
-* Added more customizable options of Blaze Forger & Enchanter
+* Added more customizable options of Blaze Forger & Enchanter.
+* Improved Arm Interaction for Blaze Enchanter and Blaze Forger.
 
 If you are **modpack developer**:
 

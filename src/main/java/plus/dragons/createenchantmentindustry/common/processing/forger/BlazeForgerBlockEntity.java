@@ -45,6 +45,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.LevelAccessor;
@@ -62,6 +63,7 @@ import plus.dragons.createdragonsplus.util.FieldsNullabilityUnknownByDefault;
 import plus.dragons.createenchantmentindustry.client.model.CEIPartialModels;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.BlazeExperienceBlockEntity;
 import plus.dragons.createenchantmentindustry.common.processing.blaze.BlazeLightningHelper;
+import plus.dragons.createenchantmentindustry.common.processing.enchanter.EnchantingTemplateItem;
 import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
 import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
@@ -270,6 +272,139 @@ public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity implement
             }
         }
         return ItemStack.EMPTY;
+    }
+
+    public ItemStack insertAutomationItem(ItemStack stack, boolean simulate) {
+        if (stack.isEmpty() || inventory.hasRemainingOutput() || hasRecoverableAutomationInput())
+            return stack;
+        int slot = getAutomationInsertionSlot(stack);
+        if (slot < 0)
+            return stack;
+        ItemStack original = stack.copy();
+        ItemStack remainder = inventory.insertItem(slot, stack, simulate);
+        if (!simulate && insertedAny(original, remainder)) {
+            inventory.updateResult();
+            notifyUpdate();
+        }
+        return remainder;
+    }
+
+    public ItemStack extractAutomationItem(int slot, int amount, boolean simulate) {
+        if (slot < 0 || amount <= 0)
+            return ItemStack.EMPTY;
+        if (slot < 2)
+            return inventory.extractItem(slot + 2, amount, simulate);
+        int inputSlot = slot - 2;
+        if (inputSlot > 1 || !isRecoverableAutomationInput(inputSlot))
+            return ItemStack.EMPTY;
+        ItemStack extracted = inventory.extractItem(inputSlot, amount, simulate);
+        if (!simulate && !extracted.isEmpty()) {
+            inventory.updateResult();
+            notifyUpdate();
+        }
+        return extracted;
+    }
+
+    public int getAutomationSlotCount() {
+        return 4;
+    }
+
+    private int getAutomationInsertionSlot(ItemStack stack) {
+        return switch (mode) {
+            case MERGE -> firstEmptyInputSlot();
+            case APPLY -> {
+                if (isForgingAddition(stack))
+                    yield inventory.getStackInSlot(1).isEmpty() ? 1 : -1;
+                if (isForgingTarget(stack))
+                    yield inventory.getStackInSlot(0).isEmpty() ? 0 : -1;
+                yield -1;
+            }
+            case SPLIT -> {
+                if (isBlankMatchingTemplate(stack))
+                    yield inventory.getStackInSlot(1).isEmpty() ? 1 : -1;
+                if (isSplittingSource(stack))
+                    yield inventory.getStackInSlot(0).isEmpty() ? 0 : -1;
+                yield -1;
+            }
+        };
+    }
+
+    private int firstEmptyInputSlot() {
+        if (inventory.getStackInSlot(0).isEmpty())
+            return 0;
+        if (inventory.getStackInSlot(1).isEmpty())
+            return 1;
+        return -1;
+    }
+
+    private boolean hasRecoverableAutomationInput() {
+        return isRecoverableAutomationInput(0) || isRecoverableAutomationInput(1);
+    }
+
+    private boolean isRecoverableAutomationInput(int slot) {
+        if (processingTime >= 0 || inventory.hasRemainingOutput())
+            return false;
+        ItemStack stack = inventory.getStackInSlot(slot);
+        if (stack.isEmpty())
+            return false;
+        if (!isExpectedAutomationInput(slot, stack))
+            return true;
+        return !inventory.getStackInSlot(0).isEmpty()
+                && !inventory.getStackInSlot(1).isEmpty()
+                && inventory.getLastResult().status() == BlazeForgerInventory.Status.INVALID;
+    }
+
+    private boolean isExpectedAutomationInput(int slot, ItemStack stack) {
+        return switch (mode) {
+            case MERGE -> isMergeInput(stack);
+            case APPLY -> slot == 0 ? isForgingTarget(stack) : isForgingAddition(stack);
+            case SPLIT -> slot == 0 ? isSplittingSource(stack) : isBlankMatchingTemplate(stack);
+        };
+    }
+
+    private boolean isMergeInput(ItemStack stack) {
+        return !stack.isEmpty() && !isBlankTemplate(stack);
+    }
+
+    private boolean isForgingAddition(ItemStack stack) {
+        if (isFilledMatchingTemplate(stack))
+            return true;
+        return stack.is(Items.ENCHANTED_BOOK) && hasEnchantments(stack);
+    }
+
+    private boolean isForgingTarget(ItemStack stack) {
+        return !stack.isEmpty()
+                && !(stack.getItem() instanceof EnchantingTemplateItem)
+                && !stack.is(Items.ENCHANTED_BOOK);
+    }
+
+    private boolean isSplittingSource(ItemStack stack) {
+        return !stack.isEmpty() && !isBlankTemplate(stack) && hasEnchantments(stack);
+    }
+
+    private boolean isBlankMatchingTemplate(ItemStack stack) {
+        return isTemplateMatchingMode(stack) && !hasEnchantments(stack);
+    }
+
+    private boolean isFilledMatchingTemplate(ItemStack stack) {
+        return isTemplateMatchingMode(stack) && hasEnchantments(stack);
+    }
+
+    private boolean isBlankTemplate(ItemStack stack) {
+        return stack.getItem() instanceof EnchantingTemplateItem && !hasEnchantments(stack);
+    }
+
+    private boolean isTemplateMatchingMode(ItemStack stack) {
+        return stack.getItem() instanceof EnchantingTemplateItem template && template.isSpecial() == special;
+    }
+
+    private static boolean hasEnchantments(ItemStack stack) {
+        return !EnchantmentHelper.getEnchantmentsForCrafting(stack).isEmpty();
+    }
+
+    private static boolean insertedAny(ItemStack original, ItemStack remainder) {
+        return original.getCount() != remainder.getCount()
+                || !ItemStack.isSameItemSameComponents(original, remainder);
     }
 
     @Override

@@ -337,7 +337,7 @@
     "create_enchantment_industry.ponder.blaze_forger.automate.text_1": "Blaze Forger can be automated with Mechanical Arm",
     "create_enchantment_industry.ponder.blaze_forger.automate.text_2": "Mechanical Arm can insert item for forging",
     "create_enchantment_industry.ponder.blaze_forger.automate.text_3": "Mechanical Arm also can feed experience fuel",
-    "create_enchantment_industry.ponder.blaze_forger.automate.text_4": "Mechanical Arm can extract forged item",
+    "create_enchantment_industry.ponder.blaze_forger.automate.text_4": "Mechanical Arm can extract forged item and invalid item",
     "create_enchantment_industry.ponder.blaze_forger.intro.header": "Descubre el Forjador de Blaze",
     "create_enchantment_industry.ponder.blaze_forger.intro.text_1": "Este es el Forjador de Blaze, que funciona como un Yunque",
     "create_enchantment_industry.ponder.blaze_forger.intro.text_2": "Aliméntalo con Experiencia Líquida para ponerlo en marcha",

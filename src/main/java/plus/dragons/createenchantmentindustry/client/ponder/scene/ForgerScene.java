@@ -287,7 +287,6 @@ public class ForgerScene {
                 be -> {
                     be.getSpecialTank().setFluid(new FluidStack(CEIFluids.EXPERIENCE.get(), 4000));
                     be.setMode(BlazeForgerMode.APPLY);
-                    be.insertItem(sword, false);
                 });
         scene.idle(40);
         scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
@@ -391,7 +390,7 @@ public class ForgerScene {
         scene.idle(10);
         scene.world().setKineticSpeed(arm2, 128);
         scene.overlay().showText(60)
-                .text("Mechanical Arm can extract forged item")
+                .text("Mechanical Arm can extract forged item and invalid item")
                 .attachKeyFrame();
         var enchanted = Items.DIAMOND_SWORD.getDefaultInstance();
         CEIPonderScenes.enchant(scene, enchanted, Enchantments.SWEEPING_EDGE, 3);

@@ -53,7 +53,7 @@ public class BlazeForgerArmInteractionPoint extends ArmInteractionPoint {
                 return input;
             }
         } else if (result.getResult() == InteractionResult.PASS) {
-            return forger.insertItem(input, simulate);
+            return forger.insertAutomationItem(input, simulate);
         }
         return input;
     }
@@ -61,15 +61,16 @@ public class BlazeForgerArmInteractionPoint extends ArmInteractionPoint {
     @Override
     public ItemStack extract(ArmBlockEntity armBlockEntity, int slot, int amount, boolean simulate) {
         if (level.getBlockEntity(pos) instanceof BlazeForgerBlockEntity forger) {
-            slot += 2;
-            return forger.inventory.extractItem(slot, amount, simulate);
+            return forger.extractAutomationItem(slot, amount, simulate);
         }
         return ItemStack.EMPTY;
     }
 
     @Override
     public int getSlotCount(ArmBlockEntity armBlockEntity) {
-        return 2;
+        if (level.getBlockEntity(pos) instanceof BlazeForgerBlockEntity forger)
+            return forger.getAutomationSlotCount();
+        return 0;
     }
 
     public static class Type extends ArmInteractionPointType {

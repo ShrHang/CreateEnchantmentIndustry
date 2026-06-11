@@ -36,22 +36,23 @@ public class BlazeComposerArmInteractionPoint extends ArmInteractionPoint {
     @Override
     public ItemStack insert(ArmBlockEntity armBlockEntity, ItemStack stack, boolean simulate) {
         if (level.getBlockEntity(pos) instanceof BlazeComposerBlockEntity composer)
-            return composer.insertItem(stack.copy(), simulate);
+            return composer.insertAutomationItem(stack.copy(), simulate);
         return stack;
     }
 
     @Override
     public ItemStack extract(ArmBlockEntity armBlockEntity, int slot, int amount, boolean simulate) {
         if (level.getBlockEntity(pos) instanceof BlazeComposerBlockEntity composer) {
-            slot += 2;
-            return composer.inventory.extractItem(slot, amount, simulate);
+            return composer.extractAutomationItem(slot, amount, simulate);
         }
         return ItemStack.EMPTY;
     }
 
     @Override
     public int getSlotCount(ArmBlockEntity armBlockEntity) {
-        return 2;
+        if (level.getBlockEntity(pos) instanceof BlazeComposerBlockEntity composer)
+            return composer.getAutomationSlotCount();
+        return 0;
     }
 
     public static class Type extends ArmInteractionPointType {

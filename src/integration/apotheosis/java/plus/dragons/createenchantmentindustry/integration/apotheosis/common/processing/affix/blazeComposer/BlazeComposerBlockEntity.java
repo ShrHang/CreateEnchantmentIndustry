@@ -29,6 +29,8 @@ import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.utility.CreateLang;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
+import dev.shadowsoffire.apotheosis.affix.AffixHelper;
+import dev.shadowsoffire.apotheosis.loot.LootCategory;
 import java.util.List;
 import java.util.function.Consumer;
 import net.createmod.catnip.lang.LangBuilder;
@@ -51,7 +53,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.fluids.FluidActionResult;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import org.jetbrains.annotations.Nullable;
@@ -378,6 +382,139 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
             }
         }
         return ItemStack.EMPTY;
+    }
+
+    public ItemStack insertAutomationItem(ItemStack stack, boolean simulate) {
+        if (stack.isEmpty())
+            return stack;
+        if (FluidUtil.getFluidHandler(stack).isPresent())
+            return emptyFluidContainer(stack, simulate);
+        var original = stack;
+        if (inventory.hasRemainingOutput() || hasRecoverableAutomationInput())
+            return stack;
+        stack = unlockSuper(stack, simulate);
+        if (insertedAny(original, stack))
+            return stack;
+        if (isSuperActivator(stack))
+            return stack;
+        int slot = getAutomationInsertionSlot(stack);
+        if (slot < 0)
+            return stack;
+        ItemStack remainder = inventory.insertItem(slot, stack, simulate);
+        if (!simulate && insertedAny(original, remainder)) {
+            inventory.updateResult();
+            notifyUpdate();
+        }
+        return remainder;
+    }
+
+    public ItemStack extractAutomationItem(int slot, int amount, boolean simulate) {
+        if (slot < 0 || amount <= 0)
+            return ItemStack.EMPTY;
+        if (slot < 2)
+            return inventory.extractItem(slot + 2, amount, simulate);
+        int inputSlot = slot - 2;
+        if (inputSlot > 1 || !isRecoverableAutomationInput(inputSlot))
+            return ItemStack.EMPTY;
+        ItemStack extracted = inventory.extractItem(inputSlot, amount, simulate);
+        if (!simulate && !extracted.isEmpty()) {
+            inventory.updateResult();
+            notifyUpdate();
+        }
+        return extracted;
+    }
+
+    public int getAutomationSlotCount() {
+        return 4;
+    }
+
+    private ItemStack emptyFluidContainer(ItemStack stack, boolean simulate) {
+        FluidActionResult result = FluidUtil.tryEmptyContainer(stack, getFluidHandler(null), Integer.MAX_VALUE, null, !simulate);
+        return result.isSuccess() ? result.getResult() : stack;
+    }
+
+    private int getAutomationInsertionSlot(ItemStack stack) {
+        return switch (mode) {
+            case EXTRACT -> {
+                if (isAffixedEquipment(stack))
+                    yield inventory.getStackInSlot(0).isEmpty() ? 0 : -1;
+                if (isBlankMatchingTemplate(stack))
+                    yield inventory.getStackInSlot(1).isEmpty() ? 1 : -1;
+                yield -1;
+            }
+            case APPLY -> {
+                if (isAffixEquipment(stack))
+                    yield inventory.getStackInSlot(0).isEmpty() ? 0 : -1;
+                if (isFilledMatchingTemplate(stack))
+                    yield inventory.getStackInSlot(1).isEmpty() ? 1 : -1;
+                yield -1;
+            }
+            case MERGE -> {
+                if (!isFilledMatchingTemplate(stack))
+                    yield -1;
+                if (inventory.getStackInSlot(0).isEmpty())
+                    yield 0;
+                if (inventory.getStackInSlot(1).isEmpty())
+                    yield 1;
+                yield -1;
+            }
+        };
+    }
+
+    private boolean hasRecoverableAutomationInput() {
+        return isRecoverableAutomationInput(0) || isRecoverableAutomationInput(1);
+    }
+
+    private boolean isRecoverableAutomationInput(int slot) {
+        if (processingTime >= 0 || inventory.hasRemainingOutput())
+            return false;
+        ItemStack stack = inventory.getStackInSlot(slot);
+        if (stack.isEmpty())
+            return false;
+        if (FluidUtil.getFluidHandler(stack).isPresent() || isSuperActivator(stack))
+            return true;
+        if (!isExpectedAutomationInput(slot, stack))
+            return true;
+        return !inventory.getStackInSlot(0).isEmpty()
+                && !inventory.getStackInSlot(1).isEmpty()
+                && inventory.getLastResult().status() == AffixTemplateOps.Status.INVALID;
+    }
+
+    private boolean isExpectedAutomationInput(int slot, ItemStack stack) {
+        return switch (mode) {
+            case EXTRACT -> slot == 0 ? isAffixedEquipment(stack) : isBlankMatchingTemplate(stack);
+            case APPLY -> slot == 0 ? isAffixEquipment(stack) : isFilledMatchingTemplate(stack);
+            case MERGE -> isFilledMatchingTemplate(stack);
+        };
+    }
+
+    private boolean isBlankMatchingTemplate(ItemStack stack) {
+        AffixTemplateItem template = AffixTemplateOps.getTemplateItem(stack);
+        return template != null
+                && template.tier().matchesSuperMode(isSuper())
+                && AffixTemplateOps.isBlankTemplate(stack);
+    }
+
+    private boolean isFilledMatchingTemplate(ItemStack stack) {
+        AffixTemplateItem template = AffixTemplateOps.getTemplateItem(stack);
+        return template != null
+                && template.tier().matchesSuperMode(isSuper())
+                && AffixTemplateOps.isFilledTemplate(stack);
+    }
+
+    private static boolean isAffixedEquipment(ItemStack stack) {
+        return isAffixEquipment(stack) && !AffixHelper.getAffixes(stack).isEmpty();
+    }
+
+    private static boolean isAffixEquipment(ItemStack stack) {
+        return !stack.isEmpty()
+                && AffixTemplateOps.getTemplateItem(stack) == null
+                && !LootCategory.forItem(stack).isNone();
+    }
+
+    private static boolean insertedAny(ItemStack original, ItemStack remainder) {
+        return original.getCount() != remainder.getCount()
+                || !ItemStack.isSameItemSameComponents(original, remainder);
     }
 
     public boolean isSuperActivator(ItemStack stack) {

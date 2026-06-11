@@ -336,7 +336,7 @@
     "create_enchantment_industry.ponder.blaze_forger.automate.text_1": "烈焰人锻造室可以用动力臂自动化",
     "create_enchantment_industry.ponder.blaze_forger.automate.text_2": "动力臂可以插入需要锻造的物品",
     "create_enchantment_industry.ponder.blaze_forger.automate.text_3": "动力臂也可以喂入经验燃料",
-    "create_enchantment_industry.ponder.blaze_forger.automate.text_4": "动力臂可以取出已锻造物品",
+    "create_enchantment_industry.ponder.blaze_forger.automate.text_4": "动力臂可以取出已锻造物品和无效物品",
     "create_enchantment_industry.ponder.blaze_forger.intro.header": "认识烈焰人锻造室",
     "create_enchantment_industry.ponder.blaze_forger.intro.text_1": "这是一个烈焰人锻造室，它的功能类似于铁砧",
     "create_enchantment_industry.ponder.blaze_forger.intro.text_2": "通入液态经验来激活它",
