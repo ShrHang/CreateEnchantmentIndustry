@@ -46,8 +46,7 @@ public enum AffixTemplateTier implements StringRepresentable {
     }
 
     public boolean canHold(AffixTemplateData data) {
-        return data.size() <= getMaxAffixes()
-                && data.entries().stream().allMatch(entry -> canHold(entry.level()));
+        return data.entries().stream().allMatch(entry -> canHold(entry.level()));
     }
 
     public float getMaxLevel() {
@@ -56,15 +55,6 @@ public enum AffixTemplateTier implements StringRepresentable {
             case BRASS -> config.brassAffixTemplateMaxLevel.getF();
             case CRYSTAL -> config.crystalAffixTemplateMaxLevel.getF();
             case APOTHEOTIC -> config.apotheoticAffixTemplateMaxLevel.getF();
-        };
-    }
-
-    public int getMaxAffixes() {
-        var config = CEIAXConfig.server().affixes();
-        return switch (this) {
-            case BRASS -> config.brassAffixTemplateMaxAffixes.get();
-            case CRYSTAL -> config.crystalAffixTemplateMaxAffixes.get();
-            case APOTHEOTIC -> config.apotheoticAffixTemplateMaxAffixes.get();
         };
     }
 

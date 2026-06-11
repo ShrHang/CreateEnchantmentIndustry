@@ -412,16 +412,18 @@ With default Apotheosis and CEI configs this is `19347 + 2 * 81 = 19509 mB` of A
 
 Affix Templates store one rarity and one or more affix entries. Each entry stores an affix id, level, source loot categories, and whether the entry has gone beyond Apotheosis' native level range. The template rarity is shared by all entries because Apotheosis equipment has one rarity component for all affixes.
 
-Template capacity is controlled by both maximum level and maximum affix count:
+Affix Templates do not have a gameplay affix-count cap, matching Enchanting Templates and their stored enchantments. Template capacity is controlled by per-entry level limits:
 
-* Brass Affix Template: `brassAffixTemplateMaxLevel` and `brassAffixTemplateMaxAffixes`
-* Crystal Affix Template: `crystalAffixTemplateMaxLevel` and `crystalAffixTemplateMaxAffixes`
-* Apotheotic Affix Template: `apotheoticAffixTemplateMaxLevel` and `apotheoticAffixTemplateMaxAffixes`
+* Brass Affix Template: `brassAffixTemplateMaxLevel`
+* Crystal Affix Template: `crystalAffixTemplateMaxLevel`
+* Apotheotic Affix Template: `apotheoticAffixTemplateMaxLevel`
+
+More entries naturally cost more because Blaze Composer prices every entry that is extracted, newly applied, upgraded, or merged. The internal network codec still has a defensive decode limit for corrupted or malicious data; that guard is not a configurable gameplay limit.
 
 Blaze Composer mode behaviour:
 
 * Extract still extracts exactly one affix from equipment into one blank template. If an item has multiple affixes, the first valid affix by id is selected for deterministic automation.
-* Merge takes two filled templates and produces exactly one filled template. The operation must fully merge all entries or it fails without consuming inputs. Different rarities fail. Exceeding the resulting template's affix count or level limits fails. Exclusive-set conflicts fail in Normal Mode; in Hyper Mode they can be allowed by `allowExclusiveSetBypassInHyperMerging` and are charged extra.
+* Merge takes two filled templates and produces exactly one filled template. The operation must fully merge all entries or it fails without consuming inputs. Different rarities fail. Exceeding the resulting template's level limits fails. Exclusive-set conflicts fail in Normal Mode; in Hyper Mode they can be allowed by `allowExclusiveSetBypassInHyperMerging` and are charged extra.
 * Apply consumes the filled template if at least one entry can be added or upgraded on the target equipment. Entries that cannot apply are not returned; the Composer goggle tooltip lists each lost affix and why it was lost. If no entry can be applied or upgraded, the operation fails and consumes nothing. This intentionally matches Blaze Forger's "apply everything that can apply" behaviour.
 
 Blaze Composer does not charge for the full result every time. It charges by operation and by the actual affix value being created, moved, or folded into the result:

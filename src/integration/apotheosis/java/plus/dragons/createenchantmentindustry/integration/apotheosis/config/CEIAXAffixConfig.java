@@ -47,15 +47,6 @@ public class CEIAXAffixConfig extends ConfigBase {
     public final ConfigFloat apotheoticAffixTemplateMaxLevel = f(4.0f, 0.01f,
             "apotheoticAffixTemplateMaxLevel",
             Comments.apotheoticAffixTemplateMaxLevel);
-    public final ConfigInt brassAffixTemplateMaxAffixes = i(1, 1,
-            "brassAffixTemplateMaxAffixes",
-            Comments.brassAffixTemplateMaxAffixes);
-    public final ConfigInt crystalAffixTemplateMaxAffixes = i(3, 1,
-            "crystalAffixTemplateMaxAffixes",
-            Comments.crystalAffixTemplateMaxAffixes);
-    public final ConfigInt apotheoticAffixTemplateMaxAffixes = i(6, 1,
-            "apotheoticAffixTemplateMaxAffixes",
-            Comments.apotheoticAffixTemplateMaxAffixes);
 
     public final ConfigFloat affixTemplateMergeStep = f(0.25f, 0.01f,
             "affixTemplateMergeStep",
@@ -158,9 +149,6 @@ public class CEIAXAffixConfig extends ConfigBase {
         static final String brassAffixTemplateMaxLevel = "The maximum affix level a Brass Affix Template can hold. Default: 1.0, matching standard Apotheosis affixes.";
         static final String crystalAffixTemplateMaxLevel = "The maximum affix level a Crystal Affix Template can hold. Default: 2.0, matching Apotheosis' native upper range.";
         static final String apotheoticAffixTemplateMaxLevel = "The maximum affix level an Apotheotic Affix Template can hold. The implementation supports very high values; this config is the balancing cap.";
-        static final String brassAffixTemplateMaxAffixes = "The maximum number of affixes a Brass Affix Template can store.";
-        static final String crystalAffixTemplateMaxAffixes = "The maximum number of affixes a Crystal Affix Template can store.";
-        static final String apotheoticAffixTemplateMaxAffixes = "The maximum number of affixes an Apotheotic Affix Template can store.";
         static final String affixTemplateMergeStep = "The level gained when merging two templates with the same affix and level.";
         static final String blazeComposerExtractBaseCost = "The base Apotheotic Essence cost (mB) of extracting an affix into a blank template.";
         static final String blazeComposerApplyBaseCost = "The base Apotheotic Essence cost (mB) of applying a filled template to equipment.";

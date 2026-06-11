@@ -298,6 +298,12 @@ public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity implement
             CEILang.builder().add(result.failure().copy()).style(ChatFormatting.YELLOW).forGoggles(tooltip, 1);
         } else if (result.status() == BlazeForgerInventory.Status.INVALID) {
             CEILang.builder().add(result.failure().copy()).style(ChatFormatting.RED).forGoggles(tooltip);
+            if (!result.rejectedEnchantments().isEmpty()) {
+                CEILang.translate("gui.goggles.forging.rejected_enchantments").style(ChatFormatting.YELLOW).forGoggles(tooltip);
+                for (Component description : result.rejectedEnchantments()) {
+                    CEILang.builder().add(description.copy()).style(ChatFormatting.YELLOW).forGoggles(tooltip, 1);
+                }
+            }
         } else if (result.valid()) {
             added = true;
             int cost = result.experienceCost();
@@ -319,6 +325,12 @@ public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity implement
                         CEILang.number(result.repairCostAfter()).style(ChatFormatting.RED))
                         .style(ChatFormatting.RED)
                         .forGoggles(tooltip, 1);
+            }
+            if (!result.lostEnchantments().isEmpty()) {
+                CEILang.translate("gui.goggles.forging.lost_enchantments").style(ChatFormatting.YELLOW).forGoggles(tooltip);
+                for (Component description : result.lostEnchantments()) {
+                    CEILang.builder().add(description.copy()).style(ChatFormatting.YELLOW).forGoggles(tooltip, 1);
+                }
             }
             int experience = special ? getSpecialExperience() : getTotalExperience();
             if (experience < cost) {

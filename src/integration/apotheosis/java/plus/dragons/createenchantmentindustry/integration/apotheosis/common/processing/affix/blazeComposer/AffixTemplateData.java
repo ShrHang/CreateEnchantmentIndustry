@@ -37,6 +37,7 @@ import net.minecraft.resources.ResourceLocation;
 public record AffixTemplateData(
         DynamicHolder<LootRarity> rarity,
         List<AffixTemplateEntry> entries) {
+    // Network decode guard only; gameplay does not cap how many affixes a template may store.
     private static final int MAX_ENTRIES = 256;
 
     public static final Codec<AffixTemplateData> CODEC = RecordCodecBuilder.create(instance -> instance.group(

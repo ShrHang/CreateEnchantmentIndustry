@@ -77,8 +77,6 @@ public class AffixTemplateItem extends Item {
                     .withStyle(ChatFormatting.GRAY));
             tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.level_capacity", AffixTemplateDisplay.formatLevel(tier.getMaxLevel()))
                     .withStyle(ChatFormatting.DARK_GRAY));
-            tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.affix_capacity", tier.getMaxAffixes())
-                    .withStyle(ChatFormatting.DARK_GRAY));
             return;
         }
         if (!data.isBound()) {
@@ -94,8 +92,8 @@ public class AffixTemplateItem extends Item {
         tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.rarity", data.rarity().get().toComponent()
                 .withStyle(style -> style.withColor(rarity.color())))
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.affixes", data.size(), tier.getMaxAffixes())
-                .withStyle(data.size() > tier.getMaxAffixes() ? ChatFormatting.RED : ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.affixes", data.size())
+                .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.level_capacity", AffixTemplateDisplay.formatLevel(tier.getMaxLevel()))
                 .withStyle(ChatFormatting.DARK_GRAY));
         for (AffixTemplateEntry entry : data.entries()) {

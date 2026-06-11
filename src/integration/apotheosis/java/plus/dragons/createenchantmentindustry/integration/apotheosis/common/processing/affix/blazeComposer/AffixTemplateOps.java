@@ -320,8 +320,6 @@ public class AffixTemplateOps {
         List<AffixTemplateEntry> mergedEntries = resultEntries.values().stream()
                 .sorted(Comparator.comparing(AffixTemplateOps::entryId))
                 .toList();
-        if (mergedEntries.size() > tier.getMaxAffixes())
-            return invalid(FailureReason.TEMPLATE_CANNOT_HOLD_AFFIX_COUNT, mergedEntries.size(), tier.getMaxAffixes());
 
         List<ExclusiveConflict> conflicts = findExclusiveConflicts(mergedEntries);
         if (!conflicts.isEmpty()) {
@@ -763,7 +761,6 @@ public class AffixTemplateOps {
         EQUIPMENT_HAS_NO_AFFIX("equipment_has_no_affix"),
         ITEM_HAS_NO_LOOT_CATEGORY("item_has_no_loot_category"),
         TEMPLATE_CANNOT_HOLD_LEVEL("template_cannot_hold_level"),
-        TEMPLATE_CANNOT_HOLD_AFFIX_COUNT("template_cannot_hold_affix_count"),
         AFFIX_DENIED_BY_RULE("affix_denied_by_rule"),
         RARITY_MISMATCH_DISALLOWED("rarity_mismatch_disallowed"),
         TEMPLATE_AFFIXES_INCOMPATIBLE("template_affixes_incompatible"),
