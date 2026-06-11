@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package plus.dragons.createenchantmentindustry.common.processing.enchanting;
+package plus.dragons.createenchantmentindustry.common.processing;
 
 import java.util.List;
 import net.minecraft.core.Holder;

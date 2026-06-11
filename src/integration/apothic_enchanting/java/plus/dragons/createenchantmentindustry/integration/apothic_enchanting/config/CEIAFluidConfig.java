@@ -26,14 +26,6 @@ public class CEIAFluidConfig extends ConfigBase {
             "infuserFluidCapacity",
             Comments.infuserFluidCapacity,
             ConfigAnnotations.RequiresRestart.SERVER.asComment());
-    public final ConfigInt gemFluidCutterCapacity = i(4000, 1000,
-            "gemFluidCutterCapacity",
-            Comments.gemFluidCutterCapacity,
-            ConfigAnnotations.RequiresRestart.SERVER.asComment());
-    public final ConfigInt affixEnhancerFluidCutterCapacity = i(4000, 1000,
-            "affixEnhancerFluidCutterCapacity",
-            Comments.affixEnhancerFluidCutterCapacity,
-            ConfigAnnotations.RequiresRestart.SERVER.asComment());
 
     @Override
     public String getName() {
@@ -42,7 +34,5 @@ public class CEIAFluidConfig extends ConfigBase {
 
     static class Comments {
         static final String infuserFluidCapacity = "The amount of liquid an Infuser can hold (mB).";
-        static final String gemFluidCutterCapacity = "The amount of liquid a Gem Cutter can hold (mB).";
-        static final String affixEnhancerFluidCutterCapacity = "The amount of liquid an Affix Enhancer can hold (mB).";
     }
 }

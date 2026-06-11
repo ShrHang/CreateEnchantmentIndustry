@@ -33,7 +33,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
-import plus.dragons.createenchantmentindustry.common.processing.enchanting.EnchantmentProcessingRules;
+import plus.dragons.createenchantmentindustry.common.processing.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 public class CEIEnchantmentHelper {

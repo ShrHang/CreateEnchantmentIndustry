@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package plus.dragons.createenchantmentindustry.common.processing.blaze;
+package plus.dragons.createenchantmentindustry.util;
 
 import java.util.Optional;
 import net.minecraft.core.BlockPos;

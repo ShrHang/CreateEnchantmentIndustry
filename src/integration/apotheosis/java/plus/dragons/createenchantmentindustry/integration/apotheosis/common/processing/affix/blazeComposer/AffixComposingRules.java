@@ -34,6 +34,7 @@ import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template.AffixTemplateEntry;
 
 public class AffixComposingRules extends SimplePreparableReloadListener<AffixComposingRules.LoadedRules> {
     public static final AffixComposingRules INSTANCE = new AffixComposingRules();

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer;
+package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

@@ -48,7 +48,7 @@ import plus.dragons.createdragonsplus.common.fluids.tank.ConfigurableFluidTank;
 import plus.dragons.createdragonsplus.common.fluids.tank.FluidTankBehaviour;
 import plus.dragons.createdragonsplus.common.processing.blaze.BlazeBlockEntity;
 import plus.dragons.createdragonsplus.util.FieldsNullabilityUnknownByDefault;
-import plus.dragons.createenchantmentindustry.common.processing.blaze.BlazeLightningHelper;
+import plus.dragons.createenchantmentindustry.util.BlazeLightningHelper;
 import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
 import plus.dragons.createenchantmentindustry.util.CEILang;
 

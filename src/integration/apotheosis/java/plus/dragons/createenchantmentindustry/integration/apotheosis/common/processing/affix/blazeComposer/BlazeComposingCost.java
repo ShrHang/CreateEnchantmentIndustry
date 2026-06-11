@@ -23,6 +23,8 @@ import dev.shadowsoffire.apotheosis.loot.LootRarity;
 import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import java.util.List;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.AffixOperationCosts;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template.AffixTemplateEntry;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template.AffixTemplateTier;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
 
 public class BlazeComposingCost {

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer;
+package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template;
 
 import dev.shadowsoffire.apotheosis.Apoth;
 import dev.shadowsoffire.apotheosis.affix.Affix;
@@ -37,6 +37,10 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.AffixComposingRules;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.BlazeComposerMode;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.BlazeComposingCost;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.OverlimitAffixHelper;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXDataComponents;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
 

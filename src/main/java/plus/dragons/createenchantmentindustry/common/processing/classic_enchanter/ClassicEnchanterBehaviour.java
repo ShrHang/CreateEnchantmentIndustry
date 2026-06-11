@@ -42,7 +42,7 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.CEIEnchantmentHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.EnchantingTemplateItem;
-import plus.dragons.createenchantmentindustry.common.processing.enchanting.EnchantmentProcessingRules;
+import plus.dragons.createenchantmentindustry.common.processing.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
 import plus.dragons.createenchantmentindustry.common.registry.CEIItems;
 import plus.dragons.createenchantmentindustry.common.registry.CEIStats;

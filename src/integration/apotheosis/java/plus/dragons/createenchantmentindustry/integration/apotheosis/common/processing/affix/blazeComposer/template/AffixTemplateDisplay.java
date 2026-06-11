@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer;
+package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template;
 
 import dev.shadowsoffire.apotheosis.affix.Affix;
 import dev.shadowsoffire.apotheosis.affix.AffixHelper;

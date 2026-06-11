@@ -34,7 +34,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import plus.dragons.createdragonsplus.common.CDPRegistrate;
-import plus.dragons.createenchantmentindustry.common.processing.enchanting.EnchantmentProcessingRules;
+import plus.dragons.createenchantmentindustry.common.processing.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.registry.*;
 import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;

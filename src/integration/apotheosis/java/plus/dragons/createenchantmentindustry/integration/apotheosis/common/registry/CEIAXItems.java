@@ -29,7 +29,7 @@ import net.minecraft.world.item.Rarity;
 import net.neoforged.neoforge.common.Tags;
 import plus.dragons.createdragonsplus.data.tag.ItemTagRegistry;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
-import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.AffixTemplateItem;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template.AffixTemplateItem;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAXItems {

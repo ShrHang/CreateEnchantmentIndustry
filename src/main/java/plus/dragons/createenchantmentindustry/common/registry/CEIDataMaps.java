@@ -50,7 +50,7 @@ import plus.dragons.createdragonsplus.common.registry.CDPFluids;
 import plus.dragons.createdragonsplus.util.Pairs;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceFuel;
-import plus.dragons.createenchantmentindustry.common.processing.enchanting.EnchantmentProcessingRule;
+import plus.dragons.createenchantmentindustry.common.processing.EnchantmentProcessingRule;
 import plus.dragons.createenchantmentindustry.util.CEIDyeFluids;
 import plus.dragons.createenchantmentindustry.util.CEIIntIntPair;
 
