@@ -153,7 +153,7 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
             seed = compound.getLong("Seed");
         processingTime = compound.getInt("ProcessingTime");
         heldItem = ItemStack.parseOptional(registries, compound.getCompound("HeldItem"));
-        enchanter.update(heldItem);
+        updateEnchanterIfLevelReady();
     }
 
     @Override
@@ -253,6 +253,11 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
     public void nextSeed() {
         assert level != null;
         seed = level.random.nextLong();
+    }
+
+    private void updateEnchanterIfLevelReady() {
+        if (level != null)
+            enchanter.update(heldItem);
     }
 
     public int getMaxEnchantLevel() {
