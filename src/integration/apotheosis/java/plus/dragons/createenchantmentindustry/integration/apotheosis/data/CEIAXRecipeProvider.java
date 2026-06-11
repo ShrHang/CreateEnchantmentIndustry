@@ -136,20 +136,22 @@ public class CEIAXRecipeProvider extends RecipeProvider {
                 .build(output.withConditions(ModIntegration.APOTHEOSIS.condition()));
 
         CreateRecipeBuilders.sequencedAssembly(CRYSTAL_AFFIX_TEMPLATE.getId())
-                .require(BRASS_AFFIX_TEMPLATE)
+                .require(PAPER)
                 .transitionTo(INCOMPLETE_CRYSTAL_AFFIX_TEMPLATE)
                 .addOutput(CRYSTAL_AFFIX_TEMPLATE, 1)
                 .loops(1)
+                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(BRASS_SHEET))
                 .addStep(FillingRecipe::new, rb -> rb.require(CEIAXFluids.CRYSTAL_ESSENCE.get(), 50))
                 .addStep(DeployerApplicationRecipe::new, rb -> rb.require(AMETHYST_SHARD))
                 .addStep(PressingRecipe::new, rb -> rb)
                 .build(output.withConditions(ModIntegration.APOTHEOSIS.condition()));
 
         CreateRecipeBuilders.sequencedAssembly(APOTHEOTIC_AFFIX_TEMPLATE.getId())
-                .require(CRYSTAL_AFFIX_TEMPLATE)
+                .require(PAPER)
                 .transitionTo(INCOMPLETE_APOTHEOTIC_AFFIX_TEMPLATE)
                 .addOutput(APOTHEOTIC_AFFIX_TEMPLATE, 1)
                 .loops(1)
+                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(BRASS_SHEET))
                 .addStep(FillingRecipe::new, rb -> rb.require(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 50))
                 .addStep(DeployerApplicationRecipe::new, rb -> rb.require(Apoth.Items.MYTHIC_MATERIAL.value()))
                 .addStep(PressingRecipe::new, rb -> rb)
