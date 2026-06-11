@@ -65,10 +65,10 @@ public class AffixOperationCosts {
         level = Math.max(0, level);
         float standard = Mth.clamp(level, 0, Affix.STANDARD_MAX_LEVEL);
         float crystal = Math.max(0, Math.min(level, Affix.MAX_LEVEL) - Affix.STANDARD_MAX_LEVEL);
-        float hyper = Math.max(0, level - Affix.MAX_LEVEL);
+        float superSegment = Math.max(0, level - Affix.MAX_LEVEL);
         return standard
                 + crystal * config.blazeComposerCrystalLevelMultiplier.getF()
-                + (float) Math.pow(hyper, config.blazeComposerHyperLevelExponent.getF()) * config.blazeComposerHyperLevelMultiplier.getF();
+                + (float) Math.pow(superSegment, config.blazeComposerSuperLevelExponent.getF()) * config.blazeComposerSuperLevelMultiplier.getF();
     }
 
     public static float typeMultiplier(AffixType type) {

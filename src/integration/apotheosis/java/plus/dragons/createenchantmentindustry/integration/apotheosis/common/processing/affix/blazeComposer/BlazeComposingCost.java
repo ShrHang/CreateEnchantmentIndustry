@@ -65,11 +65,11 @@ public class BlazeComposingCost {
                     standardCost,
                     AffixOperationCosts.apotheosisUpgradeReferenceCost() * config.blazeComposerStandardOperationCostCap.getF());
         }
-        float hyperCost = AffixOperationCosts.apotheosisUpgradeReferenceCost()
+        float superCost = AffixOperationCosts.apotheosisUpgradeReferenceCost()
                 * AffixOperationCosts.weightedLevelSpan(Math.max(fromLevel, Affix.MAX_LEVEL), resultLevel)
                 / stepWeight
                 * operation.multiplier();
-        return standardCost + hyperCost;
+        return standardCost + superCost;
     }
 
     public static int baseCost(BlazeComposerMode mode) {

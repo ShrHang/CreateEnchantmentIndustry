@@ -62,12 +62,12 @@ public enum AffixTemplateTier implements StringRepresentable {
         return ordinal() >= tier.ordinal();
     }
 
-    public boolean isHyper() {
+    public boolean isSuper() {
         return this == APOTHEOTIC;
     }
 
-    public boolean matchesHyperMode(boolean hyper) {
-        return isHyper() == hyper;
+    public boolean matchesSuperMode(boolean superMode) {
+        return isSuper() == superMode;
     }
 
     public static AffixTemplateTier highest(AffixTemplateTier first, AffixTemplateTier second) {

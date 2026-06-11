@@ -74,11 +74,11 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
     private static final int PENALTY_STEPS_PER_LEVEL = 100;
     protected int processingTime = -1;
     protected BlazeComposerMode mode = BlazeComposerMode.EXTRACT;
-    protected boolean hyper;
-    protected boolean hyperUnlocked;
+    protected boolean superMode;
+    protected boolean superUnlocked;
     protected boolean lightningBlocked;
-    protected boolean pendingBlockedHyperOperation;
-    protected float pendingBlockedHyperPenalty;
+    protected boolean pendingBlockedSuperOperation;
+    protected float pendingBlockedSuperPenalty;
     protected final BlazeComposerInventory inventory;
     protected BlazeComposerModeBehaviour modeSelector;
     protected FluidTankBehaviour tanks;
@@ -99,8 +99,8 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         modeSelector = new BlazeComposerModeBehaviour(this, new ModeTransform());
-        tanks = new FluidTankBehaviour(this, List.of(this::createNormalTank, this::createHyperTank), false);
-        fuelHandler = new HyperFuelFluidHandler(this::getNormalTank, this::getHyperTank, this::canFillHyperTank);
+        tanks = new FluidTankBehaviour(this, List.of(this::createNormalTank, this::createSuperTank), false);
+        fuelHandler = new SuperFuelFluidHandler(this::getNormalTank, this::getSuperTank, this::canFillSuperTank);
         advancement = new AdvancementBehaviour(this);
         behaviours.add(modeSelector);
         behaviours.add(tanks);
@@ -112,8 +112,8 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
                 .allowInsertion(fluidStack -> fluidStack.is(CEIAXFluids.APOTHEOTIC_ESSENCE));
     }
 
-    protected ConfigurableFluidTank createHyperTank(Consumer<FluidStack> fluidUpdateCallback) {
-        return new ConfigurableFluidTank(CEIAXConfig.server().affixes().blazeComposerHyperFluidCapacity.get(), fluidUpdateCallback)
+    protected ConfigurableFluidTank createSuperTank(Consumer<FluidStack> fluidUpdateCallback) {
+        return new ConfigurableFluidTank(CEIAXConfig.server().affixes().blazeComposerSuperFluidCapacity.get(), fluidUpdateCallback)
                 .allowInsertion(fluidStack -> fluidStack.is(CEIAXFluids.APOTHEOTIC_ESSENCE));
     }
 
@@ -129,7 +129,7 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
 
     @Override
     public HeatLevel getHeatLevel() {
-        if (getHyperEssence() > 0)
+        if (getSuperEssence() > 0)
             return HeatLevel.SEETHING;
         return getNormalEssence() > 0 ? HeatLevel.KINDLED : HeatLevel.SMOULDERING;
     }
@@ -147,9 +147,9 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         super.write(compound, registries, clientPacket);
         compound.putInt("ProcessingTime", processingTime);
         compound.putInt("Mode", mode.ordinal());
-        compound.putBoolean("HyperUnlocked", hyperUnlocked);
-        compound.putBoolean("PendingBlockedHyperOperation", pendingBlockedHyperOperation);
-        compound.putFloat("PendingBlockedHyperPenalty", pendingBlockedHyperPenalty);
+        compound.putBoolean("SuperUnlocked", superUnlocked);
+        compound.putBoolean("PendingBlockedSuperOperation", pendingBlockedSuperOperation);
+        compound.putFloat("PendingBlockedSuperPenalty", pendingBlockedSuperPenalty);
         compound.put("Inventory", inventory.serializeNBT(registries));
     }
 
@@ -158,9 +158,9 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         super.read(compound, registries, clientPacket);
         processingTime = compound.contains("ProcessingTime") ? compound.getInt("ProcessingTime") : -1;
         mode = BlazeComposerMode.BY_ID.apply(compound.getInt("Mode"));
-        hyperUnlocked = compound.getBoolean("HyperUnlocked");
-        pendingBlockedHyperOperation = compound.getBoolean("PendingBlockedHyperOperation");
-        pendingBlockedHyperPenalty = compound.getFloat("PendingBlockedHyperPenalty");
+        superUnlocked = compound.getBoolean("SuperUnlocked");
+        pendingBlockedSuperOperation = compound.getBoolean("PendingBlockedSuperOperation");
+        pendingBlockedSuperPenalty = compound.getFloat("PendingBlockedSuperPenalty");
         inventory.deserializeNBT(registries, compound.getCompound("Inventory"));
     }
 
@@ -178,24 +178,24 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
             return;
         if (level.isClientSide() && !isVirtual())
             return;
-        boolean hyper = isHyper();
-        if (this.hyper != hyper) {
-            this.hyper = hyper;
-            clearPendingHyperOperation();
+        boolean superMode = isSuper();
+        if (this.superMode != superMode) {
+            this.superMode = superMode;
+            clearPendingSuperOperation();
             processingTime = -1;
             inventory.updateResult();
             notifyUpdate();
         }
-        boolean lightningBlocked = isHyperLightningBlocked();
+        boolean lightningBlocked = isSuperLightningBlocked();
         if (this.lightningBlocked != lightningBlocked) {
             this.lightningBlocked = lightningBlocked;
             inventory.updateResult();
             notifyUpdate();
         }
         int cost = inventory.getEssenceCost();
-        if (cost > 0 && consumeEssence(cost, hyper, true)) {
+        if (cost > 0 && consumeEssence(cost, superMode, true)) {
             if (processingTime < 0) {
-                beginProcessing(hyper);
+                beginProcessing(superMode);
                 processingTime = processingTime();
                 notifyUpdate();
                 return;
@@ -205,97 +205,97 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
                 notifyUpdate();
                 return;
             }
-            if (hyper && !pendingBlockedHyperOperation && level instanceof ServerLevel serverLevel && BlazeLightningHelper.strikeLightning(serverLevel, worldPosition)) {
+            if (superMode && !pendingBlockedSuperOperation && level instanceof ServerLevel serverLevel && BlazeLightningHelper.strikeLightning(serverLevel, worldPosition)) {
                 advancement.trigger(CEIAdvancements.OSHA_VIOLATION.builtinTrigger());
                 serverLevel.destroyBlock(worldPosition, false);
                 serverLevel.setBlockAndUpdate(worldPosition, AllBlocks.LIT_BLAZE_BURNER.getDefaultState());
                 this.setRemoved();
                 return;
             }
-            consumeEssence(cost, hyper, false);
+            consumeEssence(cost, superMode, false);
             processingTime = -1;
             inventory.applyResult();
-            clearPendingHyperOperation();
+            clearPendingSuperOperation();
             advancement.awardStat(CEIAXStats.COMPOSE_AFFIX.get(), 1);
             notifyUpdate();
             level.playSound(null, worldPosition, SoundEvents.EVOKER_CAST_SPELL, SoundSource.BLOCKS, 0.8F, 0.9F + 0.2F * level.random.nextFloat());
             level.playSound(null, worldPosition, SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS, 0.5F, 0.7F + 0.2F * level.random.nextFloat());
         } else if (processingTime != -1) {
             processingTime = -1;
-            clearPendingHyperOperation();
+            clearPendingSuperOperation();
             inventory.updateResult();
             notifyUpdate();
         }
     }
 
-    protected void beginProcessing(boolean hyper) {
-        clearPendingHyperOperation();
-        if (!hyper || !isHyperLightningBlocked())
+    protected void beginProcessing(boolean superMode) {
+        clearPendingSuperOperation();
+        if (!superMode || !isSuperLightningBlocked())
             return;
-        pendingBlockedHyperOperation = true;
-        pendingBlockedHyperPenalty = randomBlockedHyperPenalty();
+        pendingBlockedSuperOperation = true;
+        pendingBlockedSuperPenalty = randomBlockedSuperPenalty();
         inventory.updateResult();
     }
 
-    public void clearPendingHyperOperation() {
-        pendingBlockedHyperOperation = false;
-        pendingBlockedHyperPenalty = 0;
+    public void clearPendingSuperOperation() {
+        pendingBlockedSuperOperation = false;
+        pendingBlockedSuperPenalty = 0;
     }
 
     public void onInputChanged() {
-        clearPendingHyperOperation();
+        clearPendingSuperOperation();
         processingTime = -1;
     }
 
-    public float getBlockedHyperPenalty() {
-        return pendingBlockedHyperOperation && isHyper() ? pendingBlockedHyperPenalty : 0;
+    public float getBlockedSuperPenalty() {
+        return pendingBlockedSuperOperation && isSuper() ? pendingBlockedSuperPenalty : 0;
     }
 
-    public float getBlockedHyperPreviewMinPenalty() {
-        return shouldPreviewBlockedHyperPenalty() ? minBlockedHyperPenalty() : 0;
+    public float getBlockedSuperPreviewMinPenalty() {
+        return shouldPreviewBlockedSuperPenalty() ? minBlockedSuperPenalty() : 0;
     }
 
-    public float getBlockedHyperPreviewMaxPenalty() {
-        return shouldPreviewBlockedHyperPenalty() ? maxBlockedHyperPenalty() : 0;
+    public float getBlockedSuperPreviewMaxPenalty() {
+        return shouldPreviewBlockedSuperPenalty() ? maxBlockedSuperPenalty() : 0;
     }
 
-    public boolean shouldPreviewBlockedHyperPenalty() {
-        return isHyper() && (pendingBlockedHyperOperation || isHyperLightningBlocked());
+    public boolean shouldPreviewBlockedSuperPenalty() {
+        return isSuper() && (pendingBlockedSuperOperation || isSuperLightningBlocked());
     }
 
-    public boolean isHyperLightningBlocked() {
-        if (level == null || !isHyper())
+    public boolean isSuperLightningBlocked() {
+        if (level == null || !isSuper())
             return false;
         return BlazeLightningHelper.isStrikeBlocked(worldPosition, BlazeLightningHelper.getStrikePos(level, worldPosition));
     }
 
-    protected float randomBlockedHyperPenalty() {
+    protected float randomBlockedSuperPenalty() {
         if (level == null)
-            return minBlockedHyperPenalty();
-        int minStep = (int) Math.ceil(minBlockedHyperPenalty() * PENALTY_STEPS_PER_LEVEL);
-        int maxStep = (int) Math.floor(maxBlockedHyperPenalty() * PENALTY_STEPS_PER_LEVEL);
+            return minBlockedSuperPenalty();
+        int minStep = (int) Math.ceil(minBlockedSuperPenalty() * PENALTY_STEPS_PER_LEVEL);
+        int maxStep = (int) Math.floor(maxBlockedSuperPenalty() * PENALTY_STEPS_PER_LEVEL);
         if (maxStep < minStep)
-            return minBlockedHyperPenalty();
+            return minBlockedSuperPenalty();
         return (minStep + level.random.nextInt(maxStep - minStep + 1)) / (float) PENALTY_STEPS_PER_LEVEL;
     }
 
-    protected float minBlockedHyperPenalty() {
+    protected float minBlockedSuperPenalty() {
         var config = CEIAXConfig.server().affixes();
         return Math.max(0, Math.min(
-                config.blazeComposerBlockedHyperMinLevelPenalty.getF(),
-                config.blazeComposerBlockedHyperMaxLevelPenalty.getF()));
+                config.blazeComposerBlockedSuperMinLevelPenalty.getF(),
+                config.blazeComposerBlockedSuperMaxLevelPenalty.getF()));
     }
 
-    protected float maxBlockedHyperPenalty() {
+    protected float maxBlockedSuperPenalty() {
         var config = CEIAXConfig.server().affixes();
         return Math.max(0, Math.max(
-                config.blazeComposerBlockedHyperMinLevelPenalty.getF(),
-                config.blazeComposerBlockedHyperMaxLevelPenalty.getF()));
+                config.blazeComposerBlockedSuperMinLevelPenalty.getF(),
+                config.blazeComposerBlockedSuperMaxLevelPenalty.getF()));
     }
 
-    public boolean consumeEssence(int amount, boolean hyper, boolean simulate) {
+    public boolean consumeEssence(int amount, boolean superMode, boolean simulate) {
         var fluid = new FluidStack(CEIAXFluids.APOTHEOTIC_ESSENCE, amount);
-        var tank = hyper ? getHyperTank() : getNormalTank();
+        var tank = superMode ? getSuperTank() : getNormalTank();
         var drained = tank.drain(fluid, FluidAction.SIMULATE);
         if (drained.getAmount() != amount)
             return false;
@@ -308,7 +308,7 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         return tanks.getHandlers()[0];
     }
 
-    public SmartFluidTank getHyperTank() {
+    public SmartFluidTank getSuperTank() {
         return tanks.getHandlers()[1];
     }
 
@@ -316,20 +316,20 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         return getNormalTank().getFluidAmount();
     }
 
-    public int getHyperEssence() {
-        return getHyperTank().getFluidAmount();
+    public int getSuperEssence() {
+        return getSuperTank().getFluidAmount();
     }
 
-    public boolean isHyper() {
-        return getHyperEssence() > 0;
+    public boolean isSuper() {
+        return getSuperEssence() > 0;
     }
 
-    public boolean isHyperUnlocked() {
-        return hyperUnlocked;
+    public boolean isSuperUnlocked() {
+        return superUnlocked;
     }
 
-    public boolean canFillHyperTank() {
-        return hyperUnlocked || getHyperEssence() > 0;
+    public boolean canFillSuperTank() {
+        return superUnlocked || getSuperEssence() > 0;
     }
 
     public BlazeComposerMode getMode() {
@@ -340,7 +340,7 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         if (this.mode == mode)
             return;
         this.mode = mode;
-        clearPendingHyperOperation();
+        clearPendingSuperOperation();
         processingTime = -1;
         inventory.updateResult();
         notifyUpdate();
@@ -350,10 +350,10 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         var original = stack;
         if (inventory.hasRemainingOutput())
             return stack;
-        stack = unlockHyper(stack, simulate);
+        stack = unlockSuper(stack, simulate);
         if (!ItemStack.isSameItemSameComponents(original, stack) || original.getCount() != stack.getCount())
             return stack;
-        if (isHyperActivator(stack))
+        if (isSuperActivator(stack))
             return stack;
         if (!stack.isEmpty())
             stack = inventory.insertItem(0, stack, simulate);
@@ -380,26 +380,26 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         return ItemStack.EMPTY;
     }
 
-    public boolean isHyperActivator(ItemStack stack) {
-        return stack.is(CEIAXItems.MOD_TAGS.blazeComposerHyperActivators);
+    public boolean isSuperActivator(ItemStack stack) {
+        return stack.is(CEIAXItems.MOD_TAGS.blazeComposerSuperActivators);
     }
 
-    public boolean canUnlockHyper(ItemStack stack) {
+    public boolean canUnlockSuper(ItemStack stack) {
         return !stack.isEmpty()
-                && isHyperActivator(stack)
-                && !hyperUnlocked
-                && getHyperEssence() == 0
+                && isSuperActivator(stack)
+                && !superUnlocked
+                && getSuperEssence() == 0
                 && getNormalEssence() >= getNormalTank().getCapacity();
     }
 
-    public ItemStack unlockHyper(ItemStack stack, boolean simulate) {
-        if (!canUnlockHyper(stack))
+    public ItemStack unlockSuper(ItemStack stack, boolean simulate) {
+        if (!canUnlockSuper(stack))
             return stack;
         ItemStack remainder = stack.copy();
         remainder.shrink(1);
         if (!simulate) {
-            hyperUnlocked = true;
-            clearPendingHyperOperation();
+            superUnlocked = true;
+            clearPendingSuperOperation();
             processingTime = -1;
             inventory.updateResult();
             notifyUpdate();
@@ -421,16 +421,16 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         CreateLang.translate("gui.goggles.fluid_container")
                 .forGoggles(tooltip);
         addTankTooltip(tooltip, mb, "gui.goggles.blaze_composer.normal_essence", getNormalTank(), ChatFormatting.GOLD);
-        addTankTooltip(tooltip, mb, "gui.goggles.blaze_composer.hyper_essence", getHyperTank(), ChatFormatting.BLUE);
-        boolean hyper = isHyper();
-        ChatFormatting essenceStyle = hyper ? ChatFormatting.BLUE : ChatFormatting.GOLD;
+        addTankTooltip(tooltip, mb, "gui.goggles.blaze_composer.super_essence", getSuperTank(), ChatFormatting.BLUE);
+        boolean superMode = isSuper();
+        ChatFormatting essenceStyle = superMode ? ChatFormatting.BLUE : ChatFormatting.GOLD;
         CEILang.translate(
-                "gui.goggles.blaze_composer.hyper_mode",
-                CEILang.translate("gui.blaze_composer.hyper_mode." + (isHyper() ? "hyper" : "normal")).style(essenceStyle))
+                "gui.goggles.blaze_composer.super_mode",
+                CEILang.translate("gui.blaze_composer.super_mode." + (isSuper() ? "super" : "normal")).style(essenceStyle))
                 .forGoggles(tooltip);
         CEILang.translate("gui.goggles.blaze_composer.mode", CEILang.translate("gui.blaze_composer.mode." + mode.getSerializedName()).style(ChatFormatting.AQUA))
                 .forGoggles(tooltip);
-        addHyperLightningTooltip(tooltip);
+        addSuperLightningTooltip(tooltip);
         if (inventory.hasRemainingOutput()) {
             CEILang.translate("gui.goggles.blaze_composer.output_blocked").style(ChatFormatting.YELLOW).forGoggles(tooltip);
             return true;
@@ -460,10 +460,10 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
                     CEILang.builder().add(description.copy()).style(ChatFormatting.YELLOW).forGoggles(tooltip, 1);
                 }
             }
-            int essence = hyper ? getHyperEssence() : getNormalEssence();
+            int essence = superMode ? getSuperEssence() : getNormalEssence();
             if (essence < cost) {
                 CEILang.translate(
-                        hyper ? "gui.goggles.blaze_composer.insufficient_hyper_essence" : "gui.goggles.blaze_composer.insufficient_essence",
+                        superMode ? "gui.goggles.blaze_composer.insufficient_super_essence" : "gui.goggles.blaze_composer.insufficient_essence",
                         CEILang.number(essence).add(mb).style(essenceStyle),
                         CEILang.number(cost).add(mb).style(essenceStyle))
                         .style(ChatFormatting.RED)
@@ -499,12 +499,12 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
                 .forGoggles(tooltip, 1);
     }
 
-    private void addHyperLightningTooltip(List<Component> tooltip) {
-        if (shouldPreviewBlockedHyperPenalty()) {
+    private void addSuperLightningTooltip(List<Component> tooltip) {
+        if (shouldPreviewBlockedSuperPenalty()) {
             CEILang.translate(
-                    "gui.goggles.blaze_composer.blocked_hyper_penalty.range",
-                    AffixTemplateDisplay.formatLevel(minBlockedHyperPenalty()),
-                    AffixTemplateDisplay.formatLevel(maxBlockedHyperPenalty()))
+                    "gui.goggles.blaze_composer.blocked_super_penalty.range",
+                    AffixTemplateDisplay.formatLevel(minBlockedSuperPenalty()),
+                    AffixTemplateDisplay.formatLevel(maxBlockedSuperPenalty()))
                     .style(ChatFormatting.RED)
                     .forGoggles(tooltip);
         }
@@ -518,7 +518,7 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
 
     @Override
     public void clearContent() {
-        clearPendingHyperOperation();
+        clearPendingSuperOperation();
         inventory.clear();
     }
 

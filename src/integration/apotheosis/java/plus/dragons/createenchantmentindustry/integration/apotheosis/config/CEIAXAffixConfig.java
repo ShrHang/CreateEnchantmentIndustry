@@ -25,18 +25,18 @@ public class CEIAXAffixConfig extends ConfigBase {
     public final ConfigInt blazeComposerFluidCapacity = i(8000, 1000,
             "blazeComposerFluidCapacity",
             Comments.blazeComposerFluidCapacity);
-    public final ConfigInt blazeComposerHyperFluidCapacity = i(8000, 1000,
-            "blazeComposerHyperFluidCapacity",
-            Comments.blazeComposerHyperFluidCapacity);
+    public final ConfigInt blazeComposerSuperFluidCapacity = i(8000, 1000,
+            "blazeComposerSuperFluidCapacity",
+            Comments.blazeComposerSuperFluidCapacity);
     public final ConfigInt blazeComposerProcessingTime = i(200, 1,
             "blazeComposerProcessingTime",
             Comments.blazeComposerProcessingTime);
-    public final ConfigFloat blazeComposerBlockedHyperMinLevelPenalty = f(0.05f, 0.0f,
-            "blazeComposerBlockedHyperMinLevelPenalty",
-            Comments.blazeComposerBlockedHyperMinLevelPenalty);
-    public final ConfigFloat blazeComposerBlockedHyperMaxLevelPenalty = f(0.20f, 0.0f,
-            "blazeComposerBlockedHyperMaxLevelPenalty",
-            Comments.blazeComposerBlockedHyperMaxLevelPenalty);
+    public final ConfigFloat blazeComposerBlockedSuperMinLevelPenalty = f(0.05f, 0.0f,
+            "blazeComposerBlockedSuperMinLevelPenalty",
+            Comments.blazeComposerBlockedSuperMinLevelPenalty);
+    public final ConfigFloat blazeComposerBlockedSuperMaxLevelPenalty = f(0.20f, 0.0f,
+            "blazeComposerBlockedSuperMaxLevelPenalty",
+            Comments.blazeComposerBlockedSuperMaxLevelPenalty);
 
     public final ConfigFloat brassAffixTemplateMaxLevel = f(1.0f, 0.01f,
             "brassAffixTemplateMaxLevel",
@@ -80,12 +80,12 @@ public class CEIAXAffixConfig extends ConfigBase {
     public final ConfigFloat blazeComposerCrystalLevelMultiplier = f(1.8f, 0.01f,
             "blazeComposerCrystalLevelMultiplier",
             Comments.blazeComposerCrystalLevelMultiplier);
-    public final ConfigFloat blazeComposerHyperLevelMultiplier = f(3.5f, 0.01f,
-            "blazeComposerHyperLevelMultiplier",
-            Comments.blazeComposerHyperLevelMultiplier);
-    public final ConfigFloat blazeComposerHyperLevelExponent = f(1.65f, 1.0f,
-            "blazeComposerHyperLevelExponent",
-            Comments.blazeComposerHyperLevelExponent);
+    public final ConfigFloat blazeComposerSuperLevelMultiplier = f(3.5f, 0.01f,
+            "blazeComposerSuperLevelMultiplier",
+            Comments.blazeComposerSuperLevelMultiplier);
+    public final ConfigFloat blazeComposerSuperLevelExponent = f(1.65f, 1.0f,
+            "blazeComposerSuperLevelExponent",
+            Comments.blazeComposerSuperLevelExponent);
 
     public final ConfigFloat brassAffixTemplateCostMultiplier = f(1.0f, 0.01f,
             "brassAffixTemplateCostMultiplier",
@@ -116,18 +116,18 @@ public class CEIAXAffixConfig extends ConfigBase {
     public final ConfigBool allowRarityMismatchApplying = b(false,
             "allowRarityMismatchApplying",
             Comments.allowRarityMismatchApplying);
-    public final ConfigBool allowExclusiveSetBypassInHyperApplying = b(false,
-            "allowExclusiveSetBypassInHyperApplying",
-            Comments.allowExclusiveSetBypassInHyperApplying);
-    public final ConfigBool allowExclusiveSetBypassInHyperMerging = b(false,
-            "allowExclusiveSetBypassInHyperMerging",
-            Comments.allowExclusiveSetBypassInHyperMerging);
-    public final ConfigFloat hyperExclusiveSetApplyExtraCostMultiplier = f(1.0f, 0.0f,
-            "hyperExclusiveSetApplyExtraCostMultiplier",
-            Comments.hyperExclusiveSetApplyExtraCostMultiplier);
-    public final ConfigFloat hyperExclusiveSetMergeExtraCostMultiplier = f(1.0f, 0.0f,
-            "hyperExclusiveSetMergeExtraCostMultiplier",
-            Comments.hyperExclusiveSetMergeExtraCostMultiplier);
+    public final ConfigBool allowExclusiveSetBypassInSuperApplying = b(false,
+            "allowExclusiveSetBypassInSuperApplying",
+            Comments.allowExclusiveSetBypassInSuperApplying);
+    public final ConfigBool allowExclusiveSetBypassInSuperMerging = b(false,
+            "allowExclusiveSetBypassInSuperMerging",
+            Comments.allowExclusiveSetBypassInSuperMerging);
+    public final ConfigFloat superExclusiveSetApplyExtraCostMultiplier = f(1.0f, 0.0f,
+            "superExclusiveSetApplyExtraCostMultiplier",
+            Comments.superExclusiveSetApplyExtraCostMultiplier);
+    public final ConfigFloat superExclusiveSetMergeExtraCostMultiplier = f(1.0f, 0.0f,
+            "superExclusiveSetMergeExtraCostMultiplier",
+            Comments.superExclusiveSetMergeExtraCostMultiplier);
     public final ConfigBool allowLevelIndependentAffixUpgrade = b(false,
             "allowLevelIndependentAffixUpgrade",
             Comments.allowLevelIndependentAffixUpgrade);
@@ -140,12 +140,12 @@ public class CEIAXAffixConfig extends ConfigBase {
     static class Comments {
         static final String[] blazeComposerFluidCapacity = { "The amount of Apotheotic Essence (mB) the Blaze Composer can hold.",
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
-        static final String[] blazeComposerHyperFluidCapacity = { "The amount of Hyper Apotheotic Essence (mB) the Blaze Composer can hold after its normal tank is full.",
+        static final String[] blazeComposerSuperFluidCapacity = { "The amount of Super Apotheotic Essence (mB) the Blaze Composer can hold after its normal tank is full.",
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
         static final String[] blazeComposerProcessingTime = { "The processing time, in ticks, of one Blaze Composer operation.",
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
-        static final String blazeComposerBlockedHyperMinLevelPenalty = "The minimum affix level loss applied to a Hyper Blaze Composer operation when its lightning path is blocked. The penalty is rolled when processing starts.";
-        static final String blazeComposerBlockedHyperMaxLevelPenalty = "The maximum affix level loss applied to a Hyper Blaze Composer operation when its lightning path is blocked. The penalty is rolled when processing starts.";
+        static final String blazeComposerBlockedSuperMinLevelPenalty = "The minimum affix level loss applied to a Super Blaze Composer operation when its lightning path is blocked. The penalty is rolled when processing starts.";
+        static final String blazeComposerBlockedSuperMaxLevelPenalty = "The maximum affix level loss applied to a Super Blaze Composer operation when its lightning path is blocked. The penalty is rolled when processing starts.";
         static final String brassAffixTemplateMaxLevel = "The maximum affix level a Brass Affix Template can hold. Default: 1.0, matching standard Apotheosis affixes.";
         static final String crystalAffixTemplateMaxLevel = "The maximum affix level a Crystal Affix Template can hold. Default: 2.0, matching Apotheosis' native upper range.";
         static final String apotheoticAffixTemplateMaxLevel = "The maximum affix level an Apotheotic Affix Template can hold. The implementation supports very high values; this config is the balancing cap.";
@@ -157,10 +157,10 @@ public class CEIAXAffixConfig extends ConfigBase {
         static final String blazeComposerApplyNewTemplateMultiplier = "Multiplier applied to the stored affix value when applying a new filled template to equipment.";
         static final String blazeComposerApplyUpgradeDeltaMultiplier = "Multiplier applied to the added affix value when a filled template upgrades an existing matching affix.";
         static final String blazeComposerMergeUpgradeDeltaMultiplier = "Multiplier applied to the added affix value when merging two matching templates.";
-        static final String blazeComposerStandardOperationCostCap = "Maximum non-Hyper level cost contribution, expressed as a multiplier of the current Apotheosis Augmenting Table upgrade reference cost. Hyper levels above 2.0 are not capped by this setting.";
+        static final String blazeComposerStandardOperationCostCap = "Maximum non-Super level cost contribution, expressed as a multiplier of the current Apotheosis Augmenting Table upgrade reference cost. Super levels above 2.0 are not capped by this setting.";
         static final String blazeComposerCrystalLevelMultiplier = "Multiplier applied to the 1.0-2.0 level segment.";
-        static final String blazeComposerHyperLevelMultiplier = "Multiplier applied to the Hyper level segment above 2.0.";
-        static final String blazeComposerHyperLevelExponent = "Exponential growth applied to Hyper levels above 2.0. Use 1.0 for linear Hyper costs.";
+        static final String blazeComposerSuperLevelMultiplier = "Multiplier applied to the Super level segment above 2.0.";
+        static final String blazeComposerSuperLevelExponent = "Exponential growth applied to Super levels above 2.0. Use 1.0 for linear Super costs.";
         static final String brassAffixTemplateCostMultiplier = "Cost multiplier for operations using Brass Affix Templates.";
         static final String crystalAffixTemplateCostMultiplier = "Cost multiplier for operations using Crystal Affix Templates.";
         static final String apotheoticAffixTemplateCostMultiplier = "Cost multiplier for operations using Apotheotic Affix Templates.";
@@ -170,10 +170,10 @@ public class CEIAXAffixConfig extends ConfigBase {
         static final String affixAugmentorCostMultiplier = "Global multiplier for Affix Augmentor costs after Apotheosis upgrade reference, level delta, and datapack rule multipliers are applied.";
         static final String affixAugmentorMaxLevel = "The maximum affix level the Affix Augmentor can reach. Default: 1.0, matching standard Apotheosis Augmenting Table upgrades.";
         static final String allowRarityMismatchApplying = "Whether filled templates can be applied to equipment with a different existing rarity.";
-        static final String allowExclusiveSetBypassInHyperApplying = "Whether Hyper Mode may ignore Apotheosis affix exclusive sets when applying Apotheotic templates to equipment.";
-        static final String allowExclusiveSetBypassInHyperMerging = "Whether Hyper Mode may ignore Apotheosis affix exclusive sets when merging Apotheotic templates.";
-        static final String hyperExclusiveSetApplyExtraCostMultiplier = "Extra Apotheotic Essence cost for each exclusive-set conflict bypassed while applying in Hyper Mode, expressed as a multiplier of the current Apotheosis upgrade reference cost.";
-        static final String hyperExclusiveSetMergeExtraCostMultiplier = "Extra Apotheotic Essence cost for each exclusive-set conflict bypassed while merging in Hyper Mode, expressed as a multiplier of the current Apotheosis upgrade reference cost.";
+        static final String allowExclusiveSetBypassInSuperApplying = "Whether Super Mode may ignore Apotheosis affix exclusive sets when applying Apotheotic templates to equipment.";
+        static final String allowExclusiveSetBypassInSuperMerging = "Whether Super Mode may ignore Apotheosis affix exclusive sets when merging Apotheotic templates.";
+        static final String superExclusiveSetApplyExtraCostMultiplier = "Extra Apotheotic Essence cost for each exclusive-set conflict bypassed while applying in Super Mode, expressed as a multiplier of the current Apotheosis upgrade reference cost.";
+        static final String superExclusiveSetMergeExtraCostMultiplier = "Extra Apotheotic Essence cost for each exclusive-set conflict bypassed while merging in Super Mode, expressed as a multiplier of the current Apotheosis upgrade reference cost.";
         static final String allowLevelIndependentAffixUpgrade = "Whether affixes marked as level-independent by Apotheosis may be upgraded by template merging.";
     }
 }

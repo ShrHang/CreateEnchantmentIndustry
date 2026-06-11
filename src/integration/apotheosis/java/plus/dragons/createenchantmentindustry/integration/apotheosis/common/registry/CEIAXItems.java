@@ -82,13 +82,13 @@ public class CEIAXItems {
     }
 
     public static class ModTags extends ItemTagRegistry {
-        public final TagKey<Item> blazeComposerHyperActivators = tag("blaze_composer/hyper_activators", "Blaze Composer Hyper Activators");
+        public final TagKey<Item> blazeComposerSuperActivators = tag("blaze_composer/super_activators", "Blaze Composer Super Activators");
 
         public ModTags() {
             super(CEIACommon.ID);
             addOptional(Tags.Items.BUCKETS, CEICommon.asResource("apotheotic_essence_bucket"));
             addOptional(Tags.Items.BUCKETS, CEICommon.asResource("crystal_essence_bucket"));
-            addOptional(blazeComposerHyperActivators, ResourceLocation.fromNamespaceAndPath("apotheosis", "mythic_material"));
+            addOptional(blazeComposerSuperActivators, ResourceLocation.fromNamespaceAndPath("apotheosis", "mythic_material"));
         }
     }
 }

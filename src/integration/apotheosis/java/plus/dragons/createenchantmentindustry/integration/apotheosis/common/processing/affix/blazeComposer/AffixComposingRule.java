@@ -30,7 +30,7 @@ public record AffixComposingRule(
         boolean denyApplying,
         boolean denyMerge,
         boolean denyAugmenting,
-        boolean denyHyper) {
+        boolean denySuper) {
 
     private static final Codec<Float> NON_NEGATIVE_FLOAT = Codec.floatRange(0, Float.MAX_VALUE);
 
@@ -43,10 +43,10 @@ public record AffixComposingRule(
             Codec.BOOL.optionalFieldOf("deny_applying", false).forGetter(AffixComposingRule::denyApplying),
             Codec.BOOL.optionalFieldOf("deny_merge", false).forGetter(AffixComposingRule::denyMerge),
             Codec.BOOL.optionalFieldOf("deny_augmenting", false).forGetter(AffixComposingRule::denyAugmenting),
-            Codec.BOOL.optionalFieldOf("deny_hyper", false).forGetter(AffixComposingRule::denyHyper))
+            Codec.BOOL.optionalFieldOf("deny_super", false).forGetter(AffixComposingRule::denySuper))
             .apply(instance, AffixComposingRule::new));
-    public boolean denies(BlazeComposerMode mode, boolean hyper) {
-        if (hyper && denyHyper)
+    public boolean denies(BlazeComposerMode mode, boolean superMode) {
+        if (superMode && denySuper)
             return true;
         return switch (mode) {
             case EXTRACT -> denyExtraction;

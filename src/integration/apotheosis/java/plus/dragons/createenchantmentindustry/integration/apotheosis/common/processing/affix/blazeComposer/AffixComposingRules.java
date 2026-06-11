@@ -91,11 +91,11 @@ public class AffixComposingRules extends SimplePreparableReloadListener<AffixCom
         return maxLevel;
     }
 
-    public boolean denies(BlazeComposerMode mode, boolean hyper, AffixTemplateEntry entry, DynamicHolder<LootRarity> rarity) {
+    public boolean denies(BlazeComposerMode mode, boolean superMode, AffixTemplateEntry entry, DynamicHolder<LootRarity> rarity) {
         LoadedRules current = rules;
         AffixComposingRule affixRule = current.affix(entry.affix());
         AffixComposingRule rarityRule = current.rarity(rarity.getId());
-        return affixRule.denies(mode, hyper) || rarityRule.denies(mode, hyper);
+        return affixRule.denies(mode, superMode) || rarityRule.denies(mode, superMode);
     }
 
     public boolean deniesAugmenting(AffixInstance instance) {

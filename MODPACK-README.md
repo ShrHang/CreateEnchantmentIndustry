@@ -21,7 +21,7 @@
 * `c:nuggets` includes Nugget of Super Experience.
 * `c:storage_blocks` includes Block of Super Experience.
 * `create:upright_on_belt` includes Cake Base o' Enchanting, Cake o' Enchanting, and optional Apothic Enchanting Infused Breath.
-* `create_enchantment_industry:blaze_composer/hyper_activators` for items that unlock Blaze Composer Hyper charging. The generated tag optionally includes `apotheosis:mythic_material`.
+* `create_enchantment_industry:blaze_composer/super_activators` for items that unlock Blaze Composer Super charging. The generated tag optionally includes `apotheosis:mythic_material`.
 
 ### Block
 
@@ -423,7 +423,7 @@ More entries naturally cost more because Blaze Composer prices every entry that 
 Blaze Composer mode behaviour:
 
 * Extract still extracts exactly one affix from equipment into one blank template. If an item has multiple affixes, the first valid affix by id is selected for deterministic automation.
-* Merge takes two filled templates and produces exactly one filled template. The operation must fully merge all entries or it fails without consuming inputs. Different rarities fail. Exceeding the resulting template's level limits fails. Exclusive-set conflicts fail in Normal Mode; in Hyper Mode they can be allowed by `allowExclusiveSetBypassInHyperMerging` and are charged extra.
+* Merge takes two filled templates and produces exactly one filled template. The operation must fully merge all entries or it fails without consuming inputs. Different rarities fail. Exceeding the resulting template's level limits fails. Exclusive-set conflicts fail in Normal Mode; in Super Mode they can be allowed by `allowExclusiveSetBypassInSuperMerging` and are charged extra.
 * Apply consumes the filled template if at least one entry can be added or upgraded on the target equipment. Entries that cannot apply are not returned; the Composer goggle tooltip lists each lost affix and why it was lost. If no entry can be applied or upgraded, the operation fails and consumes nothing. This intentionally matches Blaze Forger's "apply everything that can apply" behaviour.
 
 Blaze Composer does not charge for the full result every time. It charges by operation and by the actual affix value being created, moved, or folded into the result:
@@ -440,10 +440,10 @@ Level value is weighted before cost is calculated:
 value(level) =
   standard_segment_0_to_1
   + crystal_segment_1_to_2 * blazeComposerCrystalLevelMultiplier
-  + pow(hyper_segment_above_2, blazeComposerHyperLevelExponent) * blazeComposerHyperLevelMultiplier
+  + pow(super_segment_above_2, blazeComposerSuperLevelExponent) * blazeComposerSuperLevelMultiplier
 ```
 
-The standard non-Hyper level contribution is capped by `blazeComposerStandardOperationCostCap` before template tier, affix type, and datapack rule multipliers are applied. Hyper value above level `2.0` is intentionally uncapped by that setting and grows with the Hyper exponent. Final Composer cost is:
+The standard non-Super level contribution is capped by `blazeComposerStandardOperationCostCap` before template tier, affix type, and datapack rule multipliers are applied. Super value above level `2.0` is intentionally uncapped by that setting and grows with the Super exponent. Final Composer cost is:
 
 ```text
 cost =
@@ -457,11 +457,11 @@ cost =
   + exclusive_set_bypass_extra_cost
 ```
 
-Template tier multipliers are `brassAffixTemplateCostMultiplier`, `crystalAffixTemplateCostMultiplier`, and `apotheoticAffixTemplateCostMultiplier`. Affix type multipliers are `statAffixTypeCostMultiplier`, `basicEffectAffixTypeCostMultiplier`, and `abilityAffixTypeCostMultiplier`. Exclusive-set bypass extra costs are configured separately for applying and merging through `hyperExclusiveSetApplyExtraCostMultiplier` and `hyperExclusiveSetMergeExtraCostMultiplier`; each bypassed conflict adds the configured multiplier of the current Apotheosis upgrade reference cost.
+Template tier multipliers are `brassAffixTemplateCostMultiplier`, `crystalAffixTemplateCostMultiplier`, and `apotheoticAffixTemplateCostMultiplier`. Affix type multipliers are `statAffixTypeCostMultiplier`, `basicEffectAffixTypeCostMultiplier`, and `abilityAffixTypeCostMultiplier`. Exclusive-set bypass extra costs are configured separately for applying and merging through `superExclusiveSetApplyExtraCostMultiplier` and `superExclusiveSetMergeExtraCostMultiplier`; each bypassed conflict adds the configured multiplier of the current Apotheosis upgrade reference cost.
 
-Blaze Composer Hyper charging is explicit. Fill the normal Apotheotic Essence tank, use an item from `create_enchantment_industry:blaze_composer/hyper_activators`, then continue supplying Apotheotic Essence to fill the Hyper tank. Normal Mode processes Brass and Crystal Affix Templates; Hyper Mode processes Apotheotic Affix Templates. Hyper fuel draining to empty returns the machine to normal processing, but the Hyper charging activation remains on that Composer.
+Blaze Composer Super charging is explicit. Fill the normal Apotheotic Essence tank, use an item from `create_enchantment_industry:blaze_composer/super_activators`, then continue supplying Apotheotic Essence to fill the Super tank. Normal Mode processes Brass and Crystal Affix Templates; Super Mode processes Apotheotic Affix Templates. Super fuel draining to empty returns the machine to normal processing, but the Super charging activation remains on that Composer.
 
-Config note: the older single-purpose `allowExclusiveSetBypassInHyperMode` option has been split into `allowExclusiveSetBypassInHyperApplying` and `allowExclusiveSetBypassInHyperMerging`. There is no fallback mapping for config files; set the two new options explicitly if your pack wants Hyper Mode to bypass Apotheosis exclusive sets.
+Config note: `allowExclusiveSetBypassInSuperApplying` and `allowExclusiveSetBypassInSuperMerging` control whether Super Mode may bypass Apotheosis exclusive sets. Set both explicitly if your pack wants this behavior.
 
 Affix Augmentor is the automated standard upgrade path. By default, it upgrades only up to level `1.0`, matching Apotheosis' normal Augmenting Table. It chooses the lowest-level valid affix on the item; ties are resolved by affix id for deterministic automation. It skips level-independent affixes and affixes denied by affix composing rules.
 
@@ -517,7 +517,7 @@ Its contents are the rule directly:
   "deny_applying": false,
   "deny_merge": false,
   "deny_augmenting": false,
-  "deny_hyper": false
+  "deny_super": false
 }
 ```
 
@@ -530,7 +530,7 @@ Fields:
 * `max_level` caps template operations for matching affixes or rarities.
 * `deny_extraction`, `deny_applying`, and `deny_merge` disable specific Blaze Composer modes.
 * `deny_augmenting` prevents Affix Augmentor from selecting matching affixes.
-* `deny_hyper` prevents matching affixes from being processed in Blaze Composer Hyper Mode.
+* `deny_super` prevents matching affixes from being processed in Blaze Composer Super Mode.
 * Numeric fields must be finite and non-negative. Omitted fields use neutral defaults.
 
 ## Config
@@ -564,7 +564,7 @@ When the Apotheosis integration is active, its server config provides:
 
 * Gem Cutter conversion ratios for Gem Dust, cracked gems, and Apotheotic Essence into Crystal Essence processing cost
 * Apotheosis Augmenting Table cost conversion ratios used by Affix Augmentor and Blaze Composer
-* Blaze Composer template level limits, template affix-count limits, Hyper fuel capacity, operation multipliers, level segment weights, template/type cost multipliers, and Hyper exclusive-set bypass controls
+* Blaze Composer template level limits, template level limits, Super fuel capacity, operation multipliers, level segment weights, template/type cost multipliers, and Super exclusive-set bypass controls
 * Affix Augmentor max level and global cost multiplier
 * Bulk Salvaging equipped-item destruction probability
 * Infused Dragon's Breath Fragile Fluid Tank impact settings for salvaging dropped items and equipped items

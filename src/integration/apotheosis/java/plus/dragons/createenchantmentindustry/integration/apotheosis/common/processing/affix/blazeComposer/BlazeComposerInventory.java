@@ -106,8 +106,8 @@ public class BlazeComposerInventory extends ItemStackHandler {
     public void applyResult() {
         AffixTemplateOps.Result finalResult = AffixTemplateOps.compose(
                 composer.getMode(),
-                composer.isHyper(),
-                composer.getBlockedHyperPenalty(),
+                composer.isSuper(),
+                composer.getBlockedSuperPenalty(),
                 stacks.get(0),
                 stacks.get(1));
         if (!finalResult.valid())
@@ -123,10 +123,10 @@ public class BlazeComposerInventory extends ItemStackHandler {
         stacks.set(5, ItemStack.EMPTY);
         result = AffixTemplateOps.compose(
                 composer.getMode(),
-                composer.isHyper(),
+                composer.isSuper(),
                 0,
-                composer.getBlockedHyperPreviewMinPenalty(),
-                composer.getBlockedHyperPreviewMaxPenalty(),
+                composer.getBlockedSuperPreviewMinPenalty(),
+                composer.getBlockedSuperPreviewMaxPenalty(),
                 stacks.get(0),
                 stacks.get(1));
         if (!result.valid())

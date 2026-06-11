@@ -25,17 +25,17 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
 
-class HyperFuelFluidHandler implements IFluidHandler {
+class SuperFuelFluidHandler implements IFluidHandler {
     private static final int NORMAL_TANK = 0;
-    private static final int HYPER_TANK = 1;
+    private static final int SUPER_TANK = 1;
     private final Supplier<SmartFluidTank> normalTank;
-    private final Supplier<SmartFluidTank> hyperTank;
-    private final BooleanSupplier canFillHyperTank;
+    private final Supplier<SmartFluidTank> superTank;
+    private final BooleanSupplier canFillSuperTank;
 
-    HyperFuelFluidHandler(Supplier<SmartFluidTank> normalTank, Supplier<SmartFluidTank> hyperTank, BooleanSupplier canFillHyperTank) {
+    SuperFuelFluidHandler(Supplier<SmartFluidTank> normalTank, Supplier<SmartFluidTank> superTank, BooleanSupplier canFillSuperTank) {
         this.normalTank = normalTank;
-        this.hyperTank = hyperTank;
-        this.canFillHyperTank = canFillHyperTank;
+        this.superTank = superTank;
+        this.canFillSuperTank = canFillSuperTank;
     }
 
     @Override
@@ -64,9 +64,9 @@ class HyperFuelFluidHandler implements IFluidHandler {
             return 0;
         int filled = normalTank.get().fill(resource, action);
         int remaining = resource.getAmount() - filled;
-        if (remaining <= 0 || !canFillHyperTank.getAsBoolean())
+        if (remaining <= 0 || !canFillSuperTank.getAsBoolean())
             return filled;
-        return filled + hyperTank.get().fill(resource.copyWithAmount(remaining), action);
+        return filled + superTank.get().fill(resource.copyWithAmount(remaining), action);
     }
 
     @Override
@@ -80,7 +80,7 @@ class HyperFuelFluidHandler implements IFluidHandler {
     public FluidStack drain(int maxDrain, FluidAction action) {
         if (maxDrain <= 0)
             return FluidStack.EMPTY;
-        int drained = hyperTank.get().drain(maxDrain, action).getAmount();
+        int drained = superTank.get().drain(maxDrain, action).getAmount();
         int remaining = maxDrain - drained;
         if (remaining > 0)
             drained += normalTank.get().drain(remaining, action).getAmount();
@@ -90,7 +90,7 @@ class HyperFuelFluidHandler implements IFluidHandler {
     private SmartFluidTank getTank(int tank) {
         return switch (tank) {
             case NORMAL_TANK -> normalTank.get();
-            case HYPER_TANK -> hyperTank.get();
+            case SUPER_TANK -> superTank.get();
             default -> throw new IllegalArgumentException("Tank " + tank + " is not in range [0, 2)");
         };
     }
