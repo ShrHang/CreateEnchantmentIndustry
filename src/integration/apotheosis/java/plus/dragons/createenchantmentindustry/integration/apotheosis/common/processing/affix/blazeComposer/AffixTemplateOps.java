@@ -96,7 +96,13 @@ public class AffixTemplateOps {
         rebuildAffixName(equipment);
         ItemStack template = single(templateInput);
         setTemplateData(template, data);
-        int cost = BlazeComposingCost.calculate(BlazeComposerMode.EXTRACT, templateItem.tier(), data, data.level());
+        int cost = BlazeComposingCost.calculate(
+                BlazeComposingCost.Operation.EXTRACT_SNAPSHOT,
+                BlazeComposerMode.EXTRACT,
+                templateItem.tier(),
+                data,
+                0,
+                data.level());
         return Result.ready(
                 equipment,
                 template,
@@ -166,7 +172,13 @@ public class AffixTemplateOps {
         OverlimitAffixHelper.setAffixLevel(equipment, data.affix(), resultLevel);
         rebuildAffixName(equipment);
         AffixTemplateData costData = data.withLevel(resultLevel);
-        int cost = BlazeComposingCost.calculate(BlazeComposerMode.APPLY, templateItem.tier(), costData, resultLevel);
+        int cost = BlazeComposingCost.calculate(
+                currentLevel <= 0 ? BlazeComposingCost.Operation.APPLY_NEW_TEMPLATE : BlazeComposingCost.Operation.APPLY_UPGRADE_DELTA,
+                BlazeComposerMode.APPLY,
+                templateItem.tier(),
+                costData,
+                currentLevel,
+                resultLevel);
         return Result.ready(
                 equipment,
                 ItemStack.EMPTY,
@@ -225,7 +237,13 @@ public class AffixTemplateOps {
             return invalid(FailureReason.AFFIX_DENIED_BY_RULE, AffixTemplateDisplay.affixName(firstData.toInstance(firstTemplateInput)), modeName(BlazeComposerMode.MERGE));
 
         setTemplateData(result, resultData);
-        int cost = BlazeComposingCost.calculate(BlazeComposerMode.MERGE, tier, resultData, resultLevel);
+        int cost = BlazeComposingCost.calculate(
+                BlazeComposingCost.Operation.MERGE_UPGRADE_DELTA,
+                BlazeComposerMode.MERGE,
+                tier,
+                resultData,
+                highestInputLevel,
+                resultLevel);
         return Result.ready(
                 result,
                 ItemStack.EMPTY,

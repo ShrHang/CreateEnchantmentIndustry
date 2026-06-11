@@ -19,6 +19,7 @@
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer;
 
 import com.simibubi.create.foundation.fluid.SmartFluidTank;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -29,10 +30,12 @@ class HyperFuelFluidHandler implements IFluidHandler {
     private static final int HYPER_TANK = 1;
     private final Supplier<SmartFluidTank> normalTank;
     private final Supplier<SmartFluidTank> hyperTank;
+    private final BooleanSupplier canFillHyperTank;
 
-    HyperFuelFluidHandler(Supplier<SmartFluidTank> normalTank, Supplier<SmartFluidTank> hyperTank) {
+    HyperFuelFluidHandler(Supplier<SmartFluidTank> normalTank, Supplier<SmartFluidTank> hyperTank, BooleanSupplier canFillHyperTank) {
         this.normalTank = normalTank;
         this.hyperTank = hyperTank;
+        this.canFillHyperTank = canFillHyperTank;
     }
 
     @Override
@@ -61,7 +64,7 @@ class HyperFuelFluidHandler implements IFluidHandler {
             return 0;
         int filled = normalTank.get().fill(resource, action);
         int remaining = resource.getAmount() - filled;
-        if (remaining <= 0)
+        if (remaining <= 0 || !canFillHyperTank.getAsBoolean())
             return filled;
         return filled + hyperTank.get().fill(resource.copyWithAmount(remaining), action);
     }

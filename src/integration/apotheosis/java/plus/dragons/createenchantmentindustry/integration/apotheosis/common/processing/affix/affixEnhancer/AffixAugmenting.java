@@ -18,15 +18,56 @@
 
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.affixEnhancer;
 
+import dev.shadowsoffire.apotheosis.affix.AffixHelper;
+import dev.shadowsoffire.apotheosis.affix.AffixInstance;
+import java.util.Comparator;
+import java.util.Optional;
+import net.minecraft.world.item.ItemStack;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.AffixOperationCosts;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.AffixComposingRules;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.OverlimitAffixHelper;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
 
-public class AffixAugmenting { // Make this class for potential future upgrade
-    private static int COST;
-
-    protected static int getCost() {
-        if (COST == 0) {
-            COST = CEIAXConfig.server().fluids().affixAugmentorCostExperienceToApotheoticEssenceTotal.get() + 2 * CEIAXConfig.server().fluids().affixAugmentorCostSigilToApotheoticEssenceRatio.get();
-        }
-        return COST;
+public class AffixAugmenting {
+    public static Optional<Result> getResult(ItemStack stack) {
+        if (stack.isEmpty())
+            return Optional.empty();
+        float maxLevel = CEIAXConfig.server().affixes().affixAugmentorMaxLevel.getF();
+        if (maxLevel <= AffixOperationCosts.EPSILON)
+            return Optional.empty();
+        return AffixHelper.streamAffixes(stack)
+                .filter(AffixInstance::isValid)
+                .filter(instance -> canAugment(instance, maxLevel))
+                .sorted(Comparator
+                        .comparingDouble(AffixInstance::level)
+                        .thenComparing(instance -> instance.affix().getId()))
+                .findFirst()
+                .map(instance -> createResult(instance, maxLevel));
     }
+
+    public static boolean canAugment(ItemStack stack) {
+        return getResult(stack).isPresent();
+    }
+
+    public static ItemStack apply(ItemStack stack, Result result) {
+        ItemStack output = stack.copy();
+        output.setCount(1);
+        OverlimitAffixHelper.setAffixLevel(output, result.target().affix(), result.resultLevel());
+        return output;
+    }
+
+    private static boolean canAugment(AffixInstance instance, float maxLevel) {
+        return !instance.isLevelIndependent()
+                && instance.level() < maxLevel - AffixOperationCosts.EPSILON
+                && !AffixComposingRules.INSTANCE.deniesAugmenting(instance);
+    }
+
+    private static Result createResult(AffixInstance instance, float maxLevel) {
+        float currentLevel = instance.level();
+        float resultLevel = Math.min(currentLevel + CEIAXConfig.server().affixes().affixTemplateMergeStep.getF(), maxLevel);
+        int cost = AffixOperationCosts.augmentingCost(instance, currentLevel, resultLevel);
+        return new Result(instance, currentLevel, resultLevel, cost);
+    }
+
+    public record Result(AffixInstance target, float currentLevel, float resultLevel, int cost) {}
 }

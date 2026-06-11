@@ -40,15 +40,14 @@ public class CEIAXConditionalLootTableProvider implements DataProvider {
     @Override
     public CompletableFuture<?> run(CachedOutput cache) {
         return registries.thenCompose(provider -> CompletableFuture.allOf(
-                selfDrop(cache, provider, CEIAXBlocks.GEM_CUTTER.getId()),
-                selfDrop(cache, provider, CEIAXBlocks.AFFIX_AUGMENTOR.getId()),
-                selfDrop(cache, provider, CEIAXBlocks.BLAZE_COMPOSER.getId())));
+                selfDrop(provider, CEIAXBlocks.GEM_CUTTER.getId()),
+                selfDrop(provider, CEIAXBlocks.AFFIX_AUGMENTOR.getId()),
+                selfDrop(provider, CEIAXBlocks.BLAZE_COMPOSER.getId())));
     }
 
-    private CompletableFuture<?> selfDrop(CachedOutput cache, HolderLookup.Provider provider, ResourceLocation block) {
+    private CompletableFuture<?> selfDrop(HolderLookup.Provider provider, ResourceLocation block) {
         return CEIConditionalLootTables.saveBlock(
                 output,
-                cache,
                 block,
                 CEIConditionalLootTables.selfDroppingBlock(block, provider, ModIntegration.APOTHEOSIS.condition()));
     }

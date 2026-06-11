@@ -21,6 +21,7 @@
 * `c:nuggets` includes Nugget of Super Experience.
 * `c:storage_blocks` includes Block of Super Experience.
 * `create:upright_on_belt` includes Cake Base o' Enchanting, Cake o' Enchanting, and optional Apothic Enchanting Infused Breath.
+* `create_enchantment_industry:blaze_composer/hyper_activators` for items that unlock Blaze Composer Hyper charging. The generated tag optionally includes `apotheosis:mythic_material`.
 
 ### Block
 
@@ -355,6 +356,120 @@ Custom salvaging recipes follow Create standard processing recipe conventions:
 }
 ```
 
+### Blaze Composer and Affix Augmentor Costs
+
+From this section you'll learn how we designed the default cost calculation. If you're a modpack developer this might help you understand how things work (that's why I added this section here).
+
+When Apotheosis integration is active, Blaze Composer and Affix Augmentor use the current Apotheosis Augmenting Table upgrade cost as their shared reference point.
+
+Reference cost:
+
+```text
+apotheosis_upgrade_reference =
+  scaled_experience_essence
+  + AdventureConfig.upgradeSigilCost * affixAugmentorCostSigilToApotheoticEssenceRatio
+```
+
+`scaled_experience_essence` starts from `affixAugmentorCostExperienceToApotheoticEssenceTotal`, then scales it by actual total XP:
+
+```text
+scaled_experience_essence =
+  affixAugmentorCostExperienceToApotheoticEssenceTotal
+  * total_xp_for(Apotheosis upgradeLevelCost)
+  / total_xp_for(225)
+```
+
+With default Apotheosis and CEI configs this is `19347 + 2 * 81 = 19509 mB` of Apotheotic Essence for one standard 0.25 affix upgrade.
+
+Blaze Composer does not charge for the full result every time. It charges by operation and by the actual affix value being created or moved:
+
+* Extract charges from `0 -> extracted level` with `blazeComposerExtractSnapshotMultiplier` because it snapshots an existing affix into a blank template.
+* Applying a template to equipment with no matching affix charges from `0 -> template level` with `blazeComposerApplyNewTemplateMultiplier` because the filled template is consumed.
+* Applying a template to equipment with a matching affix charges only `current level -> result level` with `blazeComposerApplyUpgradeDeltaMultiplier`.
+* Merging two templates charges only `highest input level -> result level` with `blazeComposerMergeUpgradeDeltaMultiplier`.
+
+Level value is weighted before cost is calculated:
+
+```text
+value(level) =
+  standard_segment_0_to_1
+  + crystal_segment_1_to_2 * blazeComposerCrystalLevelMultiplier
+  + pow(hyper_segment_above_2, blazeComposerHyperLevelExponent) * blazeComposerHyperLevelMultiplier
+```
+
+The standard non-Hyper level contribution is capped by `blazeComposerStandardOperationCostCap` before template tier, affix type, and datapack rule multipliers are applied. Hyper value above level `2.0` is intentionally uncapped by that setting and grows with the Hyper exponent. Final Composer cost is:
+
+```text
+cost =
+  (mode_base_cost + operation_level_cost)
+  * template_tier_multiplier
+  * affix_type_multiplier
+  * affix_composing_rule_cost_multiplier
+```
+
+Template tier multipliers are `brassAffixTemplateCostMultiplier`, `crystalAffixTemplateCostMultiplier`, and `apotheoticAffixTemplateCostMultiplier`. Affix type multipliers are `statAffixTypeCostMultiplier`, `basicEffectAffixTypeCostMultiplier`, and `abilityAffixTypeCostMultiplier`.
+
+Blaze Composer Hyper charging is explicit. Fill the normal Apotheotic Essence tank, use an item from `create_enchantment_industry:blaze_composer/hyper_activators`, then continue supplying Apotheotic Essence to fill the Hyper tank. Normal Mode processes Brass and Crystal Affix Templates; Hyper Mode processes Apotheotic Affix Templates. Hyper fuel draining to empty returns the machine to normal processing, but the Hyper charging activation remains on that Composer.
+
+Affix Augmentor is the automated standard upgrade path. By default, it upgrades only up to level `1.0`, matching Apotheosis' normal Augmenting Table. It chooses the lowest-level valid affix on the item; ties are resolved by affix id for deterministic automation. It skips level-independent affixes and affixes denied by affix composing rules.
+
+Affix Augmentor result level:
+
+```text
+result_level = min(current_level + affixTemplateMergeStep, affixAugmentorMaxLevel)
+```
+
+Affix Augmentor cost:
+
+```text
+cost =
+  apotheosis_upgrade_reference
+  * weighted_delta(current_level, result_level) / weighted_delta(0, 0.25)
+  * affixAugmentorCostMultiplier
+  * affix_composing_rule_cost_multiplier
+  * affix_composing_rule_augmenting_cost_multiplier
+```
+
+With default configs and no datapack rule multiplier, a normal 0.25 upgrade costs the same as the current Apotheosis Augmenting Table reference cost.
+
+### Affix Composing Rules
+
+Affix composing rules are datapack JSON files loaded from:
+
+```text
+data/<namespace>/create_enchantment_industry/affix_composing_rules/*.json
+```
+
+A rule can target an affix, a rarity, or both. If both are omitted, the file is ignored. Multiple matching rules merge multiplicatively for costs and with logical OR for deny flags.
+
+Example:
+
+```json
+{
+  "affix": "apotheosis:example_affix",
+  "rarity": "apotheosis:mythic",
+  "rule": {
+    "cost_multiplier": 1.5,
+    "augmenting_cost_multiplier": 0.75,
+    "max_level": 3.0,
+    "deny_extraction": false,
+    "deny_applying": false,
+    "deny_merge": false,
+    "deny_augmenting": false,
+    "deny_hyper": false
+  }
+}
+```
+
+Fields:
+
+* `cost_multiplier` affects Blaze Composer and also acts as the shared base multiplier for Affix Augmentor.
+* `augmenting_cost_multiplier` affects Affix Augmentor only.
+* `max_level` caps template operations for matching affixes or rarities.
+* `deny_extraction`, `deny_applying`, and `deny_merge` disable specific Blaze Composer modes.
+* `deny_augmenting` prevents Affix Augmentor from selecting matching affixes.
+* `deny_hyper` prevents matching affixes from being processed in Blaze Composer Hyper Mode.
+
 ## Config
 
 ### Feature Flags
@@ -385,7 +500,9 @@ When the Apothic Enchanting integration is active, its server config provides:
 When the Apotheosis integration is active, its server config provides:
 
 * Gem Cutter conversion ratios for Gem Dust, cracked gems, and Apotheotic Essence into Crystal Essence processing cost
-* Affix Augmentor conversion ratios for experience and Sigil of Enhancement into Apotheotic Essence processing cost
+* Apotheosis Augmenting Table cost conversion ratios used by Affix Augmentor and Blaze Composer
+* Blaze Composer template limits, Hyper fuel capacity, operation multipliers, level segment weights, and template/type cost multipliers
+* Affix Augmentor max level and global cost multiplier
 * Bulk Salvaging equipped-item destruction probability
 * Infused Dragon's Breath Fragile Fluid Tank impact settings for salvaging dropped items and equipped items
 

@@ -19,6 +19,7 @@
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common;
 
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -76,7 +77,7 @@ public class CEIAXCommon {
             NeoForge.EVENT_BUS.addListener(Common::addReloadListeners);
         }
 
-        @SubscribeEvent
+        @SubscribeEvent(priority = EventPriority.LOWEST)
         public void generate(final GatherDataEvent event) {
             var generator = event.getGenerator();
             var existingFileHelper = event.getExistingFileHelper();

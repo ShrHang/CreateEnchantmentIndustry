@@ -21,6 +21,9 @@ package plus.dragons.createenchantmentindustry.integration.apotheosis.common.reg
 import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon.REGISTRATE;
 
 import com.tterrag.registrate.util.entry.ItemEntry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.neoforged.neoforge.common.Tags;
 import plus.dragons.createdragonsplus.data.tag.ItemTagRegistry;
@@ -57,10 +60,13 @@ public class CEIAXItems {
     }
 
     public static class ModTags extends ItemTagRegistry {
+        public final TagKey<Item> blazeComposerHyperActivators = tag("blaze_composer/hyper_activators", "Blaze Composer Hyper Activators");
+
         public ModTags() {
             super(CEIACommon.ID);
             addOptional(Tags.Items.BUCKETS, CEICommon.asResource("apotheotic_essence_bucket"));
             addOptional(Tags.Items.BUCKETS, CEICommon.asResource("crystal_essence_bucket"));
+            addOptional(blazeComposerHyperActivators, ResourceLocation.fromNamespaceAndPath("apotheosis", "mythic_material"));
         }
     }
 }

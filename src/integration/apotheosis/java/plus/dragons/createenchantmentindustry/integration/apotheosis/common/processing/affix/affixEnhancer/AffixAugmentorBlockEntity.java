@@ -27,12 +27,7 @@ import com.simibubi.create.content.kinetics.belt.behaviour.BeltProcessingBehavio
 import com.simibubi.create.content.kinetics.belt.behaviour.TransportedItemStackHandlerBehaviour;
 import com.simibubi.create.content.kinetics.belt.transport.TransportedItemStack;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
-import dev.shadowsoffire.apotheosis.affix.Affix;
-import dev.shadowsoffire.apotheosis.affix.AffixHelper;
-import dev.shadowsoffire.apotheosis.socket.gem.Purity;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
@@ -53,9 +48,8 @@ import plus.dragons.createenchantmentindustry.integration.apotheosis.common.kine
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
 
 public class AffixAugmentorBlockEntity extends KineticBlockEntity {
-    public static final Map<Purity, Integer> PURITY_COST = new HashMap<>();
     public static final int UNIT_PROCESSING_TIME = 200;
-    public int processingTicks;
+    public int processingTicks = -1;
     public boolean powered;
     public float chargingPercentage;
 
@@ -110,10 +104,9 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity {
                 if (level.isClientSide && processingTicks > 25) {
                     spawnParticles();
                 }
-            } else {
-                if (processingTicks != 0) {
-                    processingTicks = 0;
-                }
+            } else if (processingTicks != -1) {
+                processingTicks = -1;
+                notifyUpdate();
             }
         }
     }
@@ -132,7 +125,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity {
         if (handler.blockEntity.isVirtual())
             return PASS;
 
-        if (!hasUpgradableAffix(transported.stack))
+        if (!AffixAugmenting.canAugment(transported.stack))
             return PASS;
 
         return HOLD;
@@ -150,10 +143,13 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity {
         if (!tank.getFluid().is(CEIAXFluids.APOTHEOTIC_ESSENCE))
             return HOLD;
 
-        if (AffixHelper.streamAffixes(transported.stack).noneMatch(entry -> entry.level() < Affix.STANDARD_MAX_LEVEL))
+        var resultData = AffixAugmenting.getResult(transported.stack);
+        if (resultData.isEmpty()) {
+            processingTicks = -1;
             return PASS;
+        }
 
-        var cost = AffixAugmenting.getCost();
+        int cost = resultData.get().cost();
         if (cost > tank.getCapacity() || cost > tank.getFluidAmount())
             return HOLD;
 
@@ -171,8 +167,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity {
             remains.stack.shrink(1);
             result.stack.setCount(1);
         }
-        var upgradableAffix = AffixHelper.streamAffixes(transported.stack).filter(entry -> entry.level() < Affix.STANDARD_MAX_LEVEL).findFirst();
-        AffixHelper.applyAffix(result.stack, upgradableAffix.get().withNewLevel(Math.min(upgradableAffix.get().level() + 0.25F, Affix.STANDARD_MAX_LEVEL)));
+        result.stack = AffixAugmenting.apply(result.stack, resultData.get());
         handler.handleProcessingOnItem(transported, TransportedItemStackHandlerBehaviour.TransportedResult.convertToAndLeaveHeld(List.of(result), remains));
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.EVOKER_CAST_SPELL, SoundSource.BLOCKS, 0.8f, .9f + 0.2f * level.random.nextFloat());
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.AMETHYST_CLUSTER_STEP, SoundSource.BLOCKS, 0.24f, .72f + 0.2f * level.random.nextFloat());
@@ -206,18 +201,11 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity {
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        processingTicks = tag.getInt("ProcessingTicks");
+        processingTicks = tag.contains("ProcessingTicks") ? tag.getInt("ProcessingTicks") : -1;
         powered = tag.getBoolean("Powered");
     }
 
     public static boolean hasUpgradableAffix(ItemStack stack) {
-        var affix = AffixHelper.getAffixes(stack);
-        if (affix == null)
-            return false;
-
-        if (affix.isEmpty())
-            return false;
-
-        return AffixHelper.streamAffixes(stack).anyMatch(instance -> instance.level() < Affix.STANDARD_MAX_LEVEL);
+        return AffixAugmenting.canAugment(stack);
     }
 }

@@ -61,9 +61,12 @@ public final class CEIConditionalLootTables {
         return function;
     }
 
-    public static CompletableFuture<?> saveBlock(PackOutput output, CachedOutput cache, ResourceLocation block, JsonObject table) {
+    public static CompletableFuture<?> saveBlock(PackOutput output, ResourceLocation block, JsonObject table) {
         var pathProvider = output.createPathProvider(PackOutput.Target.DATA_PACK, "loot_table");
-        return DataProvider.saveStable(cache, table, pathProvider.json(block.withPrefix("blocks/")));
+        // These tables intentionally overwrite Registrate's default block loot tables at
+        // the same path. The shared hash cache can otherwise skip the second write and
+        // leave the unconditional table on disk.
+        return DataProvider.saveStable(CachedOutput.NO_CACHE, table, pathProvider.json(block.withPrefix("blocks/")));
     }
 
     private static JsonArray pools(JsonObject entry) {

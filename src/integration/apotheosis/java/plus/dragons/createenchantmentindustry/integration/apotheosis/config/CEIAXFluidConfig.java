@@ -69,14 +69,14 @@ public class CEIAXFluidConfig extends ConfigBase {
                 "This config determines the conversion ratio of Apotheotic Essence (mB) to Crystal Essence (mB) IN GEM CUTTER ONLY.",
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
 
-        static final String[] affixAugmentorCostExperienceToApotheoticEssenceTotal = { "This setting affects the calculation of operating costs of Affix Augmentor.",
+        static final String[] affixAugmentorCostExperienceToApotheoticEssenceTotal = { "This setting affects the Apotheosis upgrade reference cost used by Affix Augmentor and Blaze Composer.",
                 "In Apotheosis, Affix augmenting requires consuming 225 levels of Player Experience and 2 Sigil of Enhancement.",
-                "Therefore, when calculating processing cost of Affix Augmentor, to ease customization, Experience consumption is replaced by Apotheotic Essence,",
+                "Therefore, when calculating processing cost, to ease customization, Experience consumption is replaced by Apotheotic Essence,",
                 "while Sigil of Enhancement consumption is converted into Apotheotic Essence too.",
-                "This config determines the total Apotheotic Essence (mB) that replaces Experience Cost of Augmenting Table IN AFFIX AUGMENTOR ONLY.",
+                "This config determines the total Apotheotic Essence (mB) that replaces the default 225-level Experience Cost of Augmenting Table upgrades.",
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
-        static final String[] affixAugmentorCostSigilToApotheoticEssenceRatio = { "The config above has explained the calculation mechanism for the operating costs of Affix Augmentor.",
-                "This config determines the conversion ratio of Sigil of Enhancement to Apotheotic Essence (mB) IN AFFIX AUGMENTOR ONLY.",
+        static final String[] affixAugmentorCostSigilToApotheoticEssenceRatio = { "The config above has explained the calculation mechanism for the Apotheosis upgrade reference cost.",
+                "This config determines the conversion ratio of Sigil of Enhancement to Apotheotic Essence (mB).",
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
     }
 }

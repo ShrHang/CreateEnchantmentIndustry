@@ -68,9 +68,10 @@ public class BlazeComposerBlock extends BlazeBlock<BlazeComposerBlockEntity> {
         var blockEntity = getBlockEntity(level, pos);
         if (blockEntity == null)
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        if (FluidUtil.getFluidHandler(stack).isPresent()
-                && FluidUtil.interactWithFluidHandler(player, hand, blockEntity.getFluidHandler(null))) {
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        if (FluidUtil.getFluidHandler(stack).isPresent()) {
+            if (FluidUtil.interactWithFluidHandler(player, hand, blockEntity.getFluidHandler(null)))
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         var remainder = blockEntity.insertItem(stack, false);
         if (ItemStack.isSameItemSameComponents(stack, remainder) && remainder.getCount() == stack.getCount())

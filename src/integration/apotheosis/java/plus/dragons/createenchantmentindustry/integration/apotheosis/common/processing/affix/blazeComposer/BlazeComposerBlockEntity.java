@@ -60,6 +60,7 @@ import plus.dragons.createdragonsplus.common.processing.blaze.BlazeBlockEntity;
 import plus.dragons.createdragonsplus.util.FieldsNullabilityUnknownByDefault;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.client.registry.CEIAXPartialModels;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXStats;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
 import plus.dragons.createenchantmentindustry.util.CEILang;
@@ -69,6 +70,7 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
     protected int processingTime = -1;
     protected BlazeComposerMode mode = BlazeComposerMode.EXTRACT;
     protected boolean hyper;
+    protected boolean hyperUnlocked;
     protected final BlazeComposerInventory inventory;
     protected BlazeComposerModeBehaviour modeSelector;
     protected FluidTankBehaviour tanks;
@@ -90,7 +92,7 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         modeSelector = new BlazeComposerModeBehaviour(this, new ModeTransform());
         tanks = new FluidTankBehaviour(this, List.of(this::createNormalTank, this::createHyperTank), false);
-        fuelHandler = new HyperFuelFluidHandler(this::getNormalTank, this::getHyperTank);
+        fuelHandler = new HyperFuelFluidHandler(this::getNormalTank, this::getHyperTank, this::canFillHyperTank);
         advancement = new AdvancementBehaviour(this);
         behaviours.add(modeSelector);
         behaviours.add(tanks);
@@ -137,14 +139,16 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         super.write(compound, registries, clientPacket);
         compound.putInt("ProcessingTime", processingTime);
         compound.putInt("Mode", mode.ordinal());
+        compound.putBoolean("HyperUnlocked", hyperUnlocked);
         compound.put("Inventory", inventory.serializeNBT(registries));
     }
 
     @Override
     protected void read(CompoundTag compound, Provider registries, boolean clientPacket) {
         super.read(compound, registries, clientPacket);
-        processingTime = compound.getInt("ProcessingTime");
+        processingTime = compound.contains("ProcessingTime") ? compound.getInt("ProcessingTime") : -1;
         mode = BlazeComposerMode.BY_ID.apply(compound.getInt("Mode"));
+        hyperUnlocked = compound.getBoolean("HyperUnlocked");
         inventory.deserializeNBT(registries, compound.getCompound("Inventory"));
     }
 
@@ -225,6 +229,14 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         return getHyperEssence() > 0;
     }
 
+    public boolean isHyperUnlocked() {
+        return hyperUnlocked;
+    }
+
+    public boolean canFillHyperTank() {
+        return hyperUnlocked || getHyperEssence() > 0;
+    }
+
     public BlazeComposerMode getMode() {
         return mode;
     }
@@ -241,6 +253,11 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
     public ItemStack insertItem(ItemStack stack, boolean simulate) {
         var original = stack;
         if (inventory.hasRemainingOutput())
+            return stack;
+        stack = unlockHyper(stack, simulate);
+        if (!ItemStack.isSameItemSameComponents(original, stack) || original.getCount() != stack.getCount())
+            return stack;
+        if (isHyperActivator(stack))
             return stack;
         if (!stack.isEmpty())
             stack = inventory.insertItem(0, stack, simulate);
@@ -267,6 +284,36 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         return ItemStack.EMPTY;
     }
 
+    public boolean isHyperActivator(ItemStack stack) {
+        return stack.is(CEIAXItems.MOD_TAGS.blazeComposerHyperActivators);
+    }
+
+    public boolean canUnlockHyper(ItemStack stack) {
+        return !stack.isEmpty()
+                && isHyperActivator(stack)
+                && !hyperUnlocked
+                && getHyperEssence() == 0
+                && getNormalEssence() >= getNormalTank().getCapacity();
+    }
+
+    public ItemStack unlockHyper(ItemStack stack, boolean simulate) {
+        if (!canUnlockHyper(stack))
+            return stack;
+        ItemStack remainder = stack.copy();
+        remainder.shrink(1);
+        if (!simulate) {
+            hyperUnlocked = true;
+            processingTime = -1;
+            inventory.updateResult();
+            notifyUpdate();
+            if (level != null && !level.isClientSide()) {
+                level.playSound(null, worldPosition, SoundEvents.BLAZE_SHOOT, SoundSource.BLOCKS, 0.35F, 1.6F + 0.2F * level.random.nextFloat());
+                level.playSound(null, worldPosition, SoundEvents.AMETHYST_CLUSTER_STEP, SoundSource.BLOCKS, 0.45F, 0.75F + 0.2F * level.random.nextFloat());
+            }
+        }
+        return remainder;
+    }
+
     protected int processingTime() {
         return CEIAXConfig.server().affixes().blazeComposerProcessingTime.get();
     }
@@ -282,7 +329,7 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         ChatFormatting essenceStyle = hyper ? ChatFormatting.BLUE : ChatFormatting.GOLD;
         CEILang.translate(
                 "gui.goggles.blaze_composer.hyper_mode",
-                CEILang.translate("gui.blaze_composer.hyper_mode." + (hyper ? "hyper" : "normal")).style(essenceStyle))
+                CEILang.translate("gui.blaze_composer.hyper_mode." + (isHyper()? "hyper": "normal")).style(essenceStyle))
                 .forGoggles(tooltip);
         CEILang.translate("gui.goggles.blaze_composer.mode", CEILang.translate("gui.blaze_composer.mode." + mode.getSerializedName()).style(ChatFormatting.AQUA))
                 .forGoggles(tooltip);
@@ -330,9 +377,6 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
 
     private void addModeHelp(List<Component> tooltip) {
         CEILang.translate("gui.goggles.blaze_composer.mode_help." + mode.getSerializedName())
-                .style(ChatFormatting.GRAY)
-                .forGoggles(tooltip, 1);
-        CEILang.translate("gui.goggles.blaze_composer.hyper_mode_help." + (isHyper() ? "hyper" : "normal"))
                 .style(ChatFormatting.GRAY)
                 .forGoggles(tooltip, 1);
         CEILang.translate("gui.goggles.blaze_composer.requires").forGoggles(tooltip);

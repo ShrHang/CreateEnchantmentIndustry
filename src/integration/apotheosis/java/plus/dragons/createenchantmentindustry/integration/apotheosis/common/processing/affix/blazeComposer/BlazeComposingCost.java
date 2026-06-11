@@ -19,28 +19,37 @@
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer;
 
 import dev.shadowsoffire.apotheosis.affix.Affix;
-import dev.shadowsoffire.apotheosis.affix.AffixType;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.AffixOperationCosts;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
 
 public class BlazeComposingCost {
-    public static int calculate(BlazeComposerMode mode, AffixTemplateTier tier, AffixTemplateData data, float resultLevel) {
-        var config = CEIAXConfig.server().affixes();
+    public static int calculate(Operation operation, BlazeComposerMode mode, AffixTemplateTier tier, AffixTemplateData data, float fromLevel, float resultLevel) {
         float cost = baseCost(mode);
-        cost += config.blazeComposerCostPerLevel.get() * levelCostFactor(resultLevel);
+        cost += levelCost(operation, fromLevel, resultLevel);
         cost *= tierMultiplier(tier);
-        cost *= typeMultiplier(data.affix().get().definition().type());
+        cost *= AffixOperationCosts.typeMultiplier(data.affix().get().definition().type());
         cost *= AffixComposingRules.INSTANCE.getCostMultiplier(data);
-        return Math.max(1, Math.round(cost));
+        return AffixOperationCosts.roundCost(cost);
     }
 
-    public static float levelCostFactor(float level) {
+    public static float levelCost(Operation operation, float fromLevel, float resultLevel) {
         var config = CEIAXConfig.server().affixes();
-        float standard = Math.min(level, Affix.STANDARD_MAX_LEVEL);
-        float crystal = Math.max(0, Math.min(level, Affix.MAX_LEVEL) - Affix.STANDARD_MAX_LEVEL);
-        float hyper = Math.max(0, level - Affix.MAX_LEVEL);
-        return standard
-                + crystal * config.blazeComposerCrystalLevelMultiplier.getF()
-                + (float) Math.pow(hyper, config.blazeComposerHyperLevelExponent.getF()) * config.blazeComposerHyperLevelMultiplier.getF();
+        float stepWeight = Math.max(AffixOperationCosts.EPSILON, AffixOperationCosts.weightedLevelSpan(0, AffixOperationCosts.APOTHEOSIS_AUGMENTING_STEP));
+        float standardEnd = Math.min(resultLevel, Affix.MAX_LEVEL);
+        float standardCost = AffixOperationCosts.apotheosisUpgradeReferenceCost()
+                * AffixOperationCosts.weightedLevelSpan(fromLevel, standardEnd)
+                / stepWeight
+                * operation.multiplier();
+        if (standardCost > 0) {
+            standardCost = Math.min(
+                    standardCost,
+                    AffixOperationCosts.apotheosisUpgradeReferenceCost() * config.blazeComposerStandardOperationCostCap.getF());
+        }
+        float hyperCost = AffixOperationCosts.apotheosisUpgradeReferenceCost()
+                * AffixOperationCosts.weightedLevelSpan(Math.max(fromLevel, Affix.MAX_LEVEL), resultLevel)
+                / stepWeight
+                * operation.multiplier();
+        return standardCost + hyperCost;
     }
 
     public static int baseCost(BlazeComposerMode mode) {
@@ -61,12 +70,20 @@ public class BlazeComposingCost {
         };
     }
 
-    public static float typeMultiplier(AffixType type) {
-        var config = CEIAXConfig.server().affixes();
-        return switch (type) {
-            case STAT -> config.statAffixTypeCostMultiplier.getF();
-            case BASIC_EFFECT -> config.basicEffectAffixTypeCostMultiplier.getF();
-            case ABILITY -> config.abilityAffixTypeCostMultiplier.getF();
-        };
+    public enum Operation {
+        EXTRACT_SNAPSHOT,
+        APPLY_NEW_TEMPLATE,
+        APPLY_UPGRADE_DELTA,
+        MERGE_UPGRADE_DELTA;
+
+        public float multiplier() {
+            var config = CEIAXConfig.server().affixes();
+            return switch (this) {
+                case EXTRACT_SNAPSHOT -> config.blazeComposerExtractSnapshotMultiplier.getF();
+                case APPLY_NEW_TEMPLATE -> config.blazeComposerApplyNewTemplateMultiplier.getF();
+                case APPLY_UPGRADE_DELTA -> config.blazeComposerApplyUpgradeDeltaMultiplier.getF();
+                case MERGE_UPGRADE_DELTA -> config.blazeComposerMergeUpgradeDeltaMultiplier.getF();
+            };
+        }
     }
 }

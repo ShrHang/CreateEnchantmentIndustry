@@ -56,9 +56,21 @@ public class CEIAXAffixConfig extends ConfigBase {
             "blazeComposerMergeBaseCost",
             Comments.blazeComposerMergeBaseCost);
 
-    public final ConfigInt blazeComposerCostPerLevel = i(600, 1,
-            "blazeComposerCostPerLevel",
-            Comments.blazeComposerCostPerLevel);
+    public final ConfigFloat blazeComposerExtractSnapshotMultiplier = f(0.08f, 0.0f,
+            "blazeComposerExtractSnapshotMultiplier",
+            Comments.blazeComposerExtractSnapshotMultiplier);
+    public final ConfigFloat blazeComposerApplyNewTemplateMultiplier = f(0.15f, 0.0f,
+            "blazeComposerApplyNewTemplateMultiplier",
+            Comments.blazeComposerApplyNewTemplateMultiplier);
+    public final ConfigFloat blazeComposerApplyUpgradeDeltaMultiplier = f(0.55f, 0.0f,
+            "blazeComposerApplyUpgradeDeltaMultiplier",
+            Comments.blazeComposerApplyUpgradeDeltaMultiplier);
+    public final ConfigFloat blazeComposerMergeUpgradeDeltaMultiplier = f(0.35f, 0.0f,
+            "blazeComposerMergeUpgradeDeltaMultiplier",
+            Comments.blazeComposerMergeUpgradeDeltaMultiplier);
+    public final ConfigFloat blazeComposerStandardOperationCostCap = f(1.0f, 0.0f,
+            "blazeComposerStandardOperationCostCap",
+            Comments.blazeComposerStandardOperationCostCap);
     public final ConfigFloat blazeComposerCrystalLevelMultiplier = f(1.8f, 0.01f,
             "blazeComposerCrystalLevelMultiplier",
             Comments.blazeComposerCrystalLevelMultiplier);
@@ -87,6 +99,13 @@ public class CEIAXAffixConfig extends ConfigBase {
     public final ConfigFloat abilityAffixTypeCostMultiplier = f(1.6f, 0.01f,
             "abilityAffixTypeCostMultiplier",
             Comments.abilityAffixTypeCostMultiplier);
+
+    public final ConfigFloat affixAugmentorCostMultiplier = f(1.0f, 0.0f,
+            "affixAugmentorCostMultiplier",
+            Comments.affixAugmentorCostMultiplier);
+    public final ConfigFloat affixAugmentorMaxLevel = f(1.0f, 0.01f,
+            "affixAugmentorMaxLevel",
+            Comments.affixAugmentorMaxLevel);
 
     public final ConfigBool allowRarityMismatchApplying = b(false,
             "allowRarityMismatchApplying",
@@ -117,7 +136,11 @@ public class CEIAXAffixConfig extends ConfigBase {
         static final String blazeComposerExtractBaseCost = "The base Apotheotic Essence cost (mB) of extracting an affix into a blank template.";
         static final String blazeComposerApplyBaseCost = "The base Apotheotic Essence cost (mB) of applying a filled template to equipment.";
         static final String blazeComposerMergeBaseCost = "The base Apotheotic Essence cost (mB) of merging two matching affix templates.";
-        static final String blazeComposerCostPerLevel = "The added Apotheotic Essence cost (mB) per effective affix level.";
+        static final String blazeComposerExtractSnapshotMultiplier = "Multiplier applied to the stored affix value when extracting an affix into a blank template.";
+        static final String blazeComposerApplyNewTemplateMultiplier = "Multiplier applied to the stored affix value when applying a new filled template to equipment.";
+        static final String blazeComposerApplyUpgradeDeltaMultiplier = "Multiplier applied to the added affix value when a filled template upgrades an existing matching affix.";
+        static final String blazeComposerMergeUpgradeDeltaMultiplier = "Multiplier applied to the added affix value when merging two matching templates.";
+        static final String blazeComposerStandardOperationCostCap = "Maximum non-Hyper level cost contribution, expressed as a multiplier of the current Apotheosis Augmenting Table upgrade reference cost. Hyper levels above 2.0 are not capped by this setting.";
         static final String blazeComposerCrystalLevelMultiplier = "Multiplier applied to the 1.0-2.0 level segment.";
         static final String blazeComposerHyperLevelMultiplier = "Multiplier applied to the Hyper level segment above 2.0.";
         static final String blazeComposerHyperLevelExponent = "Exponential growth applied to Hyper levels above 2.0. Use 1.0 for linear Hyper costs.";
@@ -127,6 +150,8 @@ public class CEIAXAffixConfig extends ConfigBase {
         static final String statAffixTypeCostMultiplier = "Cost multiplier for STAT affixes.";
         static final String basicEffectAffixTypeCostMultiplier = "Cost multiplier for BASIC_EFFECT affixes.";
         static final String abilityAffixTypeCostMultiplier = "Cost multiplier for ABILITY affixes.";
+        static final String affixAugmentorCostMultiplier = "Global multiplier for Affix Augmentor costs after Apotheosis upgrade reference, level delta, and datapack rule multipliers are applied.";
+        static final String affixAugmentorMaxLevel = "The maximum affix level the Affix Augmentor can reach. Default: 1.0, matching standard Apotheosis Augmenting Table upgrades.";
         static final String allowRarityMismatchApplying = "Whether filled templates can be applied to equipment with a different existing rarity.";
         static final String allowExclusiveSetBypassInHyperMode = "Whether Hyper Mode may ignore Apotheosis affix exclusive sets when applying Apotheotic templates.";
         static final String allowLevelIndependentAffixUpgrade = "Whether affixes marked as level-independent by Apotheosis may be upgraded by template merging.";

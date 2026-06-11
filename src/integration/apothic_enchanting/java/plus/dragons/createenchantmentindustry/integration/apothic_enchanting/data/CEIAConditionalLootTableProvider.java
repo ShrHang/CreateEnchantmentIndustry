@@ -42,21 +42,20 @@ public class CEIAConditionalLootTableProvider implements DataProvider {
     @Override
     public CompletableFuture<?> run(CachedOutput cache) {
         return registries.thenCompose(provider -> CompletableFuture.allOf(
-                selfDrop(cache, provider, CEIABlocks.INFUSER.getId()),
-                selfDrop(cache, provider, CEIABlocks.BRASS_BOOKSHELF.getId()),
-                selfDrop(cache, provider, CEIABlocks.CREATIVE_BOOKSHELF.getId()),
-                enderWovenBag(cache, provider)));
+                selfDrop(provider, CEIABlocks.INFUSER.getId()),
+                selfDrop(provider, CEIABlocks.BRASS_BOOKSHELF.getId()),
+                selfDrop(provider, CEIABlocks.CREATIVE_BOOKSHELF.getId()),
+                enderWovenBag(provider)));
     }
 
-    private CompletableFuture<?> selfDrop(CachedOutput cache, HolderLookup.Provider provider, ResourceLocation block) {
+    private CompletableFuture<?> selfDrop(HolderLookup.Provider provider, ResourceLocation block) {
         return CEIConditionalLootTables.saveBlock(
                 output,
-                cache,
                 block,
                 CEIConditionalLootTables.selfDroppingBlock(block, provider, ModIntegration.APOTHIC_ENCHANTING.condition()));
     }
 
-    private CompletableFuture<?> enderWovenBag(CachedOutput cache, HolderLookup.Provider provider) {
+    private CompletableFuture<?> enderWovenBag(HolderLookup.Provider provider) {
         var block = CEIABlocks.ENDER_WOVEN_BAG.getId();
         var entry = CEIConditionalLootTables.itemEntry(block);
         var functions = new JsonArray();
@@ -64,7 +63,6 @@ public class CEIAConditionalLootTableProvider implements DataProvider {
         entry.add("functions", functions);
         return CEIConditionalLootTables.saveBlock(
                 output,
-                cache,
                 block,
                 CEIConditionalLootTables.block(block, entry, provider, ModIntegration.APOTHIC_ENCHANTING.condition()));
     }

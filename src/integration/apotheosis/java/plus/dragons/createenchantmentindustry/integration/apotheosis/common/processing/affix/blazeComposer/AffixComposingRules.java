@@ -24,6 +24,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.shadowsoffire.apotheosis.affix.Affix;
+import dev.shadowsoffire.apotheosis.affix.AffixInstance;
 import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import java.util.HashMap;
 import java.util.Map;
@@ -71,6 +72,15 @@ public class AffixComposingRules extends SimpleJsonResourceReloadListener {
                 * getRarityRule(data.rarity().getId()).costMultiplier();
     }
 
+    public float getAugmentingCostMultiplier(AffixInstance instance) {
+        Rule affixRule = getAffixRule(instance.affix());
+        Rule rarityRule = getRarityRule(instance.rarity().getId());
+        return affixRule.costMultiplier()
+                * affixRule.augmentingCostMultiplier()
+                * rarityRule.costMultiplier()
+                * rarityRule.augmentingCostMultiplier();
+    }
+
     public float getMaxLevel(AffixTemplateData data, float templateMaxLevel) {
         float maxLevel = templateMaxLevel;
         Optional<Float> affixMax = getAffixRule(data.affix()).maxLevel();
@@ -86,6 +96,12 @@ public class AffixComposingRules extends SimpleJsonResourceReloadListener {
         Rule affixRule = getAffixRule(data.affix());
         Rule rarityRule = getRarityRule(data.rarity().getId());
         return affixRule.denies(mode, hyper) || rarityRule.denies(mode, hyper);
+    }
+
+    public boolean deniesAugmenting(AffixInstance instance) {
+        Rule affixRule = getAffixRule(instance.affix());
+        Rule rarityRule = getRarityRule(instance.rarity().getId());
+        return affixRule.denyAugmenting() || rarityRule.denyAugmenting();
     }
 
     private Rule getAffixRule(DynamicHolder<Affix> affix) {
@@ -109,28 +125,34 @@ public class AffixComposingRules extends SimpleJsonResourceReloadListener {
 
     public record Rule(
             float costMultiplier,
+            float augmentingCostMultiplier,
             Optional<Float> maxLevel,
             boolean denyExtraction,
             boolean denyApplying,
             boolean denyMerge,
+            boolean denyAugmenting,
             boolean denyHyper) {
 
-        public static final Rule DEFAULT = new Rule(1, Optional.empty(), false, false, false, false);
+        public static final Rule DEFAULT = new Rule(1, 1, Optional.empty(), false, false, false, false, false);
         public static final Codec<Rule> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.FLOAT.optionalFieldOf("cost_multiplier", 1F).forGetter(Rule::costMultiplier),
+                Codec.FLOAT.optionalFieldOf("augmenting_cost_multiplier", 1F).forGetter(Rule::augmentingCostMultiplier),
                 Codec.FLOAT.optionalFieldOf("max_level").forGetter(Rule::maxLevel),
                 Codec.BOOL.optionalFieldOf("deny_extraction", false).forGetter(Rule::denyExtraction),
                 Codec.BOOL.optionalFieldOf("deny_applying", false).forGetter(Rule::denyApplying),
                 Codec.BOOL.optionalFieldOf("deny_merge", false).forGetter(Rule::denyMerge),
+                Codec.BOOL.optionalFieldOf("deny_augmenting", false).forGetter(Rule::denyAugmenting),
                 Codec.BOOL.optionalFieldOf("deny_hyper", false).forGetter(Rule::denyHyper))
                 .apply(instance, Rule::new));
         public Rule merge(Rule other) {
             return new Rule(
                     costMultiplier * other.costMultiplier,
+                    augmentingCostMultiplier * other.augmentingCostMultiplier,
                     other.maxLevel.or(() -> maxLevel),
                     denyExtraction || other.denyExtraction,
                     denyApplying || other.denyApplying,
                     denyMerge || other.denyMerge,
+                    denyAugmenting || other.denyAugmenting,
                     denyHyper || other.denyHyper);
         }
 

@@ -20,6 +20,7 @@ package plus.dragons.createenchantmentindustry.integration.apothic_enchanting.da
 
 import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon.REGISTRATE;
 
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -37,7 +38,7 @@ public class CEIAData {
         modBus.register(this);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void generate(final GatherDataEvent event) {
         var generator = event.getGenerator();
         var existingFileHelper = event.getExistingFileHelper();
