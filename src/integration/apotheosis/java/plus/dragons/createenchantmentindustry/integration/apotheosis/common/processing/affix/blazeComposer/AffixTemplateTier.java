@@ -69,8 +69,4 @@ public enum AffixTemplateTier implements StringRepresentable {
     public boolean matchesSuperMode(boolean superMode) {
         return isSuper() == superMode;
     }
-
-    public static AffixTemplateTier highest(AffixTemplateTier first, AffixTemplateTier second) {
-        return first.ordinal() >= second.ordinal() ? first : second;
-    }
 }

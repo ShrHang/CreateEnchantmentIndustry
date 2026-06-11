@@ -266,11 +266,13 @@ public class AffixTemplateOps {
         Result secondDataFailure = validateTemplateData(secondData);
         if (secondDataFailure != null)
             return secondDataFailure;
+        if (firstItem.tier() != secondItem.tier())
+            return invalid(FailureReason.TEMPLATE_TIER_MISMATCH);
         if (!firstData.rarity().equals(secondData.rarity()))
             return invalid(FailureReason.TEMPLATE_RARITY_MISMATCH, AffixTemplateDisplay.rarityName(firstData), AffixTemplateDisplay.rarityName(secondData));
 
-        AffixTemplateTier tier = AffixTemplateTier.highest(firstItem.tier(), secondItem.tier());
-        ItemStack result = single(firstItem.tier().isAtLeast(secondItem.tier()) ? firstTemplateInput : secondTemplateInput);
+        AffixTemplateTier tier = firstItem.tier();
+        ItemStack result = single(firstTemplateInput);
         Result ruleFailure = validateMergingRules(superMode, tier, firstData, secondData, result);
         if (ruleFailure != null)
             return ruleFailure;
@@ -764,6 +766,7 @@ public class AffixTemplateOps {
         AFFIX_DENIED_BY_RULE("affix_denied_by_rule"),
         RARITY_MISMATCH_DISALLOWED("rarity_mismatch_disallowed"),
         TEMPLATE_AFFIXES_INCOMPATIBLE("template_affixes_incompatible"),
+        TEMPLATE_TIER_MISMATCH("template_tier_mismatch"),
         TEMPLATE_RARITY_MISMATCH("template_rarity_mismatch"),
         LEVEL_INDEPENDENT_AFFIX("level_independent_affix"),
         WOULD_NOT_IMPROVE("would_not_improve"),

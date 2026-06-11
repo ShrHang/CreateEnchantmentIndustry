@@ -184,6 +184,7 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
                 }
                 processingTime = -1;
                 heldItem = enchanter.getResult(heldItem);
+                enchanter.update(heldItem);
                 return;
             }
         }
@@ -230,6 +231,7 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
 
                 consumeExperience(cost, special, false);
                 nextSeed();
+                enchanter.update(heldItem);
                 notifyUpdate();
                 level.playSound(null, worldPosition, SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.1F + 0.9F);
             } else {
@@ -270,13 +272,15 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
         var input = stack.copy();
         var inserted = input.split(1);
         enchanter.update(inserted);
-        if (!enchanter.canProcess(inserted)) {
-            enchanter.update(ItemStack.EMPTY);
+        boolean canProcess = enchanter.canProcess(inserted);
+        enchanter.update(heldItem);
+        if (!canProcess) {
             return stack;
         }
         if (simulate)
             return input;
         heldItem = inserted;
+        enchanter.update(heldItem);
         notifyUpdate();
         return input;
     }
@@ -289,6 +293,7 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
             if (!simulate) {
                 heldItem = ItemStack.EMPTY;
                 processingTime = -1;
+                enchanter.update(heldItem);
                 notifyUpdate();
             }
         }
@@ -305,6 +310,8 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
     @Override
     public void clearContent() {
         heldItem = ItemStack.EMPTY;
+        processingTime = -1;
+        enchanter.update(heldItem);
     }
 
     private static class EnchanterTransform extends ValueBoxTransform.Sided {

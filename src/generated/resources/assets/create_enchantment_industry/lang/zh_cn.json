@@ -154,6 +154,7 @@
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_affixes_incompatible": "%1$s 与 %2$s 冲突。",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_cannot_hold_level": "该模板无法承载等级 %1$s；当前上限为 %2$s。",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_rarity_mismatch": "模板稀有度不一致：%1$s 与 %2$s。",
+    "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_tier_mismatch": "词缀模板必须属于相同层级。",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.unbound_template_data": "该模板保存的词缀数据已经不可用。",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.would_not_improve": "该组合不会提升结果。",
     "create_enchantment_industry.gui.goggles.blaze_composer.insufficient_essence": "神化精粹不足：%1$s / %2$s",

@@ -225,8 +225,13 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
             addModeHelp(tooltip);
             return true;
         }
-        int cost = getExperienceCost();
-        if (cost > 0) {
+        if (enchanter.processingTime == -1 && !EnchantmentHelper.getEnchantmentsForCrafting(enchanter.heldItem).isEmpty()) {
+            CEILang.translate("gui.goggles.enchanting.completed").style(ChatFormatting.GREEN).forGoggles(tooltip);
+            return true;
+        }
+        boolean canProcess = canProcess(enchanter.heldItem);
+        int cost = canProcess ? getExperienceCost() : 0;
+        if (canProcess && cost > 0) {
             LangBuilder mb = CreateLang.translate("generic.unit.millibuckets");
             CEILang.translate("gui.goggles.enchanting.cost", CEILang.number(cost).add(mb).style(style))
                     .forGoggles(tooltip);
@@ -240,8 +245,6 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
                         .style(ChatFormatting.RED)
                         .forGoggles(tooltip);
             }
-        } else if (enchanter.processingTime == -1 && !EnchantmentHelper.getEnchantmentsForCrafting(enchanter.heldItem).isEmpty()) {
-            CEILang.translate("gui.goggles.enchanting.completed").style(ChatFormatting.GREEN).forGoggles(tooltip);
         } else {
             CEILang.translate("gui.goggles.enchanting.invalid_item").style(ChatFormatting.RED).forGoggles(tooltip);
         }

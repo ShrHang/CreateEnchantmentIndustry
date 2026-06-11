@@ -154,6 +154,7 @@
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_affixes_incompatible": "%1$s conflicts with %2$s.",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_cannot_hold_level": "The template cannot hold level %1$s; its current limit is %2$s.",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_rarity_mismatch": "Template rarities do not match: %1$s and %2$s.",
+    "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_tier_mismatch": "Affix Templates must be of the same tier.",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.unbound_template_data": "This template stores affix data that is no longer available.",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.would_not_improve": "This combination would not improve the result.",
     "create_enchantment_industry.gui.goggles.blaze_composer.insufficient_essence": "Not enough Apotheotic Essence: %1$s / %2$s",

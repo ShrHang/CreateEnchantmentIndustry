@@ -201,6 +201,7 @@
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.affix_denied_by_rule":  "%1$s is disabled for %2$s by affix composing rules.",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.rarity_mismatch_disallowed":  "Equipment rarity %1$s does not match template rarity %2$s.",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_affixes_incompatible":  "%1$s conflicts with %2$s.",
+    "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_tier_mismatch":  "Affix Templates must be of the same tier.",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_rarity_mismatch":  "Template rarities do not match: %1$s and %2$s.",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.level_independent_affix":  "The matching affix does not scale with level.",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.would_not_improve":  "This combination would not improve the result.",

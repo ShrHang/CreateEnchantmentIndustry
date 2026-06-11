@@ -108,6 +108,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
         }
         conflicting = nbt.getBoolean("Conflicting");
         overCap = nbt.getBoolean("OverCap");
+        updateResult();
     }
 
     @Override

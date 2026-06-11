@@ -265,6 +265,7 @@
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.affix_denied_by_rule": "%1$s 被词缀编构规则禁止用于 %2$s。",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.rarity_mismatch_disallowed": "装备稀有度 %1$s 与模板稀有度 %2$s 不一致。",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_affixes_incompatible": "%1$s 与 %2$s 冲突。",
+    "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_tier_mismatch": "词缀模板必须属于相同层级。",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_rarity_mismatch": "模板稀有度不一致：%1$s 与 %2$s。",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.level_independent_affix": "匹配的词缀不会随等级变化。",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.would_not_improve": "该组合不会提升结果。",

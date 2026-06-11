@@ -154,6 +154,7 @@
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_affixes_incompatible": "˙%2$s ɥʇıʍ sʇɔıןɟuoɔ %1$s",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_cannot_hold_level": "˙%2$s sı ʇıɯıן ʇuǝɹɹnɔ sʇı ؛%1$s ןǝʌǝן pןoɥ ʇouuɐɔ ǝʇɐןdɯǝʇ ǝɥ⟘",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_rarity_mismatch": "˙%2$s puɐ %1$s :ɥɔʇɐɯ ʇou op sǝıʇıɹɐɹ ǝʇɐןdɯǝ⟘",
+    "create_enchantment_industry.gui.goggles.blaze_composer.failure.template_tier_mismatch": "˙ɹǝıʇ ǝɯɐs ǝɥʇ ɟo ǝq ʇsnɯ sǝʇɐןdɯǝ⟘ xıɟɟⱯ",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.unbound_template_data": "˙ǝןqɐןıɐʌɐ ɹǝbuoן ou sı ʇɐɥʇ ɐʇɐp xıɟɟɐ sǝɹoʇs ǝʇɐןdɯǝʇ sıɥ⟘",
     "create_enchantment_industry.gui.goggles.blaze_composer.failure.would_not_improve": "˙ʇןnsǝɹ ǝɥʇ ǝʌoɹdɯı ʇou pןnoʍ uoıʇɐuıqɯoɔ sıɥ⟘",
     "create_enchantment_industry.gui.goggles.blaze_composer.insufficient_essence": "%2$s / %1$s :ǝɔuǝssƎ ɔıʇoǝɥʇodⱯ ɥbnouǝ ʇoN",
