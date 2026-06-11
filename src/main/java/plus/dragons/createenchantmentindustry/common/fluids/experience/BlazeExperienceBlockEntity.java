@@ -222,9 +222,6 @@ public abstract class BlazeExperienceBlockEntity extends BlazeBlockEntity implem
         LangBuilder mb = CreateLang.translate("generic.unit.millibuckets");
         CreateLang.translate("gui.goggles.fluid_container")
                 .forGoggles(tooltip);
-        CreateLang.builder().add(CEIFluids.EXPERIENCE.getType().getDescription())
-                .style(ChatFormatting.GRAY)
-                .forGoggles(tooltip, 1);
         boolean special = false;
         for (var tank : tanks.getHandlers()) {
             CEILang.translate(special ? "gui.goggles.blaze_experience.super_experience" : "gui.goggles.blaze_experience.experience")

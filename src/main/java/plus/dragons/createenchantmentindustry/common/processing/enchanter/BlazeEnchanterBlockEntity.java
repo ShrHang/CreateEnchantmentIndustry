@@ -126,6 +126,7 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
             nextSeed();
             setChanged();
         }
+        enchanter.update(heldItem);
     }
 
     @Override
@@ -152,6 +153,7 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
             seed = compound.getLong("Seed");
         processingTime = compound.getInt("ProcessingTime");
         heldItem = ItemStack.parseOptional(registries, compound.getCompound("HeldItem"));
+        enchanter.update(heldItem);
     }
 
     @Override
@@ -243,7 +245,7 @@ public class BlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity implem
     }
 
     public RandomSource getRandom() {
-        return RandomSource.create(seed);
+        return RandomSource.create(seed != null ? seed : worldPosition.asLong());
     }
 
     public void nextSeed() {

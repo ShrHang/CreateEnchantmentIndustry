@@ -30,7 +30,6 @@ import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatt
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
 import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
-import dev.engine_room.flywheel.api.visualization.VisualizationLevel;
 import java.util.List;
 import net.createmod.catnip.lang.LangBuilder;
 import net.minecraft.ChatFormatting;
@@ -101,6 +100,17 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
     }
 
     public boolean setTemplate(ItemStack stack) {
+        if (!loadTemplate(stack))
+            return false;
+        update(enchanter.heldItem);
+        if (!(getWorld().isClientSide)) {
+            blockEntity.setChanged();
+            blockEntity.sendData();
+        }
+        return true;
+    }
+
+    private boolean loadTemplate(ItemStack stack) {
         if (stack.isEmpty()) {
             template = ItemStack.EMPTY;
             enchanting = new EnchantingBehaviour();
@@ -108,12 +118,6 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
             template = stack;
             enchanting = new TemplateEnchantingBehaviour(template);
         } else return false;
-        update(enchanter.heldItem);
-        var level = getWorld();
-        if (!(level instanceof VisualizationLevel)) {
-            blockEntity.setChanged();
-            blockEntity.sendData();
-        }
         return true;
     }
 
@@ -180,15 +184,12 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
     @Override
     public void read(CompoundTag nbt, Provider registries, boolean clientPacket) {
         value = Math.clamp(nbt.getInt(LEVEL), 0, enchanter.getMaxEnchantLevel());
-        template = ItemStack.parseOptional(registries, nbt.getCompound(TEMPLATE));
-        var level = getWorld();
-        if (level != null)
-            setTemplate(template);
+        loadTemplate(ItemStack.parseOptional(registries, nbt.getCompound(TEMPLATE)));
     }
 
     @Override
     public void initialize() {
-        setTemplate(template);
+        loadTemplate(template);
     }
 
     @Override
