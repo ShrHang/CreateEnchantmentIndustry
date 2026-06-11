@@ -38,18 +38,30 @@ import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIA
 
 public class AffixTemplateOps {
     private static final float EPSILON = 0.0001F;
+    private static final float MINIMUM_LEVEL = 0.01F;
+    private static final float MINIMUM_LEVEL_IMPROVEMENT = 0.01F;
 
-    public static Result compose(BlazeComposerMode mode, boolean hyper, ItemStack firstInput, ItemStack secondInput) {
+    public static Result compose(BlazeComposerMode mode, boolean hyper, float blockedHyperPenalty, ItemStack firstInput, ItemStack secondInput) {
+        return compose(mode, hyper, blockedHyperPenalty, 0, 0, firstInput, secondInput);
+    }
+
+    public static Result compose(BlazeComposerMode mode, boolean hyper, float blockedHyperPenalty, float previewMinPenalty, float previewMaxPenalty, ItemStack firstInput, ItemStack secondInput) {
         if (firstInput.isEmpty() && secondInput.isEmpty())
             return Result.emptyInput();
+        blockedHyperPenalty = hyper ? blockedHyperPenalty : 0;
+        PenaltyPreview penaltyPreview = hyper ? PenaltyPreview.of(previewMinPenalty, previewMaxPenalty) : PenaltyPreview.none();
         return switch (mode) {
-            case EXTRACT -> extract(hyper, firstInput, secondInput);
-            case APPLY -> apply(hyper, firstInput, secondInput);
-            case MERGE -> merge(hyper, firstInput, secondInput);
+            case EXTRACT -> extract(hyper, blockedHyperPenalty, penaltyPreview, firstInput, secondInput);
+            case APPLY -> apply(hyper, blockedHyperPenalty, penaltyPreview, firstInput, secondInput);
+            case MERGE -> merge(hyper, blockedHyperPenalty, penaltyPreview, firstInput, secondInput);
         };
     }
 
-    public static Result extract(boolean hyper, ItemStack equipmentInput, ItemStack templateInput) {
+    public static Result extract(boolean hyper, float blockedHyperPenalty, ItemStack equipmentInput, ItemStack templateInput) {
+        return extract(hyper, blockedHyperPenalty, PenaltyPreview.none(), equipmentInput, templateInput);
+    }
+
+    private static Result extract(boolean hyper, float blockedHyperPenalty, PenaltyPreview penaltyPreview, ItemStack equipmentInput, ItemStack templateInput) {
         if (equipmentInput.isEmpty())
             return incomplete(FailureReason.MISSING_AFFIXED_EQUIPMENT);
         if (templateInput.isEmpty())
@@ -95,7 +107,15 @@ public class AffixTemplateOps {
         OverlimitAffixHelper.removeAffix(equipment, instance.affix());
         rebuildAffixName(equipment);
         ItemStack template = single(templateInput);
-        setTemplateData(template, data);
+        AffixTemplateData resultData = data.withLevel(applyBlockedHyperPenalty(data.level(), MINIMUM_LEVEL, blockedHyperPenalty));
+        setTemplateData(template, resultData);
+        Component resultDescription = penaltyPreview.active()
+                ? AffixTemplateDisplay.describeTemplateRange(
+                        resultData,
+                        penaltyPreview.minResultLevel(data.level(), MINIMUM_LEVEL),
+                        penaltyPreview.maxResultLevel(data.level(), MINIMUM_LEVEL),
+                        template)
+                : AffixTemplateDisplay.describeTemplate(resultData, template);
         int cost = BlazeComposingCost.calculate(
                 BlazeComposingCost.Operation.EXTRACT_SNAPSHOT,
                 BlazeComposerMode.EXTRACT,
@@ -108,10 +128,14 @@ public class AffixTemplateOps {
                 template,
                 cost,
                 AffixTemplateDisplay.describeRemovedAffix(equipment, instance),
-                AffixTemplateDisplay.describeTemplate(data, template));
+                resultDescription);
     }
 
-    public static Result apply(boolean hyper, ItemStack equipmentInput, ItemStack templateInput) {
+    public static Result apply(boolean hyper, float blockedHyperPenalty, ItemStack equipmentInput, ItemStack templateInput) {
+        return apply(hyper, blockedHyperPenalty, PenaltyPreview.none(), equipmentInput, templateInput);
+    }
+
+    private static Result apply(boolean hyper, float blockedHyperPenalty, PenaltyPreview penaltyPreview, ItemStack equipmentInput, ItemStack templateInput) {
         if (equipmentInput.isEmpty())
             return incomplete(FailureReason.MISSING_EQUIPMENT);
         if (templateInput.isEmpty())
@@ -169,24 +193,41 @@ public class AffixTemplateOps {
                     ? invalid(FailureReason.ALREADY_AT_TEMPLATE_CAP, AffixTemplateDisplay.formatLevel(maxLevel))
                     : invalid(FailureReason.WOULD_NOT_IMPROVE);
 
+        float costLevel = resultLevel;
+        float minimumLevel = currentLevel <= 0
+                ? MINIMUM_LEVEL
+                : minimumImprovedLevel(currentLevel, resultLevel);
+        resultLevel = applyBlockedHyperPenalty(resultLevel, minimumLevel, blockedHyperPenalty);
         OverlimitAffixHelper.setAffixLevel(equipment, data.affix(), resultLevel);
         rebuildAffixName(equipment);
-        AffixTemplateData costData = data.withLevel(resultLevel);
+        AffixTemplateData costData = data.withLevel(costLevel);
         int cost = BlazeComposingCost.calculate(
                 currentLevel <= 0 ? BlazeComposingCost.Operation.APPLY_NEW_TEMPLATE : BlazeComposingCost.Operation.APPLY_UPGRADE_DELTA,
                 BlazeComposerMode.APPLY,
                 templateItem.tier(),
                 costData,
                 currentLevel,
-                resultLevel);
+                costLevel);
+        Component resultDescription = penaltyPreview.active()
+                ? AffixTemplateDisplay.describeEquipmentAffixUpgradeRange(
+                        equipment,
+                        data.affix(),
+                        currentLevel,
+                        penaltyPreview.minResultLevel(costLevel, minimumLevel),
+                        penaltyPreview.maxResultLevel(costLevel, minimumLevel))
+                : AffixTemplateDisplay.describeEquipmentAffixUpgrade(equipment, data.affix(), currentLevel, resultLevel);
         return Result.ready(
                 equipment,
                 ItemStack.EMPTY,
                 cost,
-                AffixTemplateDisplay.describeEquipmentAffixUpgrade(equipment, data.affix(), currentLevel, resultLevel));
+                resultDescription);
     }
 
-    public static Result merge(boolean hyper, ItemStack firstTemplateInput, ItemStack secondTemplateInput) {
+    public static Result merge(boolean hyper, float blockedHyperPenalty, ItemStack firstTemplateInput, ItemStack secondTemplateInput) {
+        return merge(hyper, blockedHyperPenalty, PenaltyPreview.none(), firstTemplateInput, secondTemplateInput);
+    }
+
+    private static Result merge(boolean hyper, float blockedHyperPenalty, PenaltyPreview penaltyPreview, ItemStack firstTemplateInput, ItemStack secondTemplateInput) {
         if (firstTemplateInput.isEmpty())
             return incomplete(FailureReason.MISSING_FILLED_TEMPLATE);
         if (secondTemplateInput.isEmpty())
@@ -232,6 +273,8 @@ public class AffixTemplateOps {
                     ? invalid(FailureReason.ALREADY_AT_TEMPLATE_CAP, AffixTemplateDisplay.formatLevel(maxLevel))
                     : invalid(FailureReason.WOULD_NOT_IMPROVE);
 
+        float costLevel = resultLevel;
+        resultLevel = applyBlockedHyperPenalty(resultLevel, minimumImprovedLevel(highestInputLevel, resultLevel), blockedHyperPenalty);
         AffixTemplateData resultData = firstData.withLevel(resultLevel);
         if (AffixComposingRules.INSTANCE.denies(BlazeComposerMode.MERGE, hyper, resultData))
             return invalid(FailureReason.AFFIX_DENIED_BY_RULE, AffixTemplateDisplay.affixName(firstData.toInstance(firstTemplateInput)), modeName(BlazeComposerMode.MERGE));
@@ -241,14 +284,22 @@ public class AffixTemplateOps {
                 BlazeComposingCost.Operation.MERGE_UPGRADE_DELTA,
                 BlazeComposerMode.MERGE,
                 tier,
-                resultData,
+                firstData.withLevel(costLevel),
                 highestInputLevel,
-                resultLevel);
+                costLevel);
+        Component resultDescription = penaltyPreview.active()
+                ? AffixTemplateDisplay.describeTemplateUpgradeRange(
+                        firstData,
+                        resultData,
+                        penaltyPreview.minResultLevel(costLevel, minimumImprovedLevel(highestInputLevel, costLevel)),
+                        penaltyPreview.maxResultLevel(costLevel, minimumImprovedLevel(highestInputLevel, costLevel)),
+                        result)
+                : AffixTemplateDisplay.describeTemplateUpgrade(firstData, resultData, result);
         return Result.ready(
                 result,
                 ItemStack.EMPTY,
                 cost,
-                AffixTemplateDisplay.describeTemplateUpgrade(firstData, resultData, result));
+                resultDescription);
     }
 
     public static AffixTemplateItem getTemplateItem(ItemStack stack) {
@@ -325,6 +376,16 @@ public class AffixTemplateOps {
                 || !data.toInstance(stack).isLevelIndependent();
     }
 
+    private static float applyBlockedHyperPenalty(float level, float minimumLevel, float penalty) {
+        if (penalty <= EPSILON)
+            return level;
+        return Math.min(level, Math.max(minimumLevel, level - penalty));
+    }
+
+    private static float minimumImprovedLevel(float currentLevel, float resultLevel) {
+        return Math.min(resultLevel, currentLevel + MINIMUM_LEVEL_IMPROVEMENT);
+    }
+
     private static AffixInstance firstAffix(ItemStack stack) {
         return AffixHelper.getAffixes(stack).values().stream()
                 .filter(AffixInstance::isValid)
@@ -370,6 +431,32 @@ public class AffixTemplateOps {
 
     private static boolean nearlyEqual(float first, float second) {
         return Math.abs(first - second) <= EPSILON;
+    }
+
+    private record PenaltyPreview(float minPenalty, float maxPenalty) {
+        public static PenaltyPreview none() {
+            return new PenaltyPreview(0, 0);
+        }
+
+        public static PenaltyPreview of(float first, float second) {
+            return new PenaltyPreview(Math.max(0, Math.min(first, second)), Math.max(0, Math.max(first, second)));
+        }
+
+        public boolean active() {
+            return maxPenalty > EPSILON;
+        }
+
+        public float minResultLevel(float level, float minimumLevel) {
+            return Math.min(
+                    applyBlockedHyperPenalty(level, minimumLevel, minPenalty),
+                    applyBlockedHyperPenalty(level, minimumLevel, maxPenalty));
+        }
+
+        public float maxResultLevel(float level, float minimumLevel) {
+            return Math.max(
+                    applyBlockedHyperPenalty(level, minimumLevel, minPenalty),
+                    applyBlockedHyperPenalty(level, minimumLevel, maxPenalty));
+        }
     }
 
     public enum Status {

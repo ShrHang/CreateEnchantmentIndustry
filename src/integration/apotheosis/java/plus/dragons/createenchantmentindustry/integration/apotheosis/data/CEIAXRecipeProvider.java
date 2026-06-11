@@ -23,6 +23,7 @@ import static com.simibubi.create.AllItems.*;
 import static net.minecraft.world.item.Items.AMETHYST_SHARD;
 import static net.minecraft.world.item.Items.NETHER_STAR;
 import static net.minecraft.world.item.Items.PAPER;
+import static plus.dragons.createdragonsplus.common.registry.CDPItems.BLAZE_UPGRADE_SMITHING_TEMPLATE;
 import static plus.dragons.createdragonsplus.data.recipe.VanillaRecipeBuilders.shaped;
 import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXBlocks.AFFIX_AUGMENTOR;
 import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXBlocks.BLAZE_COMPOSER;
@@ -30,13 +31,22 @@ import static plus.dragons.createenchantmentindustry.integration.apotheosis.comm
 import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems.APOTHEOTIC_AFFIX_TEMPLATE;
 import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems.BRASS_AFFIX_TEMPLATE;
 import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems.CRYSTAL_AFFIX_TEMPLATE;
+import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems.INCOMPLETE_APOTHEOTIC_AFFIX_TEMPLATE;
+import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems.INCOMPLETE_BRASS_AFFIX_TEMPLATE;
+import static plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems.INCOMPLETE_CRYSTAL_AFFIX_TEMPLATE;
 
+import com.simibubi.create.content.fluids.transfer.FillingRecipe;
+import com.simibubi.create.content.kinetics.deployer.DeployerApplicationRecipe;
+import com.simibubi.create.content.kinetics.press.PressingRecipe;
 import dev.shadowsoffire.apotheosis.Apoth;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.data.PackOutput;
+import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.data.recipes.SmithingTransformRecipeBuilder;
+import net.minecraft.world.item.crafting.Ingredient;
 import plus.dragons.createdragonsplus.data.recipe.CreateRecipeBuilders;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.ModIntegration;
@@ -115,51 +125,44 @@ public class CEIAXRecipeProvider extends RecipeProvider {
                 .unlockedBy("amethyst_shard", has(AMETHYST_SHARD))
                 .accept(output);
 
-        shaped().define('o', BRASS_SHEET)
-                .define('x', AMETHYST_SHARD)
-                .define('S', Apoth.Items.COMMON_MATERIAL.value())
-                .define('P', PAPER)
-                .pattern("oxo")
-                .pattern("PSP")
-                .pattern("oxo")
-                .output(BRASS_AFFIX_TEMPLATE)
-                .withCondition(ModIntegration.APOTHEOSIS.condition())
-                .unlockedBy("common_material", has(Apoth.Items.COMMON_MATERIAL.value()))
-                .accept(output);
+        CreateRecipeBuilders.sequencedAssembly(BRASS_AFFIX_TEMPLATE.getId())
+                .require(PAPER)
+                .transitionTo(INCOMPLETE_BRASS_AFFIX_TEMPLATE)
+                .addOutput(BRASS_AFFIX_TEMPLATE, 1)
+                .loops(1)
+                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(BRASS_SHEET))
+                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(Apoth.Items.COMMON_MATERIAL.value()))
+                .addStep(PressingRecipe::new, rb -> rb)
+                .build(output.withConditions(ModIntegration.APOTHEOSIS.condition()));
 
-        shaped().define('o', BRASS_AFFIX_TEMPLATE)
-                .define('x', AMETHYST_SHARD)
-                .define('S', Apoth.Items.GEM_DUST.value())
-                .pattern(" x ")
-                .pattern("xox")
-                .pattern(" S ")
-                .output(CRYSTAL_AFFIX_TEMPLATE)
-                .withCondition(ModIntegration.APOTHEOSIS.condition())
-                .unlockedBy("gem_dust", has(Apoth.Items.GEM_DUST.value()))
-                .accept(output);
+        CreateRecipeBuilders.sequencedAssembly(CRYSTAL_AFFIX_TEMPLATE.getId())
+                .require(BRASS_AFFIX_TEMPLATE)
+                .transitionTo(INCOMPLETE_CRYSTAL_AFFIX_TEMPLATE)
+                .addOutput(CRYSTAL_AFFIX_TEMPLATE, 1)
+                .loops(1)
+                .addStep(FillingRecipe::new, rb -> rb.require(CEIAXFluids.CRYSTAL_ESSENCE.get(), 50))
+                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(AMETHYST_SHARD))
+                .addStep(PressingRecipe::new, rb -> rb)
+                .build(output.withConditions(ModIntegration.APOTHEOSIS.condition()));
 
-        shaped().define('o', CRYSTAL_AFFIX_TEMPLATE)
-                .define('x', Apoth.Items.MYTHIC_MATERIAL.value())
-                .define('S', NETHER_STAR)
-                .pattern("xSx")
-                .pattern("SoS")
-                .pattern("xSx")
-                .output(APOTHEOTIC_AFFIX_TEMPLATE)
-                .withCondition(ModIntegration.APOTHEOSIS.condition())
-                .unlockedBy("mythic_material", has(Apoth.Items.MYTHIC_MATERIAL.value()))
-                .accept(output);
+        CreateRecipeBuilders.sequencedAssembly(APOTHEOTIC_AFFIX_TEMPLATE.getId())
+                .require(CRYSTAL_AFFIX_TEMPLATE)
+                .transitionTo(INCOMPLETE_APOTHEOTIC_AFFIX_TEMPLATE)
+                .addOutput(APOTHEOTIC_AFFIX_TEMPLATE, 1)
+                .loops(1)
+                .addStep(FillingRecipe::new, rb -> rb.require(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 50))
+                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(Apoth.Items.MYTHIC_MATERIAL.value()))
+                .addStep(PressingRecipe::new, rb -> rb)
+                .build(output.withConditions(ModIntegration.APOTHEOSIS.condition()));
 
-        shaped().define('o', BRASS_CASING)
-                .define('x', PRECISION_MECHANISM)
-                .define('S', Apoth.Items.SIGIL_OF_ENHANCEMENT.value())
-                .define('B', BLAZE_BURNER)
-                .pattern("xSx")
-                .pattern("oBo")
-                .pattern("xSx")
-                .output(BLAZE_COMPOSER)
-                .withCondition(ModIntegration.APOTHEOSIS.condition())
-                .unlockedBy("sigil_of_enhancement", has(Apoth.Items.SIGIL_OF_ENHANCEMENT.value()))
-                .accept(output);
+        SmithingTransformRecipeBuilder.smithing(
+                Ingredient.of(BLAZE_UPGRADE_SMITHING_TEMPLATE),
+                Ingredient.of(BLAZE_BURNER),
+                Ingredient.of(AFFIX_AUGMENTOR),
+                RecipeCategory.MISC,
+                BLAZE_COMPOSER.asItem())
+                .unlocks("has_affix_augmentor", has(AFFIX_AUGMENTOR))
+                .save(output.withConditions(ModIntegration.APOTHEOSIS.condition()), BLAZE_COMPOSER.getId().withPrefix("smithing/"));
     }
 
     @Override

@@ -60,8 +60,10 @@ public class BlazeComposerInventory extends ItemStackHandler {
 
     @Override
     protected void onContentsChanged(int slot) {
-        if (slot == 0 || slot == 1)
+        if (slot == 0 || slot == 1) {
+            composer.onInputChanged();
             updateResult();
+        }
         composer.notifyUpdate();
     }
 
@@ -102,8 +104,16 @@ public class BlazeComposerInventory extends ItemStackHandler {
     }
 
     public void applyResult() {
-        stacks.set(2, stacks.get(4).copy());
-        stacks.set(3, stacks.get(5).copy());
+        AffixTemplateOps.Result finalResult = AffixTemplateOps.compose(
+                composer.getMode(),
+                composer.isHyper(),
+                composer.getBlockedHyperPenalty(),
+                stacks.get(0),
+                stacks.get(1));
+        if (!finalResult.valid())
+            return;
+        stacks.set(2, finalResult.primaryOutput().copy());
+        stacks.set(3, finalResult.secondaryOutput().copy());
         clearInput();
         updateResult();
     }
@@ -111,7 +121,14 @@ public class BlazeComposerInventory extends ItemStackHandler {
     public void updateResult() {
         stacks.set(4, ItemStack.EMPTY);
         stacks.set(5, ItemStack.EMPTY);
-        result = AffixTemplateOps.compose(composer.getMode(), composer.isHyper(), stacks.get(0), stacks.get(1));
+        result = AffixTemplateOps.compose(
+                composer.getMode(),
+                composer.isHyper(),
+                0,
+                composer.getBlockedHyperPreviewMinPenalty(),
+                composer.getBlockedHyperPreviewMaxPenalty(),
+                stacks.get(0),
+                stacks.get(1));
         if (!result.valid())
             return;
         stacks.set(4, result.primaryOutput().copy());

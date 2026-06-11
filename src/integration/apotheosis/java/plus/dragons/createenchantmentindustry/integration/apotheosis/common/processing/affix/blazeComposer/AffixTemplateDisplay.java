@@ -53,12 +53,31 @@ public class AffixTemplateDisplay {
                 rarityName(data));
     }
 
+    public static Component describeTemplateRange(AffixTemplateData data, float minLevel, float maxLevel, ItemStack stack) {
+        return Component.translatable(
+                "create_enchantment_industry.gui.goggles.blaze_composer.result.template_affix_range",
+                affixName(data.toInstance(stack)),
+                formatLevel(minLevel),
+                formatLevel(maxLevel),
+                rarityName(data));
+    }
+
     public static Component describeTemplateUpgrade(AffixTemplateData before, AffixTemplateData after, ItemStack stack) {
         return Component.translatable(
                 "create_enchantment_industry.gui.goggles.blaze_composer.result.template_affix_upgrade",
                 affixName(after.toInstance(stack)),
                 formatLevel(before.level()),
                 formatLevel(after.level()),
+                rarityName(after));
+    }
+
+    public static Component describeTemplateUpgradeRange(AffixTemplateData before, AffixTemplateData after, float minLevel, float maxLevel, ItemStack stack) {
+        return Component.translatable(
+                "create_enchantment_industry.gui.goggles.blaze_composer.result.template_affix_upgrade_range",
+                affixName(after.toInstance(stack)),
+                formatLevel(before.level()),
+                formatLevel(minLevel),
+                formatLevel(maxLevel),
                 rarityName(after));
     }
 
@@ -88,6 +107,28 @@ public class AffixTemplateDisplay {
                 affixName(instance),
                 formatLevel(before),
                 formatLevel(after));
+    }
+
+    public static Component describeEquipmentAffixUpgradeRange(ItemStack stack, DynamicHolder<Affix> affix, float before, float minAfter, float maxAfter) {
+        AffixInstance instance = AffixHelper.getAffixes(stack).get(affix);
+        if (instance == null) {
+            instance = new AffixInstance(affix, maxAfter, AffixHelper.getRarity(stack), stack);
+        }
+        if (before <= 0) {
+            return Component.translatable(
+                    "create_enchantment_industry.gui.goggles.blaze_composer.result.equipment_affix_range",
+                    stack.getHoverName().copy(),
+                    affixName(instance),
+                    formatLevel(minAfter),
+                    formatLevel(maxAfter));
+        }
+        return Component.translatable(
+                "create_enchantment_industry.gui.goggles.blaze_composer.result.equipment_affix_upgrade_range",
+                stack.getHoverName().copy(),
+                affixName(instance),
+                formatLevel(before),
+                formatLevel(minAfter),
+                formatLevel(maxAfter));
     }
 
     public static Component describeRemovedAffix(ItemStack stack, AffixInstance instance) {

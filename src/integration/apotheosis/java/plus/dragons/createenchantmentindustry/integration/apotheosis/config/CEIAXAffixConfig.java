@@ -31,6 +31,12 @@ public class CEIAXAffixConfig extends ConfigBase {
     public final ConfigInt blazeComposerProcessingTime = i(200, 1,
             "blazeComposerProcessingTime",
             Comments.blazeComposerProcessingTime);
+    public final ConfigFloat blazeComposerBlockedHyperMinLevelPenalty = f(0.05f, 0.0f,
+            "blazeComposerBlockedHyperMinLevelPenalty",
+            Comments.blazeComposerBlockedHyperMinLevelPenalty);
+    public final ConfigFloat blazeComposerBlockedHyperMaxLevelPenalty = f(0.20f, 0.0f,
+            "blazeComposerBlockedHyperMaxLevelPenalty",
+            Comments.blazeComposerBlockedHyperMaxLevelPenalty);
 
     public final ConfigFloat brassAffixTemplateMaxLevel = f(1.0f, 0.01f,
             "brassAffixTemplateMaxLevel",
@@ -129,6 +135,8 @@ public class CEIAXAffixConfig extends ConfigBase {
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
         static final String[] blazeComposerProcessingTime = { "The processing time, in ticks, of one Blaze Composer operation.",
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
+        static final String blazeComposerBlockedHyperMinLevelPenalty = "The minimum affix level loss applied to a Hyper Blaze Composer operation when its lightning path is blocked. The penalty is rolled when processing starts.";
+        static final String blazeComposerBlockedHyperMaxLevelPenalty = "The maximum affix level loss applied to a Hyper Blaze Composer operation when its lightning path is blocked. The penalty is rolled when processing starts.";
         static final String brassAffixTemplateMaxLevel = "The maximum affix level a Brass Affix Template can hold. Default: 1.0, matching standard Apotheosis affixes.";
         static final String crystalAffixTemplateMaxLevel = "The maximum affix level a Crystal Affix Template can hold. Default: 2.0, matching Apotheosis' native upper range.";
         static final String apotheoticAffixTemplateMaxLevel = "The maximum affix level an Apotheotic Affix Template can hold. The implementation supports very high values; this config is the balancing cap.";

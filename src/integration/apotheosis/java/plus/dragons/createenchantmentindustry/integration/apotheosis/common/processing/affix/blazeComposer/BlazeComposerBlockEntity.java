@@ -19,6 +19,7 @@
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.simibubi.create.AllBlocks;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -39,6 +40,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Clearable;
@@ -58,6 +60,8 @@ import plus.dragons.createdragonsplus.common.fluids.tank.ConfigurableFluidTank;
 import plus.dragons.createdragonsplus.common.fluids.tank.FluidTankBehaviour;
 import plus.dragons.createdragonsplus.common.processing.blaze.BlazeBlockEntity;
 import plus.dragons.createdragonsplus.util.FieldsNullabilityUnknownByDefault;
+import plus.dragons.createenchantmentindustry.common.processing.blaze.BlazeLightningHelper;
+import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.client.registry.CEIAXPartialModels;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems;
@@ -67,10 +71,14 @@ import plus.dragons.createenchantmentindustry.util.CEILang;
 
 @FieldsNullabilityUnknownByDefault
 public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Clearable, IHaveGoggleInformation {
+    private static final int PENALTY_STEPS_PER_LEVEL = 100;
     protected int processingTime = -1;
     protected BlazeComposerMode mode = BlazeComposerMode.EXTRACT;
     protected boolean hyper;
     protected boolean hyperUnlocked;
+    protected boolean lightningBlocked;
+    protected boolean pendingBlockedHyperOperation;
+    protected float pendingBlockedHyperPenalty;
     protected final BlazeComposerInventory inventory;
     protected BlazeComposerModeBehaviour modeSelector;
     protected FluidTankBehaviour tanks;
@@ -140,6 +148,8 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         compound.putInt("ProcessingTime", processingTime);
         compound.putInt("Mode", mode.ordinal());
         compound.putBoolean("HyperUnlocked", hyperUnlocked);
+        compound.putBoolean("PendingBlockedHyperOperation", pendingBlockedHyperOperation);
+        compound.putFloat("PendingBlockedHyperPenalty", pendingBlockedHyperPenalty);
         compound.put("Inventory", inventory.serializeNBT(registries));
     }
 
@@ -149,6 +159,8 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         processingTime = compound.contains("ProcessingTime") ? compound.getInt("ProcessingTime") : -1;
         mode = BlazeComposerMode.BY_ID.apply(compound.getInt("Mode"));
         hyperUnlocked = compound.getBoolean("HyperUnlocked");
+        pendingBlockedHyperOperation = compound.getBoolean("PendingBlockedHyperOperation");
+        pendingBlockedHyperPenalty = compound.getFloat("PendingBlockedHyperPenalty");
         inventory.deserializeNBT(registries, compound.getCompound("Inventory"));
     }
 
@@ -169,13 +181,21 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         boolean hyper = isHyper();
         if (this.hyper != hyper) {
             this.hyper = hyper;
+            clearPendingHyperOperation();
             processingTime = -1;
+            inventory.updateResult();
+            notifyUpdate();
+        }
+        boolean lightningBlocked = isHyperLightningBlocked();
+        if (this.lightningBlocked != lightningBlocked) {
+            this.lightningBlocked = lightningBlocked;
             inventory.updateResult();
             notifyUpdate();
         }
         int cost = inventory.getEssenceCost();
         if (cost > 0 && consumeEssence(cost, hyper, true)) {
             if (processingTime < 0) {
+                beginProcessing(hyper);
                 processingTime = processingTime();
                 notifyUpdate();
                 return;
@@ -185,17 +205,92 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
                 notifyUpdate();
                 return;
             }
+            if (hyper && !pendingBlockedHyperOperation && level instanceof ServerLevel serverLevel && BlazeLightningHelper.strikeLightning(serverLevel, worldPosition)) {
+                advancement.trigger(CEIAdvancements.OSHA_VIOLATION.builtinTrigger());
+                serverLevel.destroyBlock(worldPosition, false);
+                serverLevel.setBlockAndUpdate(worldPosition, AllBlocks.LIT_BLAZE_BURNER.getDefaultState());
+                this.setRemoved();
+                return;
+            }
             consumeEssence(cost, hyper, false);
             processingTime = -1;
             inventory.applyResult();
+            clearPendingHyperOperation();
             advancement.awardStat(CEIAXStats.COMPOSE_AFFIX.get(), 1);
             notifyUpdate();
             level.playSound(null, worldPosition, SoundEvents.EVOKER_CAST_SPELL, SoundSource.BLOCKS, 0.8F, 0.9F + 0.2F * level.random.nextFloat());
             level.playSound(null, worldPosition, SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS, 0.5F, 0.7F + 0.2F * level.random.nextFloat());
         } else if (processingTime != -1) {
             processingTime = -1;
+            clearPendingHyperOperation();
+            inventory.updateResult();
             notifyUpdate();
         }
+    }
+
+    protected void beginProcessing(boolean hyper) {
+        clearPendingHyperOperation();
+        if (!hyper || !isHyperLightningBlocked())
+            return;
+        pendingBlockedHyperOperation = true;
+        pendingBlockedHyperPenalty = randomBlockedHyperPenalty();
+        inventory.updateResult();
+    }
+
+    public void clearPendingHyperOperation() {
+        pendingBlockedHyperOperation = false;
+        pendingBlockedHyperPenalty = 0;
+    }
+
+    public void onInputChanged() {
+        clearPendingHyperOperation();
+        processingTime = -1;
+    }
+
+    public float getBlockedHyperPenalty() {
+        return pendingBlockedHyperOperation && isHyper() ? pendingBlockedHyperPenalty : 0;
+    }
+
+    public float getBlockedHyperPreviewMinPenalty() {
+        return shouldPreviewBlockedHyperPenalty() ? minBlockedHyperPenalty() : 0;
+    }
+
+    public float getBlockedHyperPreviewMaxPenalty() {
+        return shouldPreviewBlockedHyperPenalty() ? maxBlockedHyperPenalty() : 0;
+    }
+
+    public boolean shouldPreviewBlockedHyperPenalty() {
+        return isHyper() && (pendingBlockedHyperOperation || isHyperLightningBlocked());
+    }
+
+    public boolean isHyperLightningBlocked() {
+        if (level == null || !isHyper())
+            return false;
+        return BlazeLightningHelper.isStrikeBlocked(worldPosition, BlazeLightningHelper.getStrikePos(level, worldPosition));
+    }
+
+    protected float randomBlockedHyperPenalty() {
+        if (level == null)
+            return minBlockedHyperPenalty();
+        int minStep = (int) Math.ceil(minBlockedHyperPenalty() * PENALTY_STEPS_PER_LEVEL);
+        int maxStep = (int) Math.floor(maxBlockedHyperPenalty() * PENALTY_STEPS_PER_LEVEL);
+        if (maxStep < minStep)
+            return minBlockedHyperPenalty();
+        return (minStep + level.random.nextInt(maxStep - minStep + 1)) / (float) PENALTY_STEPS_PER_LEVEL;
+    }
+
+    protected float minBlockedHyperPenalty() {
+        var config = CEIAXConfig.server().affixes();
+        return Math.max(0, Math.min(
+                config.blazeComposerBlockedHyperMinLevelPenalty.getF(),
+                config.blazeComposerBlockedHyperMaxLevelPenalty.getF()));
+    }
+
+    protected float maxBlockedHyperPenalty() {
+        var config = CEIAXConfig.server().affixes();
+        return Math.max(0, Math.max(
+                config.blazeComposerBlockedHyperMinLevelPenalty.getF(),
+                config.blazeComposerBlockedHyperMaxLevelPenalty.getF()));
     }
 
     public boolean consumeEssence(int amount, boolean hyper, boolean simulate) {
@@ -245,6 +340,7 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         if (this.mode == mode)
             return;
         this.mode = mode;
+        clearPendingHyperOperation();
         processingTime = -1;
         inventory.updateResult();
         notifyUpdate();
@@ -303,6 +399,7 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         remainder.shrink(1);
         if (!simulate) {
             hyperUnlocked = true;
+            clearPendingHyperOperation();
             processingTime = -1;
             inventory.updateResult();
             notifyUpdate();
@@ -329,10 +426,11 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
         ChatFormatting essenceStyle = hyper ? ChatFormatting.BLUE : ChatFormatting.GOLD;
         CEILang.translate(
                 "gui.goggles.blaze_composer.hyper_mode",
-                CEILang.translate("gui.blaze_composer.hyper_mode." + (isHyper()? "hyper": "normal")).style(essenceStyle))
+                CEILang.translate("gui.blaze_composer.hyper_mode." + (isHyper() ? "hyper" : "normal")).style(essenceStyle))
                 .forGoggles(tooltip);
         CEILang.translate("gui.goggles.blaze_composer.mode", CEILang.translate("gui.blaze_composer.mode." + mode.getSerializedName()).style(ChatFormatting.AQUA))
                 .forGoggles(tooltip);
+        addHyperLightningTooltip(tooltip);
         if (inventory.hasRemainingOutput()) {
             CEILang.translate("gui.goggles.blaze_composer.output_blocked").style(ChatFormatting.YELLOW).forGoggles(tooltip);
             return true;
@@ -392,6 +490,17 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
                 .forGoggles(tooltip, 1);
     }
 
+    private void addHyperLightningTooltip(List<Component> tooltip) {
+        if (shouldPreviewBlockedHyperPenalty()) {
+            CEILang.translate(
+                    "gui.goggles.blaze_composer.blocked_hyper_penalty.range",
+                    AffixTemplateDisplay.formatLevel(minBlockedHyperPenalty()),
+                    AffixTemplateDisplay.formatLevel(maxBlockedHyperPenalty()))
+                    .style(ChatFormatting.RED)
+                    .forGoggles(tooltip);
+        }
+    }
+
     @Override
     public void invalidate() {
         super.invalidate();
@@ -400,6 +509,7 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
 
     @Override
     public void clearContent() {
+        clearPendingHyperOperation();
         inventory.clear();
     }
 

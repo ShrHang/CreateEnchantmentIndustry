@@ -25,29 +25,22 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.fluid.SmartFluidTank;
 import com.simibubi.create.foundation.utility.CreateLang;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 import net.createmod.catnip.lang.LangBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderLookup.Provider;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import org.jetbrains.annotations.Nullable;
@@ -55,17 +48,14 @@ import plus.dragons.createdragonsplus.common.fluids.tank.ConfigurableFluidTank;
 import plus.dragons.createdragonsplus.common.fluids.tank.FluidTankBehaviour;
 import plus.dragons.createdragonsplus.common.processing.blaze.BlazeBlockEntity;
 import plus.dragons.createdragonsplus.util.FieldsNullabilityUnknownByDefault;
+import plus.dragons.createenchantmentindustry.common.processing.blaze.BlazeLightningHelper;
 import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
 
 @FieldsNullabilityUnknownByDefault
 public abstract class BlazeExperienceBlockEntity extends BlazeBlockEntity implements IHaveGoggleInformation {
-    public static final String LIGHTNING_BOLT_EXPERIENCE_CHARGE_KEY = "ExperienceCharge";
-    public static final TagKey<Block> LIGHTNING_ROD_BLOCKS = TagKey.create(
-            Registries.BLOCK,
-            ResourceLocation.fromNamespaceAndPath("c", "lightning_rods"));
-    public static final TagKey<PoiType> LIGHTNING_ROD_POINT_OF_INTEREST_TYPES = TagKey.create(
-            Registries.POINT_OF_INTEREST_TYPE,
-            ResourceLocation.fromNamespaceAndPath("c", "lightning_rods"));
+    public static final String LIGHTNING_BOLT_EXPERIENCE_CHARGE_KEY = BlazeLightningHelper.LIGHTNING_BOLT_EXPERIENCE_CHARGE_KEY;
+    public static final TagKey<Block> LIGHTNING_ROD_BLOCKS = BlazeLightningHelper.LIGHTNING_ROD_BLOCKS;
+    public static final TagKey<PoiType> LIGHTNING_ROD_POINT_OF_INTEREST_TYPES = BlazeLightningHelper.LIGHTNING_ROD_POINT_OF_INTEREST_TYPES;
     private boolean isCreative;
     protected FluidTankBehaviour tanks;
 
@@ -219,29 +209,11 @@ public abstract class BlazeExperienceBlockEntity extends BlazeBlockEntity implem
 
     protected @Nullable BlockPos getStrikePos() {
         assert level != null;
-        var dimension = level.dimensionType();
-        if (!dimension.hasSkyLight())
-            return null;
-        if (dimension.hasCeiling())
-            return null;
-        return level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, worldPosition).below();
+        return BlazeLightningHelper.getStrikePos(level, worldPosition);
     }
 
-    @SuppressWarnings("all")
     protected boolean strikeLightning(ServerLevel level, BlockPos strikePos) {
-        var lightning = EntityType.LIGHTNING_BOLT.create(level);
-        if (lightning == null)
-            return false;
-        lightning.getPersistentData().putBoolean(LIGHTNING_BOLT_EXPERIENCE_CHARGE_KEY, true);
-        Optional<BlockPos> rodPos = level.getPoiManager().findAll(
-                poi -> poi.is(LIGHTNING_ROD_POINT_OF_INTEREST_TYPES),
-                pos -> pos.getY() == level.getHeight(Heightmap.Types.WORLD_SURFACE, pos.getX(), pos.getZ()) - 1,
-                strikePos,
-                128,
-                PoiManager.Occupancy.ANY).unordered().findAny();
-        lightning.moveTo(Vec3.atBottomCenterOf(rodPos.orElse(strikePos).above()));
-        level.addFreshEntity(lightning);
-        return rodPos.isEmpty();
+        return BlazeLightningHelper.strikeLightning(level, strikePos);
     }
 
     @Override

@@ -20,6 +20,7 @@ package plus.dragons.createenchantmentindustry.integration.apotheosis.common.reg
 
 import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon.REGISTRATE;
 
+import com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem;
 import com.tterrag.registrate.util.entry.ItemEntry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -33,6 +34,27 @@ import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.com
 
 public class CEIAXItems {
     public static final ModTags MOD_TAGS = new ModTags();
+
+    public static final ItemEntry<SequencedAssemblyItem> INCOMPLETE_BRASS_AFFIX_TEMPLATE = REGISTRATE
+            .item("incomplete_brass_affix_template", SequencedAssemblyItem::new)
+            .asOptional()
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.mcLoc("item/generated"))
+                    .texture("layer0", prov.modLoc("item/brass_affix_template")))
+            .register();
+
+    public static final ItemEntry<SequencedAssemblyItem> INCOMPLETE_CRYSTAL_AFFIX_TEMPLATE = REGISTRATE
+            .item("incomplete_crystal_affix_template", SequencedAssemblyItem::new)
+            .asOptional()
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.mcLoc("item/generated"))
+                    .texture("layer0", prov.modLoc("item/crystal_affix_template")))
+            .register();
+
+    public static final ItemEntry<SequencedAssemblyItem> INCOMPLETE_APOTHEOTIC_AFFIX_TEMPLATE = REGISTRATE
+            .item("incomplete_apotheotic_affix_template", SequencedAssemblyItem::new)
+            .asOptional()
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.mcLoc("item/generated"))
+                    .texture("layer0", prov.modLoc("item/apotheotic_affix_template")))
+            .register();
 
     public static final ItemEntry<AffixTemplateItem> BRASS_AFFIX_TEMPLATE = REGISTRATE
             .item("brass_affix_template", AffixTemplateItem::brass)
