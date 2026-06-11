@@ -78,7 +78,21 @@ public class CEIEnchantmentHelper {
         return list;
     }
 
+    public static List<EnchantmentInstance> getAvailablePenaltyCurseResults(Stream<Holder<Enchantment>> possibleEnchantments, int maxPenaltyLevel) {
+        List<EnchantmentInstance> list = Lists.newArrayList();
+        if (maxPenaltyLevel <= 0)
+            return list;
+        possibleEnchantments.forEach(holder -> {
+            Enchantment enchantment = holder.value();
+            int level = Math.min(maxLevel(holder), maxPenaltyLevel);
+            if (level >= enchantment.getMinLevel())
+                list.add(new EnchantmentInstance(holder, level));
+        });
+        return list;
+    }
+
     public static List<EnchantmentInstance> selectEnchantments(RandomSource random, int adjustedLevel, List<EnchantmentInstance> available, boolean special) {
+        available = Lists.newArrayList(available);
         List<EnchantmentInstance> list = Lists.newArrayList();
         WeightedRandom.getRandomItem(random, available).ifPresent(list::add);
         while (random.nextInt(50) <= adjustedLevel) {

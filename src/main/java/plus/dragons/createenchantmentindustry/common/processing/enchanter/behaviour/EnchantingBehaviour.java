@@ -25,20 +25,25 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.random.WeightedRandom;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.level.Level;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.CEIEnchantmentHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.EnchantingTemplateItem;
 import plus.dragons.createenchantmentindustry.common.registry.CEIEnchantments;
+import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 public class EnchantingBehaviour {
     protected int enchantingLevel;
+    protected boolean cursed;
     protected TagKey<Enchantment> enchantmentTag = CEIEnchantments.MOD_TAGS.enchanting;
     protected List<EnchantmentInstance> enchantments = new ArrayList<>(0);
+    protected List<EnchantmentInstance> penaltyCurses = new ArrayList<>(0);
 
     protected List<EnchantmentInstance> getAvailableEnchantments(Level level, ItemStack stack, boolean special) {
         int adjustedLevel = CEIEnchantmentHelper.getAdjustedLevel(stack, enchantingLevel);
@@ -52,16 +57,19 @@ public class EnchantingBehaviour {
         return CEIEnchantmentHelper.getAvailableEnchantmentResults(adjustedLevel, possible, special);
     }
 
-    protected List<EnchantmentInstance> getAvailableCurses(Level level, ItemStack stack) {
-        int adjustedLevel = CEIEnchantmentHelper.getAdjustedLevel(stack, enchantingLevel);
-        if (adjustedLevel == 0)
+    protected List<EnchantmentInstance> getAvailablePenaltyCurses(Level level, ItemStack stack) {
+        if (CEIConfig.enchantments().blazeEnchanterBlockedLightningCurseChance.get() <= 0)
+            return new ArrayList<>(0);
+        if (CEIConfig.enchantments().blazeEnchanterBlockedLightningCurseCount.get() <= 0)
             return new ArrayList<>(0);
         var possible = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT)
                 .getTag(EnchantmentTags.CURSE)
                 .stream()
                 .flatMap(HolderSet::stream)
-                .filter(stack::isPrimaryItemFor);
-        return CEIEnchantmentHelper.getAvailableEnchantmentResults(adjustedLevel, possible, true);
+                .filter(enchantment -> stack.is(Items.BOOK) || stack.supportsEnchantment(enchantment));
+        return CEIEnchantmentHelper.getAvailablePenaltyCurseResults(
+                possible,
+                CEIConfig.enchantments().blazeEnchanterBlockedLightningCurseMaxLevel.get());
     }
 
     public boolean canProcess(Level level, ItemStack stack, boolean special) {
@@ -72,13 +80,14 @@ public class EnchantingBehaviour {
 
     public void update(Level level, ItemStack stack, int enchantingLevel, boolean special, boolean cursed) {
         this.enchantingLevel = enchantingLevel;
+        this.cursed = special && cursed;
         enchantmentTag = special
                 ? CEIEnchantments.MOD_TAGS.superEnchanting
                 : CEIEnchantments.MOD_TAGS.enchanting;
         enchantments = getAvailableEnchantments(level, stack, special);
-        if (!enchantments.isEmpty() && cursed) {
-            enchantments.addAll(getAvailableCurses(level, stack));
-        }
+        penaltyCurses = !enchantments.isEmpty() && this.cursed
+                ? getAvailablePenaltyCurses(level, stack)
+                : new ArrayList<>(0);
     }
 
     public ItemStack getResult(Level level, ItemStack stack, RandomSource random, boolean special) {
@@ -87,7 +96,37 @@ public class EnchantingBehaviour {
         if (stack.is(Items.BOOK) && enchantments.size() > 1) {
             enchantments.remove(random.nextInt(enchantments.size()));
         }
+        applyCursePenalty(enchantments, random, special);
         return stack.getItem().applyEnchantments(stack, enchantments);
+    }
+
+    protected void applyCursePenalty(List<EnchantmentInstance> enchantments, RandomSource random, boolean special) {
+        if (!special || !cursed || penaltyCurses.isEmpty())
+            return;
+        double chance = CEIConfig.enchantments().blazeEnchanterBlockedLightningCurseChance.get();
+        int count = CEIConfig.enchantments().blazeEnchanterBlockedLightningCurseCount.get();
+        if (chance <= 0 || count <= 0)
+            return;
+        for (int i = 0; i < count; i++) {
+            if (random.nextFloat() >= chance)
+                continue;
+            var available = new ArrayList<>(penaltyCurses);
+            removeAlreadySelected(available, enchantments);
+            if (!CEIConfig.enchantments().ignoreEnchantmentCompatibility.get()) {
+                for (var selected : enchantments) {
+                    EnchantmentHelper.filterCompatibleEnchantments(available, selected);
+                }
+            }
+            if (available.isEmpty())
+                return;
+            WeightedRandom.getRandomItem(random, available)
+                    .ifPresent(enchantments::add);
+        }
+    }
+
+    private void removeAlreadySelected(List<EnchantmentInstance> available, List<EnchantmentInstance> selected) {
+        available.removeIf(instance -> selected.stream()
+                .anyMatch(enchantment -> enchantment.enchantment.equals(instance.enchantment)));
     }
 
     public int getExperienceCost() {
@@ -102,6 +141,8 @@ public class EnchantingBehaviour {
     }
 
     public List<EnchantmentInstance> getPreviewEnchantments() {
-        return List.copyOf(enchantments);
+        var preview = new ArrayList<>(enchantments);
+        preview.addAll(penaltyCurses);
+        return List.copyOf(preview);
     }
 }

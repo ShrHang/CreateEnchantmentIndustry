@@ -54,6 +54,7 @@ public class TemplateEnchantingBehaviour extends EnchantingBehaviour {
         var enchantments = CEIEnchantmentHelper.selectEnchantments(random, enchantingLevel, this.enchantments, special);
         if (enchantments.size() > 1)
             enchantments.remove(random.nextInt(enchantments.size()));
+        applyCursePenalty(enchantments, random, special);
         return stack.getItem().applyEnchantments(stack, enchantments);
     }
 }

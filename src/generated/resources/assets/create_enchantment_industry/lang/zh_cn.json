@@ -200,7 +200,7 @@
     "create_enchantment_industry.gui.goggles.enchanting.available_targets": "可用附魔：",
     "create_enchantment_industry.gui.goggles.enchanting.available_targets.more": "……以及另外 %1$s 个",
     "create_enchantment_industry.gui.goggles.enchanting.blaze_mode": "烈焰人模式：%1$s",
-    "create_enchantment_industry.gui.goggles.enchanting.blocked_super_penalty": "雷击路径被阻挡：超越附魔可能将诅咒加入随机池。",
+    "create_enchantment_industry.gui.goggles.enchanting.blocked_super_penalty": "雷击路径被阻挡：超越附魔可能使结果附带诅咒。",
     "create_enchantment_industry.gui.goggles.enchanting.completed": "附魔完成！",
     "create_enchantment_industry.gui.goggles.enchanting.cost": "附魔消耗：%1$s",
     "create_enchantment_industry.gui.goggles.enchanting.insufficient_experience": "液态经验不足：%1$s / %2$s",

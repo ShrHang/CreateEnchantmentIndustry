@@ -201,7 +201,7 @@
     "create_enchantment_industry.gui.goggles.enchanting.available_targets": "Available Enchantments:",
     "create_enchantment_industry.gui.goggles.enchanting.available_targets.more": "...and %1$s more",
     "create_enchantment_industry.gui.goggles.enchanting.blaze_mode": "Blaze Mode: %1$s",
-    "create_enchantment_industry.gui.goggles.enchanting.blocked_super_penalty": "Blocked lightning path: Super Enchanting may include curses in its random pool.",
+    "create_enchantment_industry.gui.goggles.enchanting.blocked_super_penalty": "Blocked lightning path: Super Enchanting may taint the result with curses.",
     "create_enchantment_industry.gui.goggles.enchanting.completed": "エンチャント完了！",
     "create_enchantment_industry.gui.goggles.enchanting.cost": "消費する液体経験値: %1$s",
     "create_enchantment_industry.gui.goggles.enchanting.insufficient_experience": "Not enough Liquid Experience: %1$s / %2$s",

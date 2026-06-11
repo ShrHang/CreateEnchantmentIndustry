@@ -24,7 +24,7 @@
     "create_enchantment_industry.gui.goggles.enchanting.level":  "Enchanting at level: %1$s",
     "create_enchantment_industry.gui.goggles.enchanting.level.not_set":  "Enchanting level not set!",
     "create_enchantment_industry.gui.goggles.enchanting.cost":  "Enchanting consumes: %1$s",
-    "create_enchantment_industry.gui.goggles.enchanting.blocked_super_penalty":  "Blocked lightning path: Super Enchanting may include curses in its random pool.",
+    "create_enchantment_industry.gui.goggles.enchanting.blocked_super_penalty":  "Blocked lightning path: Super Enchanting may taint the result with curses.",
     "create_enchantment_industry.gui.goggles.enchanting.available_targets":  "Available Enchantments:",
     "create_enchantment_industry.gui.goggles.enchanting.available_targets.more":  "...and %1$s more",
     "create_enchantment_industry.gui.goggles.enchanting.mode_help.direct":  "Randomly enchants a compatible item using the selected enchanting level.",

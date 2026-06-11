@@ -14,3 +14,4 @@
 ### Fixed
 * Fixed optional integration block loot tables losing their `neoforge:conditions` during data generation.
 * Fixed Affix Augmentor idle processing state so belt-held items can start processing reliably.
+* Fixed how `curse` in Blaze Forger work.

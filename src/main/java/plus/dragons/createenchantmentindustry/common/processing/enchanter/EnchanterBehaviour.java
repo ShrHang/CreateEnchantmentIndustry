@@ -40,6 +40,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -265,11 +266,14 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
         int limit = isPlayerSneaking ? available.size() : Math.min(available.size(), 6);
         for (int i = 0; i < limit; i++) {
             EnchantmentInstance instance = available.get(i);
-            Component name = Enchantment.getFullname(instance.enchantment, instance.level);
-            ChatFormatting style = instance.enchantment.is(net.minecraft.tags.EnchantmentTags.CURSE)
+            var name = Enchantment.getFullname(instance.enchantment, instance.level).copy();
+            if (instance.enchantment.is(EnchantmentTags.CURSE)) {
+                name.append(" ?");
+            }
+            ChatFormatting style = instance.enchantment.is(EnchantmentTags.CURSE)
                     ? ChatFormatting.RED
                     : ChatFormatting.GRAY;
-            CEILang.builder().add(name.copy()).style(style).forGoggles(tooltip, 1);
+            CEILang.builder().add(name).style(style).forGoggles(tooltip, 1);
         }
         if (!isPlayerSneaking && available.size() > limit) {
             CEILang.translate("gui.goggles.enchanting.available_targets.more", available.size() - limit)
