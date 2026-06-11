@@ -20,61 +20,58 @@ package plus.dragons.createenchantmentindustry.integration.apotheosis.common.pro
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.shadowsoffire.apotheosis.affix.Affix;
 import dev.shadowsoffire.apotheosis.affix.AffixInstance;
 import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AffixComposingRules extends SimpleJsonResourceReloadListener {
+public class AffixComposingRules extends SimplePreparableReloadListener<AffixComposingRules.LoadedRules> {
     public static final AffixComposingRules INSTANCE = new AffixComposingRules();
     private static final Logger LOGGER = LoggerFactory.getLogger(AffixComposingRules.class);
     private static final Gson GSON = new Gson();
-    private static final String DIRECTORY = "create_enchantment_industry/affix_composing_rules";
+    private static final String AFFIX_DIRECTORY = "create_enchantment_industry/affix_composing/affix";
+    private static final String RARITY_DIRECTORY = "create_enchantment_industry/affix_composing/rarity";
 
-    private Map<ResourceLocation, Rule> affixRules = Map.of();
-    private Map<ResourceLocation, Rule> rarityRules = Map.of();
+    private volatile LoadedRules rules = LoadedRules.EMPTY;
 
-    private AffixComposingRules() {
-        super(GSON, DIRECTORY);
+    private AffixComposingRules() {}
+
+    @Override
+    protected LoadedRules prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
+        Map<ResourceLocation, JsonElement> affixObjects = new HashMap<>();
+        Map<ResourceLocation, JsonElement> rarityObjects = new HashMap<>();
+        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, AFFIX_DIRECTORY, GSON, affixObjects);
+        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, RARITY_DIRECTORY, GSON, rarityObjects);
+        return new LoadedRules(
+                parseRules("affix", affixObjects),
+                parseRules("rarity", rarityObjects));
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> objects, ResourceManager resourceManager, ProfilerFiller profiler) {
-        Map<ResourceLocation, Rule> affixes = new HashMap<>();
-        Map<ResourceLocation, Rule> rarities = new HashMap<>();
-        objects.forEach((id, element) -> RuleFile.CODEC.parse(JsonOps.INSTANCE, element)
-                .resultOrPartial(message -> LOGGER.warn("Failed to parse affix composing rule {}: {}", id, message))
-                .ifPresent(ruleFile -> {
-                    ruleFile.affix.ifPresent(affix -> affixes.merge(affix, ruleFile.rule, Rule::merge));
-                    ruleFile.rarity.ifPresent(rarity -> rarities.merge(rarity, ruleFile.rule, Rule::merge));
-                    if (ruleFile.affix.isEmpty() && ruleFile.rarity.isEmpty()) {
-                        LOGGER.warn("Affix composing rule {} does not target an affix or rarity and was ignored", id);
-                    }
-                }));
-        affixRules = Map.copyOf(affixes);
-        rarityRules = Map.copyOf(rarities);
-        LOGGER.info("Loaded {} affix composing affix rules and {} rarity rules", affixRules.size(), rarityRules.size());
+    protected void apply(LoadedRules loadedRules, ResourceManager resourceManager, ProfilerFiller profiler) {
+        rules = loadedRules;
+        LOGGER.debug("Loaded {} affix-targeted composing rules and {} rarity-targeted composing rules", loadedRules.affixes().size(), loadedRules.rarities().size());
     }
 
     public float getCostMultiplier(AffixTemplateData data) {
-        return getAffixRule(data.affix()).costMultiplier()
-                * getRarityRule(data.rarity().getId()).costMultiplier();
+        LoadedRules current = rules;
+        return current.affix(data.affix()).costMultiplier()
+                * current.rarity(data.rarity().getId()).costMultiplier();
     }
 
     public float getAugmentingCostMultiplier(AffixInstance instance) {
-        Rule affixRule = getAffixRule(instance.affix());
-        Rule rarityRule = getRarityRule(instance.rarity().getId());
+        LoadedRules current = rules;
+        AffixComposingRule affixRule = current.affix(instance.affix());
+        AffixComposingRule rarityRule = current.rarity(instance.rarity().getId());
         return affixRule.costMultiplier()
                 * affixRule.augmentingCostMultiplier()
                 * rarityRule.costMultiplier()
@@ -82,88 +79,57 @@ public class AffixComposingRules extends SimpleJsonResourceReloadListener {
     }
 
     public float getMaxLevel(AffixTemplateData data, float templateMaxLevel) {
+        LoadedRules current = rules;
         float maxLevel = templateMaxLevel;
-        Optional<Float> affixMax = getAffixRule(data.affix()).maxLevel();
-        Optional<Float> rarityMax = getRarityRule(data.rarity().getId()).maxLevel();
-        if (affixMax.isPresent())
-            maxLevel = Math.min(maxLevel, affixMax.get());
-        if (rarityMax.isPresent())
-            maxLevel = Math.min(maxLevel, rarityMax.get());
+        AffixComposingRule affixRule = current.affix(data.affix());
+        AffixComposingRule rarityRule = current.rarity(data.rarity().getId());
+        if (affixRule.maxLevel().isPresent())
+            maxLevel = Math.min(maxLevel, affixRule.maxLevel().get());
+        if (rarityRule.maxLevel().isPresent())
+            maxLevel = Math.min(maxLevel, rarityRule.maxLevel().get());
         return maxLevel;
     }
 
     public boolean denies(BlazeComposerMode mode, boolean hyper, AffixTemplateData data) {
-        Rule affixRule = getAffixRule(data.affix());
-        Rule rarityRule = getRarityRule(data.rarity().getId());
+        LoadedRules current = rules;
+        AffixComposingRule affixRule = current.affix(data.affix());
+        AffixComposingRule rarityRule = current.rarity(data.rarity().getId());
         return affixRule.denies(mode, hyper) || rarityRule.denies(mode, hyper);
     }
 
     public boolean deniesAugmenting(AffixInstance instance) {
-        Rule affixRule = getAffixRule(instance.affix());
-        Rule rarityRule = getRarityRule(instance.rarity().getId());
+        LoadedRules current = rules;
+        AffixComposingRule affixRule = current.affix(instance.affix());
+        AffixComposingRule rarityRule = current.rarity(instance.rarity().getId());
         return affixRule.denyAugmenting() || rarityRule.denyAugmenting();
     }
 
-    private Rule getAffixRule(DynamicHolder<Affix> affix) {
-        return affixRules.getOrDefault(affix.getId(), Rule.DEFAULT);
+    private static Map<ResourceLocation, AffixComposingRule> parseRules(
+            String targetType,
+            Map<ResourceLocation, JsonElement> objects) {
+        Map<ResourceLocation, AffixComposingRule> parsed = new HashMap<>();
+        objects.forEach((id, element) -> AffixComposingRule.CODEC.parse(JsonOps.INSTANCE, element)
+                .resultOrPartial(message -> LOGGER.error("Failed to parse affix composing {} rule {}: {}", targetType, id, message))
+                .ifPresent(rule -> parsed.put(id, rule)));
+        return Map.copyOf(parsed);
     }
 
-    private Rule getRarityRule(ResourceLocation rarity) {
-        return rarityRules.getOrDefault(rarity, Rule.DEFAULT);
-    }
+    protected record LoadedRules(
+            Map<ResourceLocation, AffixComposingRule> affixes,
+            Map<ResourceLocation, AffixComposingRule> rarities) {
+        private static final LoadedRules EMPTY = new LoadedRules(Map.of(), Map.of());
 
-    public record RuleFile(
-            Optional<ResourceLocation> affix,
-            Optional<ResourceLocation> rarity,
-            Rule rule) {
-        public static final Codec<RuleFile> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                ResourceLocation.CODEC.optionalFieldOf("affix").forGetter(RuleFile::affix),
-                ResourceLocation.CODEC.optionalFieldOf("rarity").forGetter(RuleFile::rarity),
-                Rule.CODEC.optionalFieldOf("rule", Rule.DEFAULT).forGetter(RuleFile::rule))
-                .apply(instance, RuleFile::new));
-    }
-
-    public record Rule(
-            float costMultiplier,
-            float augmentingCostMultiplier,
-            Optional<Float> maxLevel,
-            boolean denyExtraction,
-            boolean denyApplying,
-            boolean denyMerge,
-            boolean denyAugmenting,
-            boolean denyHyper) {
-
-        public static final Rule DEFAULT = new Rule(1, 1, Optional.empty(), false, false, false, false, false);
-        public static final Codec<Rule> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Codec.FLOAT.optionalFieldOf("cost_multiplier", 1F).forGetter(Rule::costMultiplier),
-                Codec.FLOAT.optionalFieldOf("augmenting_cost_multiplier", 1F).forGetter(Rule::augmentingCostMultiplier),
-                Codec.FLOAT.optionalFieldOf("max_level").forGetter(Rule::maxLevel),
-                Codec.BOOL.optionalFieldOf("deny_extraction", false).forGetter(Rule::denyExtraction),
-                Codec.BOOL.optionalFieldOf("deny_applying", false).forGetter(Rule::denyApplying),
-                Codec.BOOL.optionalFieldOf("deny_merge", false).forGetter(Rule::denyMerge),
-                Codec.BOOL.optionalFieldOf("deny_augmenting", false).forGetter(Rule::denyAugmenting),
-                Codec.BOOL.optionalFieldOf("deny_hyper", false).forGetter(Rule::denyHyper))
-                .apply(instance, Rule::new));
-        public Rule merge(Rule other) {
-            return new Rule(
-                    costMultiplier * other.costMultiplier,
-                    augmentingCostMultiplier * other.augmentingCostMultiplier,
-                    other.maxLevel.or(() -> maxLevel),
-                    denyExtraction || other.denyExtraction,
-                    denyApplying || other.denyApplying,
-                    denyMerge || other.denyMerge,
-                    denyAugmenting || other.denyAugmenting,
-                    denyHyper || other.denyHyper);
+        public LoadedRules {
+            affixes = Map.copyOf(affixes);
+            rarities = Map.copyOf(rarities);
         }
 
-        public boolean denies(BlazeComposerMode mode, boolean hyper) {
-            if (hyper && denyHyper)
-                return true;
-            return switch (mode) {
-                case EXTRACT -> denyExtraction;
-                case APPLY -> denyApplying;
-                case MERGE -> denyMerge;
-            };
+        private AffixComposingRule affix(DynamicHolder<Affix> affix) {
+            return affixes.getOrDefault(affix.getId(), AffixComposingRule.DEFAULT);
+        }
+
+        private AffixComposingRule rarity(ResourceLocation rarity) {
+            return rarities.getOrDefault(rarity, AffixComposingRule.DEFAULT);
         }
     }
 }

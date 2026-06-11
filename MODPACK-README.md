@@ -463,32 +463,42 @@ With default configs and no datapack rule multiplier, a normal 0.25 upgrade cost
 
 ### Affix Composing Rules
 
-Affix composing rules are datapack JSON files loaded from:
+Apotheosis affixes and rarities are Placebo dynamic registry entries rather than NeoForge registry entries, so they cannot host native NeoForge data maps. Affix composing rules use the same target-file model: the resource id of each JSON file is the exact affix or rarity id receiving the rule.
+
+Affix rules are loaded from:
 
 ```text
-data/<namespace>/create_enchantment_industry/affix_composing_rules/*.json
+data/<affix_namespace>/create_enchantment_industry/affix_composing/affix/<affix_path>.json
 ```
 
-A rule can target an affix, a rarity, or both. If both are omitted, the file is ignored. Multiple matching rules merge multiplicatively for costs and with logical OR for deny flags.
+Rarity rules are loaded from:
 
-Example:
+```text
+data/<rarity_namespace>/create_enchantment_industry/affix_composing/rarity/<rarity_path>.json
+```
+
+For example, the rule for `apotheosis:example_affix` is:
+
+```text
+data/apotheosis/create_enchantment_industry/affix_composing/affix/example_affix.json
+```
+
+Its contents are the rule directly:
 
 ```json
 {
-  "affix": "apotheosis:example_affix",
-  "rarity": "apotheosis:mythic",
-  "rule": {
-    "cost_multiplier": 1.5,
-    "augmenting_cost_multiplier": 0.75,
-    "max_level": 3.0,
-    "deny_extraction": false,
-    "deny_applying": false,
-    "deny_merge": false,
-    "deny_augmenting": false,
-    "deny_hyper": false
-  }
+  "cost_multiplier": 1.5,
+  "augmenting_cost_multiplier": 0.75,
+  "max_level": 3.0,
+  "deny_extraction": false,
+  "deny_applying": false,
+  "deny_merge": false,
+  "deny_augmenting": false,
+  "deny_hyper": false
 }
 ```
+
+Rules target exact ids only; dynamic registry tags are not supported. A higher-priority datapack replaces a lower-priority rule at the same resource path, matching normal datapack resource override behavior. An affix rule and its rarity rule both apply: cost multipliers multiply, deny flags use logical OR, and the lowest configured `max_level` wins.
 
 Fields:
 
@@ -498,6 +508,7 @@ Fields:
 * `deny_extraction`, `deny_applying`, and `deny_merge` disable specific Blaze Composer modes.
 * `deny_augmenting` prevents Affix Augmentor from selecting matching affixes.
 * `deny_hyper` prevents matching affixes from being processed in Blaze Composer Hyper Mode.
+* Numeric fields must be finite and non-negative. Omitted fields use neutral defaults.
 
 ## Config
 
