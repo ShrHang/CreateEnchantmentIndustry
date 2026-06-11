@@ -18,9 +18,11 @@
 
 package plus.dragons.createenchantmentindustry.common.processing.enchanter.behaviour;
 
+import java.util.List;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.CEIEnchantmentHelper;
@@ -50,11 +52,22 @@ public class TemplateEnchantingBehaviour extends EnchantingBehaviour {
     }
 
     @Override
+    public void update(Level level, ItemStack stack, int enchantingLevel, boolean special, boolean cursed, RandomSource random) {
+        super.update(level, target, enchantingLevel, special, cursed, random);
+    }
+
+    @Override
     public ItemStack getResult(Level level, ItemStack stack, RandomSource random, boolean special) {
+        var enchantments = selectResultEnchantments(random, stack, special);
+        return stack.getItem().applyEnchantments(stack, enchantments);
+    }
+
+    @Override
+    protected List<EnchantmentInstance> selectResultEnchantments(RandomSource random, ItemStack stack, boolean special) {
         var enchantments = CEIEnchantmentHelper.selectEnchantments(random, enchantingLevel, this.enchantments, special);
         if (enchantments.size() > 1)
             enchantments.remove(random.nextInt(enchantments.size()));
         applyCursePenalty(enchantments, random, special);
-        return stack.getItem().applyEnchantments(stack, enchantments);
+        return enchantments;
     }
 }

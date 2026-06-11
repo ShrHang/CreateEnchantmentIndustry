@@ -30,8 +30,11 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import plus.dragons.createdragonsplus.common.CDPRegistrate;
+import plus.dragons.createenchantmentindustry.common.processing.enchanting.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.registry.*;
 import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
@@ -59,10 +62,15 @@ public class CEICommon {
         CEIItemAttributes.register(modBus);
         modBus.register(this);
         modBus.register(new CEIConfig(modContainer));
+        NeoForge.EVENT_BUS.addListener(CEICommon::serverStarted);
     }
 
     @SubscribeEvent
     public void setup(final FMLCommonSetupEvent event) {}
+
+    public static void serverStarted(final ServerStartedEvent event) {
+        EnchantmentProcessingRules.warnLegacyDataMaps(event.getServer());
+    }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void register(final RegisterEvent event) {

@@ -35,6 +35,7 @@ import net.minecraft.world.level.Level;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.CEIEnchantmentHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.EnchantingTemplateItem;
+import plus.dragons.createenchantmentindustry.common.processing.enchanting.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.registry.CEIEnchantments;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
@@ -44,6 +45,7 @@ public class EnchantingBehaviour {
     protected TagKey<Enchantment> enchantmentTag = CEIEnchantments.MOD_TAGS.enchanting;
     protected List<EnchantmentInstance> enchantments = new ArrayList<>(0);
     protected List<EnchantmentInstance> penaltyCurses = new ArrayList<>(0);
+    protected List<EnchantmentInstance> costEnchantments = new ArrayList<>(0);
 
     protected List<EnchantmentInstance> getAvailableEnchantments(Level level, ItemStack stack, boolean special) {
         int adjustedLevel = CEIEnchantmentHelper.getAdjustedLevel(stack, enchantingLevel);
@@ -79,6 +81,10 @@ public class EnchantingBehaviour {
     }
 
     public void update(Level level, ItemStack stack, int enchantingLevel, boolean special, boolean cursed) {
+        update(level, stack, enchantingLevel, special, cursed, null);
+    }
+
+    public void update(Level level, ItemStack stack, int enchantingLevel, boolean special, boolean cursed, RandomSource random) {
         this.enchantingLevel = enchantingLevel;
         this.cursed = special && cursed;
         enchantmentTag = special
@@ -88,16 +94,24 @@ public class EnchantingBehaviour {
         penaltyCurses = !enchantments.isEmpty() && this.cursed
                 ? getAvailablePenaltyCurses(level, stack)
                 : new ArrayList<>(0);
+        costEnchantments = random == null || enchantments.isEmpty()
+                ? new ArrayList<>(0)
+                : selectResultEnchantments(random, stack, special);
     }
 
     public ItemStack getResult(Level level, ItemStack stack, RandomSource random, boolean special) {
+        var enchantments = selectResultEnchantments(random, stack, special);
+        return stack.getItem().applyEnchantments(stack, enchantments);
+    }
+
+    protected List<EnchantmentInstance> selectResultEnchantments(RandomSource random, ItemStack stack, boolean special) {
         int adjustedLevel = CEIEnchantmentHelper.getAdjustedLevel(stack, enchantingLevel);
         var enchantments = CEIEnchantmentHelper.selectEnchantments(random, adjustedLevel, this.enchantments, special);
         if (stack.is(Items.BOOK) && enchantments.size() > 1) {
             enchantments.remove(random.nextInt(enchantments.size()));
         }
         applyCursePenalty(enchantments, random, special);
-        return stack.getItem().applyEnchantments(stack, enchantments);
+        return enchantments;
     }
 
     protected void applyCursePenalty(List<EnchantmentInstance> enchantments, RandomSource random, boolean special) {
@@ -137,7 +151,18 @@ public class EnchantingBehaviour {
         for (int i = 0; i < levelCost; i++) {
             experienceCost += ExperienceHelper.getExperienceForNextLevel(enchantingLevel - i);
         }
-        return experienceCost;
+        return EnchantmentProcessingRules.blazeEnchanterCost(experienceCost, costEnchantments.isEmpty() ? enchantments : costEnchantments, false, false);
+    }
+
+    public int getExperienceCost(boolean special, boolean template) {
+        if (enchantments.isEmpty())
+            return 0;
+        int levelCost = Math.ceilDiv(enchantingLevel, 10);
+        int experienceCost = 0;
+        for (int i = 0; i < levelCost; i++) {
+            experienceCost += ExperienceHelper.getExperienceForNextLevel(enchantingLevel - i);
+        }
+        return EnchantmentProcessingRules.blazeEnchanterCost(experienceCost, costEnchantments.isEmpty() ? enchantments : costEnchantments, special, template);
     }
 
     public List<EnchantmentInstance> getPreviewEnchantments() {

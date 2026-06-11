@@ -36,9 +36,12 @@ public class CEIEnchantmentsConfig extends ConfigBase {
     public final ConfigInt blazeEnchanterBlockedLightningCurseMaxLevel = i(1, 1, 255,
             "blazeEnchanterBlockedLightningCurseMaxLevel",
             Comments.blazeEnchanterBlockedLightningCurseMaxLevel);
-    public final ConfigInt enchantmentMaxLevelExtension = i(1, 0, 255,
-            "enchantmentMaxLevelExtension",
-            Comments.enchantmentMaxLevelExtension);
+    public final ConfigInt blazeEnchanterMaxLevelExtension = i(1, 0, 255,
+            "blazeEnchanterMaxLevelExtension",
+            Comments.blazeEnchanterMaxLevelExtension);
+    public final ConfigInt blazeForgerMaxLevelExtension = i(1, 0, 255,
+            "blazeForgerMaxLevelExtension",
+            Comments.blazeForgerMaxLevelExtension);
     public final ConfigBool ignoreEnchantmentCompatibility = b(true,
             "ignoreEnchantmentCompatibility",
             Comments.ignoreEnchantmentCompatibility);
@@ -57,7 +60,8 @@ public class CEIEnchantmentsConfig extends ConfigBase {
         static final String blazeEnchanterBlockedLightningCurseChance = "Chance per curse roll for blocked-lightning Super Enchanting to add an applicable curse to the result";
         static final String blazeEnchanterBlockedLightningCurseCount = "Maximum curse rolls for blocked-lightning Super Enchanting";
         static final String blazeEnchanterBlockedLightningCurseMaxLevel = "Maximum curse level blocked-lightning Super Enchanting can add";
-        static final String enchantmentMaxLevelExtension = "Max enchantment level in Super Enchanting will be extended by this value";
+        static final String blazeEnchanterMaxLevelExtension = "Max enchantment level in Super Enchanting will be extended by this value when no per-enchantment processing rule exists";
+        static final String blazeForgerMaxLevelExtension = "Max enchantment level in Super Forging will be extended by this value when no per-enchantment processing rule exists";
         static final String ignoreEnchantmentCompatibility = "If Super Enchanting and Super Forging ignores enchantment compatibility";
         static final String splitEnchantmentRespectLevelExtension = "If Enchantment splitting respects over-capped level";
     }

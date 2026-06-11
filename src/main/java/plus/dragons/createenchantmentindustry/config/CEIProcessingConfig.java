@@ -36,6 +36,39 @@ public class CEIProcessingConfig extends ConfigBase {
     public final ConfigFloat classicBlazeEnchanterSuperEnchantingCurseLevelDroppingRate = f(0.25f, 0.01f,
             "classicBlazeEnchanterSuperEnchantingCurseLevelDroppingRate",
             Comments.classicBlazeEnchanterSuperEnchantingCurseLevelDroppingRate);
+    public final ConfigFloat blazeEnchanterNormalEnchantingCostMultiplier = f(1.0f, 0.0f,
+            "blazeEnchanterNormalEnchantingCostMultiplier",
+            Comments.blazeEnchanterNormalEnchantingCostMultiplier);
+    public final ConfigFloat blazeEnchanterSuperEnchantingCostMultiplier = f(1.0f, 0.0f,
+            "blazeEnchanterSuperEnchantingCostMultiplier",
+            Comments.blazeEnchanterSuperEnchantingCostMultiplier);
+    public final ConfigFloat blazeEnchanterDirectEnchantingCostMultiplier = f(1.0f, 0.0f,
+            "blazeEnchanterDirectEnchantingCostMultiplier",
+            Comments.blazeEnchanterDirectEnchantingCostMultiplier);
+    public final ConfigFloat blazeEnchanterTemplateEnchantingCostMultiplier = f(1.0f, 0.0f,
+            "blazeEnchanterTemplateEnchantingCostMultiplier",
+            Comments.blazeEnchanterTemplateEnchantingCostMultiplier);
+    public final ConfigFloat blazeForgerNormalForgingCostMultiplier = f(1.0f, 0.0f,
+            "blazeForgerNormalForgingCostMultiplier",
+            Comments.blazeForgerNormalForgingCostMultiplier);
+    public final ConfigFloat blazeForgerSuperForgingCostMultiplier = f(1.0f, 0.0f,
+            "blazeForgerSuperForgingCostMultiplier",
+            Comments.blazeForgerSuperForgingCostMultiplier);
+    public final ConfigFloat blazeForgerMergeCostMultiplier = f(1.0f, 0.0f,
+            "blazeForgerMergeCostMultiplier",
+            Comments.blazeForgerMergeCostMultiplier);
+    public final ConfigFloat blazeForgerApplyCostMultiplier = f(1.0f, 0.0f,
+            "blazeForgerApplyCostMultiplier",
+            Comments.blazeForgerApplyCostMultiplier);
+    public final ConfigFloat blazeForgerSplitCostMultiplier = f(1.0f, 0.0f,
+            "blazeForgerSplitCostMultiplier",
+            Comments.blazeForgerSplitCostMultiplier);
+    public final ConfigInt blazeForgerConflictExtraLevelCost = i(1, 0,
+            "blazeForgerConflictExtraLevelCost",
+            Comments.blazeForgerConflictExtraLevelCost);
+    public final ConfigInt blazeForgerDurabilityRepairLevelCost = i(2, 0,
+            "blazeForgerDurabilityRepairLevelCost",
+            Comments.blazeForgerDurabilityRepairLevelCost);
 
     @Override
     public String getName() {
@@ -48,5 +81,16 @@ public class CEIProcessingConfig extends ConfigBase {
         static final String classicBlazeEnchanterNormalEnchantingCostCoefficient = "Experience cost coefficient of Classic Blaze Enchanter regular enchanting.";
         static final String classicBlazeEnchanterSuperEnchantingCostCoefficient = "Experience cost coefficient of Classic Blaze Enchanter super enchanting.";
         static final String classicBlazeEnchanterSuperEnchantingCurseLevelDroppingRate = "Probability that a cursed Classic Blaze Enchanter super enchants resulting in a drop in enchantment level.";
+        static final String blazeEnchanterNormalEnchantingCostMultiplier = "Global experience cost multiplier for regular Blaze Enchanter operations.";
+        static final String blazeEnchanterSuperEnchantingCostMultiplier = "Global experience cost multiplier for Super Blaze Enchanter operations.";
+        static final String blazeEnchanterDirectEnchantingCostMultiplier = "Experience cost multiplier for direct Blaze Enchanter operations on items and books.";
+        static final String blazeEnchanterTemplateEnchantingCostMultiplier = "Experience cost multiplier for Blaze Enchanter operations that write enchantments into templates.";
+        static final String blazeForgerNormalForgingCostMultiplier = "Global experience cost multiplier for regular Blaze Forger operations.";
+        static final String blazeForgerSuperForgingCostMultiplier = "Global experience cost multiplier for Super Blaze Forger operations.";
+        static final String blazeForgerMergeCostMultiplier = "Experience cost multiplier for Blaze Forger merge operations.";
+        static final String blazeForgerApplyCostMultiplier = "Experience cost multiplier for Blaze Forger apply operations.";
+        static final String blazeForgerSplitCostMultiplier = "Experience cost multiplier for Blaze Forger split operations.";
+        static final String blazeForgerConflictExtraLevelCost = "Extra level cost added when Super Forging ignores an enchantment conflict.";
+        static final String blazeForgerDurabilityRepairLevelCost = "Level cost added when Blaze Forger repairs item durability during merge.";
     }
 }

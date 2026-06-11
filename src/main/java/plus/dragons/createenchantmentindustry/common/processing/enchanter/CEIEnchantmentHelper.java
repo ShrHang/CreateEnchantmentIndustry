@@ -33,7 +33,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
-import plus.dragons.createenchantmentindustry.common.registry.CEIDataMaps;
+import plus.dragons.createenchantmentindustry.common.processing.enchanting.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 public class CEIEnchantmentHelper {
@@ -68,6 +68,8 @@ public class CEIEnchantmentHelper {
         possibleEnchantments.forEach(holder -> {
             Enchantment enchantment = holder.value();
             int maxLevel = maxLevel(holder);
+            if (special)
+                maxLevel += EnchantmentProcessingRules.blazeEnchanterLevelExtension(holder);
             for (int i = maxLevel; i >= enchantment.getMinLevel(); i--) {
                 if (level >= enchantment.getMinCost(i) && level <= enchantment.getMaxCost(i)) {
                     list.add(new EnchantmentInstance(holder, i));
@@ -115,8 +117,9 @@ public class CEIEnchantmentHelper {
         return alternativeMaxLevel.apply(enchantment);
     }
 
+    @Deprecated(forRemoval = false)
     public static int levelExtension(Holder<Enchantment> enchantment) {
-        var result = enchantment.getData(CEIDataMaps.SUPER_ENCHANTING_LEVEL_EXTENSION);
-        return result != null ? result.intValue() : CEIConfig.enchantments().enchantmentMaxLevelExtension.get();
+        // Legacy ABI entry point. New code should call the machine-specific rule helpers directly.
+        return EnchantmentProcessingRules.blazeForgerLevelExtension(enchantment);
     }
 }

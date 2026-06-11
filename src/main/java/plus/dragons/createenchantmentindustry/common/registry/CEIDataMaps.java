@@ -50,6 +50,7 @@ import plus.dragons.createdragonsplus.common.registry.CDPFluids;
 import plus.dragons.createdragonsplus.util.Pairs;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceFuel;
+import plus.dragons.createenchantmentindustry.common.processing.enchanting.EnchantmentProcessingRule;
 import plus.dragons.createenchantmentindustry.util.CEIDyeFluids;
 import plus.dragons.createenchantmentindustry.util.CEIIntIntPair;
 
@@ -106,6 +107,10 @@ public class CEIDataMaps {
             .builder(CEICommon.asResource("super_enchanting/custom_level_extension"), Registries.ENCHANTMENT, ExtraCodecs.NON_NEGATIVE_INT)
             .synced(Codec.INT, true)
             .build();
+    public static final DataMapType<Enchantment, EnchantmentProcessingRule> ENCHANTMENT_PROCESSING_RULES = DataMapType
+            .builder(CEICommon.asResource("enchantment_processing/rules"), Registries.ENCHANTMENT, EnchantmentProcessingRule.CODEC)
+            .synced(EnchantmentProcessingRule.CODEC, true)
+            .build();
 
     public static void register(IEventBus modBus) {
         modBus.register(CEIDataMaps.class);
@@ -127,6 +132,7 @@ public class CEIDataMaps {
         event.register(FORGING_COST_MULTIPLIER);
         event.register(SPLITTING_COST_MULTIPLIER);
         event.register(SUPER_ENCHANTING_LEVEL_EXTENSION);
+        event.register(ENCHANTMENT_PROCESSING_RULES);
     }
 
     public static <T> Stream<Pair<Fluid, T>> getSourceFluidEntries(DataMapType<Fluid, T> type) {
@@ -210,9 +216,9 @@ public class CEIDataMaps {
         provider.builder(PRINTING_ENCHANTED_BOOK_COST);
         provider.builder(FORGING_COST_MULTIPLIER);
         provider.builder(SPLITTING_COST_MULTIPLIER);
-        provider.builder(SUPER_ENCHANTING_LEVEL_EXTENSION)
-                .add(MENDING, 0, false)
-                .add(INFINITY, 0, false);
-        ;
+        provider.builder(SUPER_ENCHANTING_LEVEL_EXTENSION);
+        provider.builder(ENCHANTMENT_PROCESSING_RULES)
+                .add(MENDING, EnchantmentProcessingRule.enchanterAndForgerExtension(0, 0), false)
+                .add(INFINITY, EnchantmentProcessingRule.enchanterAndForgerExtension(0, 0), false);
     }
 }

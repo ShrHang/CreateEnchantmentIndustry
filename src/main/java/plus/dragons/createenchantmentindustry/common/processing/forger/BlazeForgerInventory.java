@@ -40,8 +40,8 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.CEIEnchantmentHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.EnchantingTemplateItem;
+import plus.dragons.createenchantmentindustry.common.processing.enchanting.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
-import plus.dragons.createenchantmentindustry.common.registry.CEIDataMaps;
 import plus.dragons.createenchantmentindustry.common.registry.CEIStats;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
@@ -315,7 +315,12 @@ public class BlazeForgerInventory extends ItemStackHandler {
             var extractedEnchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
             extractedEnchantments.set(enchantment.getKey(), level);
             EnchantmentHelper.setEnchantments(addition, extractedEnchantments.toImmutable());
-            cost += Math.max(1, enchantment.getKey().value().getAnvilCost() / 2) * level;
+            cost += EnchantmentProcessingRules.blazeForgerLevelCost(
+                    enchantment.getKey(),
+                    BlazeForgerMode.SPLIT,
+                    forger.special,
+                    enchantment.getKey().value().getAnvilCost(),
+                    level);
             return Result.ready(BlazeForgerMode.SPLIT, book, addition, cost, conflicting, overCap, false, 0, 0);
         }
         if (!splitEnchantments(base, addition, baseEnchantments))
@@ -340,8 +345,12 @@ public class BlazeForgerInventory extends ItemStackHandler {
         EnchantmentHelper.setEnchantments(base, removedEnchantments.toImmutable());
         int level = getSplitLevel(enchantment, baseEnchantments);
         addition.enchant(enchantment, level);
-        var multiplier = enchantment.getData(CEIDataMaps.SPLITTING_COST_MULTIPLIER);
-        cost += (int) (Math.max(1, enchantment.value().getAnvilCost() / 2) * level * (multiplier != null ? multiplier : 1));
+        cost += EnchantmentProcessingRules.blazeForgerLevelCost(
+                enchantment,
+                BlazeForgerMode.SPLIT,
+                forger.special,
+                enchantment.value().getAnvilCost(),
+                level);
         return true;
     }
 
@@ -351,7 +360,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
             return level;
         int maxLevel = CEIEnchantmentHelper.maxLevel(enchantment);
         if (CEIConfig.enchantments().splitEnchantmentRespectLevelExtension.get())
-            maxLevel += CEIEnchantmentHelper.levelExtension(enchantment);
+            maxLevel += EnchantmentProcessingRules.blazeForgerLevelExtension(enchantment);
         return Math.min(level, maxLevel);
     }
 
@@ -370,14 +379,14 @@ public class BlazeForgerInventory extends ItemStackHandler {
                 if (!holder1.equals(holder) && !Enchantment.areCompatible(holder, holder1)) {
                     applicable = forger.special && CEIConfig.enchantments().ignoreEnchantmentCompatibility.get();
                     conflicting = applicable;
-                    cost++;
+                    cost += EnchantmentProcessingRules.conflictExtraLevelCost();
                 }
             }
 
             if (applicable) {
                 applied = true;
                 int maxLevel = CEIEnchantmentHelper.maxLevel(holder);
-                int extendedMaxLevel = maxLevel + CEIEnchantmentHelper.levelExtension(holder);
+                int extendedMaxLevel = maxLevel + EnchantmentProcessingRules.blazeForgerLevelExtension(holder);
 
                 if (resultLevel > extendedMaxLevel) {
                     resultLevel = extendedMaxLevel;
@@ -389,10 +398,13 @@ public class BlazeForgerInventory extends ItemStackHandler {
 
                 resultEnchantments.set(holder, resultLevel);
                 int anvilCost = enchantment.getAnvilCost();
-                anvilCost = Math.max(1, anvilCost / 2);
 
-                var multiplier = holder.getData(CEIDataMaps.FORGING_COST_MULTIPLIER);
-                cost += (int) (anvilCost * resultLevel * (multiplier != null ? multiplier : 1));
+                cost += EnchantmentProcessingRules.blazeForgerLevelCost(
+                        holder,
+                        forger.getMode(),
+                        forger.special,
+                        anvilCost,
+                        resultLevel);
             }
         }
         if (!applied)
@@ -414,16 +426,19 @@ public class BlazeForgerInventory extends ItemStackHandler {
                 if (!holder1.equals(holder) && !Enchantment.areCompatible(holder, holder1)) {
                     applicable = forger.special && CEIConfig.enchantments().ignoreEnchantmentCompatibility.get();
                     conflicting = applicable;
-                    cost++;
+                    cost += EnchantmentProcessingRules.conflictExtraLevelCost();
                 }
             }
             if (applicable) {
                 applied = true;
                 resultEnchantments.set(holder, entry.getIntValue());
                 int anvilCost = enchantment.getAnvilCost();
-                anvilCost = Math.max(1, anvilCost / 2);
-                var multiplier = holder.getData(CEIDataMaps.FORGING_COST_MULTIPLIER);
-                cost += (int) (anvilCost * entry.getIntValue() * (multiplier != null ? multiplier : 1));
+                cost += EnchantmentProcessingRules.blazeForgerLevelCost(
+                        holder,
+                        forger.getMode(),
+                        forger.special,
+                        anvilCost,
+                        entry.getIntValue());
             }
         }
         if (!applied)
@@ -448,7 +463,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
 
             if (resultDamage < base.getDamageValue()) {
                 base.setDamageValue(resultDamage);
-                cost += 2;
+                cost += EnchantmentProcessingRules.durabilityRepairLevelCost();
                 applied = true;
             }
         }

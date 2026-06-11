@@ -162,42 +162,71 @@ Example:
 
 If no custom entry exists, the Printer falls back to its normal cost formula and server config multiplier.
 
-### Blaze Forger Costs
+### Enchantment Processing Rules
 
-Blaze Forger cost tuning is controlled by enchantment data maps:
+`create_enchantment_industry:enchantment_processing/rules` is an enchantment data map that tunes Blaze Enchanter and Blaze Forger behaviour per enchantment.
 
-* `create_enchantment_industry:forging/cost_multiplier` controls normal forging cost multipliers.
-* `create_enchantment_industry:forging/split_enchantment_cost_multiplier` controls enchantment splitting cost multipliers.
+It controls two groups of values:
 
-Each entry maps an enchantment to a positive float:
-
-```json
-{
-  "values": {
-    "minecraft:mending": 2.0,
-    "minecraft:unbreaking": 0.75
-  }
-}
-```
-
-Missing entries use `1.0`.
-
-### Super Enchanting Level Extension
-
-`create_enchantment_industry:super_enchanting/custom_level_extension` is an enchantment data map that overrides the per-enchantment extra level cap used by Super Enchanting.
+* `level_extension` sets the extra level cap used by Super Enchanting and Super Forging.
+* `cost_multiplier` sets per-enchantment cost multipliers for Blaze Enchanter and Blaze Forger operations.
 
 Example:
 
 ```json
 {
   "values": {
-    "minecraft:sharpness": 2,
-    "minecraft:mending": 0
+    "minecraft:sharpness": {
+      "level_extension": {
+        "blaze_enchanter": 2,
+        "blaze_forger": 4
+      },
+      "cost_multiplier": {
+        "blaze_enchanter": {
+          "normal": 1.0,
+          "super": 1.5,
+          "direct": 1.0,
+          "template": 1.2
+        },
+        "blaze_forger": {
+          "normal": 1.0,
+          "super": 2.0,
+          "merge": 1.0,
+          "apply": 1.25,
+          "split": 0.75
+        }
+      }
+    },
+    "minecraft:mending": {
+      "level_extension": {
+        "blaze_enchanter": 0,
+        "blaze_forger": 0
+      }
+    }
   }
 }
 ```
 
-Missing entries use the server config value `enchantmentMaxLevelExtension`. The generated data map sets Mending and Infinity to `0`.
+All fields are optional. Missing level extension values use the matching server config:
+
+* `blazeEnchanterMaxLevelExtension`
+* `blazeForgerMaxLevelExtension`
+
+Missing cost multipliers use `1.0`. Cost multipliers may be `0.0`, but any otherwise valid operation still costs at least one unit.
+
+Blaze Enchanter cost is based on its selected enchanting level, then multiplied by:
+
+* regular or Super Blaze Enchanter global cost multiplier
+* direct or template Blaze Enchanter global cost multiplier
+* the weighted average of selected enchantment rule multipliers
+
+Blaze Forger cost is based on each affected enchantment's anvil cost and level, then multiplied by:
+
+* regular or Super Blaze Forger global cost multiplier
+* merge, apply, or split Blaze Forger global cost multiplier
+* the matching per-enchantment rule multipliers
+
+The generated rule data map sets Mending and Infinity level extension to `0` for both Blaze Enchanter and Blaze Forger.
 
 ## Recipes
 
