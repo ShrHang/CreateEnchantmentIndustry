@@ -223,7 +223,6 @@
     "tooltip.create_enchantment_industry.affix_template.level":  "Level: %1$s / %2$s",
     "tooltip.create_enchantment_industry.affix_template.category":  "Source category: %1$s",
     "tooltip.create_enchantment_industry.affix_template.transcendent":  "Transcendent",
-    "tooltip.create_enchantment_industry.affix_template.effect":  "Effect:",
     "tooltip.create_enchantment_industry.affix_template.effect.line":  " - %1$s",
     "tooltip.create_enchantment_industry.affix_template.effect.unknown":  " - This affix provides a special effect without a displayable description."
 }

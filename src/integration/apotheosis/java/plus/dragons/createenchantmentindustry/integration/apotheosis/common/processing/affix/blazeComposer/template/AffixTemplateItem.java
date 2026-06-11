@@ -55,10 +55,6 @@ public class AffixTemplateItem extends Item {
         return tier;
     }
 
-    public boolean canHold(float level) {
-        return tier.canHold(level);
-    }
-
     @Override
     public boolean isFoil(ItemStack stack) {
         return stack.has(CEIAXDataComponents.AFFIX_TEMPLATE.get());
@@ -107,11 +103,16 @@ public class AffixTemplateItem extends Item {
     }
 
     private void addEntryTooltip(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag, AffixTemplateData data, AffixTemplateEntry entry) {
-        tooltip.add(Component.translatable(
-                "tooltip.create_enchantment_industry.affix_template.affix",
-                AffixTemplateDisplay.affixName(entry, data.rarity(), stack),
-                AffixTemplateDisplay.formatLevel(entry.level()))
-                .withStyle(entry.level() > tier.getMaxLevel() ? ChatFormatting.RED : entry.transcendent() ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GRAY));
+        var e = Component.translatable(
+                        "tooltip.create_enchantment_industry.affix_template.affix",
+                        AffixTemplateDisplay.affixName(entry, data.rarity(), stack),
+                        AffixTemplateDisplay.formatLevel(entry.level()))
+                .withStyle(entry.level() > tier.getMaxLevel() ? ChatFormatting.RED : entry.transcendent() ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GRAY);
+        if (entry.transcendent()) {
+            e.append(" ").append(Component.translatable("tooltip.create_enchantment_industry.affix_template.transcendent")
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+        }
+        tooltip.add(e);
         if (!entry.sourceCategories().isEmpty()) {
             Component categories = Component.literal(entry.sourceCategories().stream()
                     .map(AffixTemplateDisplay::sourceCategoryName)
@@ -119,10 +120,6 @@ public class AffixTemplateItem extends Item {
                     .collect(Collectors.joining(", ")));
             tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.category", categories)
                     .withStyle(ChatFormatting.DARK_GRAY));
-        }
-        if (entry.transcendent()) {
-            tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.transcendent")
-                    .withStyle(ChatFormatting.LIGHT_PURPLE));
         }
         addAffixEffectTooltip(stack, context, tooltip, flag, data, entry);
     }
@@ -138,8 +135,6 @@ public class AffixTemplateItem extends Item {
         if (instance.getAffix() instanceof AttributeProvidingAffix provider) {
             provider.gatherModifierTooltips(instance, tooltipContext, effects::add);
         }
-        tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.effect")
-                .withStyle(ChatFormatting.DARK_GRAY));
         if (effects.isEmpty()) {
             tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.effect.unknown")
                     .withStyle(ChatFormatting.GRAY));
