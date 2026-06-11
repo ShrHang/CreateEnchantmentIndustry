@@ -23,6 +23,7 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import dev.shadowsoffire.apotheosis.affix.Affix;
 import dev.shadowsoffire.apotheosis.affix.AffixInstance;
+import dev.shadowsoffire.apotheosis.loot.LootRarity;
 import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,10 +63,10 @@ public class AffixComposingRules extends SimplePreparableReloadListener<AffixCom
         LOGGER.debug("Loaded {} affix-targeted composing rules and {} rarity-targeted composing rules", loadedRules.affixes().size(), loadedRules.rarities().size());
     }
 
-    public float getCostMultiplier(AffixTemplateData data) {
+    public float getCostMultiplier(AffixTemplateEntry entry, DynamicHolder<LootRarity> rarity) {
         LoadedRules current = rules;
-        return current.affix(data.affix()).costMultiplier()
-                * current.rarity(data.rarity().getId()).costMultiplier();
+        return current.affix(entry.affix()).costMultiplier()
+                * current.rarity(rarity.getId()).costMultiplier();
     }
 
     public float getAugmentingCostMultiplier(AffixInstance instance) {
@@ -78,11 +79,11 @@ public class AffixComposingRules extends SimplePreparableReloadListener<AffixCom
                 * rarityRule.augmentingCostMultiplier();
     }
 
-    public float getMaxLevel(AffixTemplateData data, float templateMaxLevel) {
+    public float getMaxLevel(AffixTemplateEntry entry, DynamicHolder<LootRarity> rarity, float templateMaxLevel) {
         LoadedRules current = rules;
         float maxLevel = templateMaxLevel;
-        AffixComposingRule affixRule = current.affix(data.affix());
-        AffixComposingRule rarityRule = current.rarity(data.rarity().getId());
+        AffixComposingRule affixRule = current.affix(entry.affix());
+        AffixComposingRule rarityRule = current.rarity(rarity.getId());
         if (affixRule.maxLevel().isPresent())
             maxLevel = Math.min(maxLevel, affixRule.maxLevel().get());
         if (rarityRule.maxLevel().isPresent())
@@ -90,10 +91,10 @@ public class AffixComposingRules extends SimplePreparableReloadListener<AffixCom
         return maxLevel;
     }
 
-    public boolean denies(BlazeComposerMode mode, boolean hyper, AffixTemplateData data) {
+    public boolean denies(BlazeComposerMode mode, boolean hyper, AffixTemplateEntry entry, DynamicHolder<LootRarity> rarity) {
         LoadedRules current = rules;
-        AffixComposingRule affixRule = current.affix(data.affix());
-        AffixComposingRule rarityRule = current.rarity(data.rarity().getId());
+        AffixComposingRule affixRule = current.affix(entry.affix());
+        AffixComposingRule rarityRule = current.rarity(rarity.getId());
         return affixRule.denies(mode, hyper) || rarityRule.denies(mode, hyper);
     }
 

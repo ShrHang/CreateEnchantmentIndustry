@@ -385,7 +385,7 @@ Custom salvaging recipes follow Create standard processing recipe conventions:
 }
 ```
 
-### Blaze Composer and Affix Augmentor Costs
+### Blaze Composer, Affix Templates, and Affix Augmentor Costs
 
 From this section you'll learn how we designed the default cost calculation. If you're a modpack developer this might help you understand how things work (that's why I added this section here).
 
@@ -410,12 +410,27 @@ scaled_experience_essence =
 
 With default Apotheosis and CEI configs this is `19347 + 2 * 81 = 19509 mB` of Apotheotic Essence for one standard 0.25 affix upgrade.
 
-Blaze Composer does not charge for the full result every time. It charges by operation and by the actual affix value being created or moved:
+Affix Templates store one rarity and one or more affix entries. Each entry stores an affix id, level, source loot categories, and whether the entry has gone beyond Apotheosis' native level range. The template rarity is shared by all entries because Apotheosis equipment has one rarity component for all affixes.
+
+Template capacity is controlled by both maximum level and maximum affix count:
+
+* Brass Affix Template: `brassAffixTemplateMaxLevel` and `brassAffixTemplateMaxAffixes`
+* Crystal Affix Template: `crystalAffixTemplateMaxLevel` and `crystalAffixTemplateMaxAffixes`
+* Apotheotic Affix Template: `apotheoticAffixTemplateMaxLevel` and `apotheoticAffixTemplateMaxAffixes`
+
+Blaze Composer mode behaviour:
+
+* Extract still extracts exactly one affix from equipment into one blank template. If an item has multiple affixes, the first valid affix by id is selected for deterministic automation.
+* Merge takes two filled templates and produces exactly one filled template. The operation must fully merge all entries or it fails without consuming inputs. Different rarities fail. Exceeding the resulting template's affix count or level limits fails. Exclusive-set conflicts fail in Normal Mode; in Hyper Mode they can be allowed by `allowExclusiveSetBypassInHyperMerging` and are charged extra.
+* Apply consumes the filled template if at least one entry can be added or upgraded on the target equipment. Entries that cannot apply are not returned; the Composer goggle tooltip lists each lost affix and why it was lost. If no entry can be applied or upgraded, the operation fails and consumes nothing. This intentionally matches Blaze Forger's "apply everything that can apply" behaviour.
+
+Blaze Composer does not charge for the full result every time. It charges by operation and by the actual affix value being created, moved, or folded into the result:
 
 * Extract charges from `0 -> extracted level` with `blazeComposerExtractSnapshotMultiplier` because it snapshots an existing affix into a blank template.
-* Applying a template to equipment with no matching affix charges from `0 -> template level` with `blazeComposerApplyNewTemplateMultiplier` because the filled template is consumed.
-* Applying a template to equipment with a matching affix charges only `current level -> result level` with `blazeComposerApplyUpgradeDeltaMultiplier`.
-* Merging two templates charges only `highest input level -> result level` with `blazeComposerMergeUpgradeDeltaMultiplier`.
+* Applying a template entry to equipment with no matching affix charges from `0 -> template level` with `blazeComposerApplyNewTemplateMultiplier` because the filled template is consumed.
+* Applying a template entry to equipment with a matching affix charges only `current level -> result level` with `blazeComposerApplyUpgradeDeltaMultiplier`.
+* Merging a new affix entry into the result charges from `0 -> entry level` with `blazeComposerMergeUpgradeDeltaMultiplier`.
+* Merging two entries with the same affix charges from the lower input level to the resulting level with `blazeComposerMergeUpgradeDeltaMultiplier`. Equal levels can upgrade by `affixTemplateMergeStep`; different levels fold the weaker entry into the stronger result.
 
 Level value is weighted before cost is calculated:
 
@@ -430,15 +445,21 @@ The standard non-Hyper level contribution is capped by `blazeComposerStandardOpe
 
 ```text
 cost =
-  (mode_base_cost + operation_level_cost)
-  * template_tier_multiplier
-  * affix_type_multiplier
-  * affix_composing_rule_cost_multiplier
+  mode_base_cost
+  + sum(
+      operation_level_cost(entry)
+      * template_tier_multiplier
+      * affix_type_multiplier(entry)
+      * affix_composing_rule_cost_multiplier(entry, rarity)
+    )
+  + exclusive_set_bypass_extra_cost
 ```
 
-Template tier multipliers are `brassAffixTemplateCostMultiplier`, `crystalAffixTemplateCostMultiplier`, and `apotheoticAffixTemplateCostMultiplier`. Affix type multipliers are `statAffixTypeCostMultiplier`, `basicEffectAffixTypeCostMultiplier`, and `abilityAffixTypeCostMultiplier`.
+Template tier multipliers are `brassAffixTemplateCostMultiplier`, `crystalAffixTemplateCostMultiplier`, and `apotheoticAffixTemplateCostMultiplier`. Affix type multipliers are `statAffixTypeCostMultiplier`, `basicEffectAffixTypeCostMultiplier`, and `abilityAffixTypeCostMultiplier`. Exclusive-set bypass extra costs are configured separately for applying and merging through `hyperExclusiveSetApplyExtraCostMultiplier` and `hyperExclusiveSetMergeExtraCostMultiplier`; each bypassed conflict adds the configured multiplier of the current Apotheosis upgrade reference cost.
 
 Blaze Composer Hyper charging is explicit. Fill the normal Apotheotic Essence tank, use an item from `create_enchantment_industry:blaze_composer/hyper_activators`, then continue supplying Apotheotic Essence to fill the Hyper tank. Normal Mode processes Brass and Crystal Affix Templates; Hyper Mode processes Apotheotic Affix Templates. Hyper fuel draining to empty returns the machine to normal processing, but the Hyper charging activation remains on that Composer.
+
+Config note: the older single-purpose `allowExclusiveSetBypassInHyperMode` option has been split into `allowExclusiveSetBypassInHyperApplying` and `allowExclusiveSetBypassInHyperMerging`. There is no fallback mapping for config files; set the two new options explicitly if your pack wants Hyper Mode to bypass Apotheosis exclusive sets.
 
 Affix Augmentor is the automated standard upgrade path. By default, it upgrades only up to level `1.0`, matching Apotheosis' normal Augmenting Table. It chooses the lowest-level valid affix on the item; ties are resolved by affix id for deterministic automation. It skips level-independent affixes and affixes denied by affix composing rules.
 
@@ -498,7 +519,7 @@ Its contents are the rule directly:
 }
 ```
 
-Rules target exact ids only; dynamic registry tags are not supported. A higher-priority datapack replaces a lower-priority rule at the same resource path, matching normal datapack resource override behavior. An affix rule and its rarity rule both apply: cost multipliers multiply, deny flags use logical OR, and the lowest configured `max_level` wins.
+Rules target exact ids only; dynamic registry tags are not supported. A higher-priority datapack replaces a lower-priority rule at the same resource path, matching normal datapack resource override behavior. Rules are evaluated per affix entry on a template. An affix rule and its rarity rule both apply to that entry: cost multipliers multiply, deny flags use logical OR, and the lowest configured `max_level` wins.
 
 Fields:
 
@@ -541,7 +562,7 @@ When the Apotheosis integration is active, its server config provides:
 
 * Gem Cutter conversion ratios for Gem Dust, cracked gems, and Apotheotic Essence into Crystal Essence processing cost
 * Apotheosis Augmenting Table cost conversion ratios used by Affix Augmentor and Blaze Composer
-* Blaze Composer template limits, Hyper fuel capacity, operation multipliers, level segment weights, and template/type cost multipliers
+* Blaze Composer template level limits, template affix-count limits, Hyper fuel capacity, operation multipliers, level segment weights, template/type cost multipliers, and Hyper exclusive-set bypass controls
 * Affix Augmentor max level and global cost multiplier
 * Bulk Salvaging equipped-item destruction probability
 * Infused Dragon's Breath Fragile Fluid Tank impact settings for salvaging dropped items and equipped items

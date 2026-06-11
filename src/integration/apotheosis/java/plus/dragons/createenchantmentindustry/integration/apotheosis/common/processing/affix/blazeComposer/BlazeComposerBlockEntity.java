@@ -443,6 +443,9 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
             CEILang.builder().add(result.failure().copy()).style(ChatFormatting.YELLOW).forGoggles(tooltip, 1);
         } else if (result.status() == AffixTemplateOps.Status.INVALID) {
             CEILang.builder().add(result.failure().copy()).style(ChatFormatting.RED).forGoggles(tooltip);
+            for (Component description : result.warningDescriptions()) {
+                CEILang.builder().add(description.copy()).style(ChatFormatting.YELLOW).forGoggles(tooltip, 1);
+            }
         } else if (result.valid()) {
             int cost = result.cost();
             CEILang.translate("gui.goggles.blaze_composer.cost", CEILang.number(cost).add(mb).style(essenceStyle))
@@ -450,6 +453,12 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
             CEILang.translate("gui.goggles.blaze_composer.result").forGoggles(tooltip);
             for (Component description : result.outputDescriptions()) {
                 CEILang.builder().add(description.copy()).forGoggles(tooltip, 1);
+            }
+            if (!result.warningDescriptions().isEmpty()) {
+                CEILang.translate("gui.goggles.blaze_composer.lost_affixes").style(ChatFormatting.YELLOW).forGoggles(tooltip);
+                for (Component description : result.warningDescriptions()) {
+                    CEILang.builder().add(description.copy()).style(ChatFormatting.YELLOW).forGoggles(tooltip, 1);
+                }
             }
             int essence = hyper ? getHyperEssence() : getNormalEssence();
             if (essence < cost) {

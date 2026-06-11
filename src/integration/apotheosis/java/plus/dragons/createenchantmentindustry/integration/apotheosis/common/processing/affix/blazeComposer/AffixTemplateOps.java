@@ -28,10 +28,14 @@ import dev.shadowsoffire.apotheosis.loot.LootRarity;
 import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXDataComponents;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
@@ -86,49 +90,48 @@ public class AffixTemplateOps {
         if (instance == null)
             return invalid(FailureReason.EQUIPMENT_HAS_NO_AFFIX);
 
-        AffixTemplateData data = new AffixTemplateData(
+        AffixTemplateEntry entry = new AffixTemplateEntry(
                 instance.affix(),
                 instance.level(),
-                rarity,
-                category.getKey(),
+                List.of(category.getKey()),
                 instance.level() > Affix.MAX_LEVEL);
-        Result levelFailure = validateExtractionLevel(templateItem.tier(), hyper, data);
+        AffixTemplateData data = AffixTemplateData.single(rarity, entry);
+        Result levelFailure = validateExtractionLevel(templateItem.tier(), hyper, entry);
         if (levelFailure != null)
             return levelFailure;
-        if (!canTemplateHold(templateItem, data))
-            return invalid(
-                    FailureReason.TEMPLATE_CANNOT_HOLD_LEVEL,
-                    AffixTemplateDisplay.formatLevel(data.level()),
-                    AffixTemplateDisplay.formatLevel(maxLevel(templateItem.tier(), data)));
-        if (AffixComposingRules.INSTANCE.denies(BlazeComposerMode.EXTRACT, hyper, data))
+        Result holdFailure = validateEntryLevel(templateItem.tier(), data.rarity(), entry);
+        if (holdFailure != null)
+            return holdFailure;
+        if (AffixComposingRules.INSTANCE.denies(BlazeComposerMode.EXTRACT, hyper, entry, data.rarity()))
             return invalid(FailureReason.AFFIX_DENIED_BY_RULE, AffixTemplateDisplay.affixName(instance), modeName(BlazeComposerMode.EXTRACT));
 
         ItemStack equipment = single(equipmentInput);
         OverlimitAffixHelper.removeAffix(equipment, instance.affix());
         rebuildAffixName(equipment);
         ItemStack template = single(templateInput);
-        AffixTemplateData resultData = data.withLevel(applyBlockedHyperPenalty(data.level(), MINIMUM_LEVEL, blockedHyperPenalty));
+        AffixTemplateEntry resultEntry = entry.withLevel(applyBlockedHyperPenalty(entry.level(), MINIMUM_LEVEL, blockedHyperPenalty));
+        AffixTemplateData resultData = AffixTemplateData.single(rarity, resultEntry);
         setTemplateData(template, resultData);
-        Component resultDescription = penaltyPreview.active()
-                ? AffixTemplateDisplay.describeTemplateRange(
-                        resultData,
-                        penaltyPreview.minResultLevel(data.level(), MINIMUM_LEVEL),
-                        penaltyPreview.maxResultLevel(data.level(), MINIMUM_LEVEL),
-                        template)
-                : AffixTemplateDisplay.describeTemplate(resultData, template);
+        List<Component> resultDescriptions = new ArrayList<>();
+        resultDescriptions.add(AffixTemplateDisplay.describeRemovedAffix(equipment, instance));
+        resultDescriptions.addAll(describeTemplateResult(
+                resultData,
+                template,
+                penaltyPreview,
+                Map.of(entryId(resultEntry), MINIMUM_LEVEL)));
         int cost = BlazeComposingCost.calculate(
                 BlazeComposingCost.Operation.EXTRACT_SNAPSHOT,
                 BlazeComposerMode.EXTRACT,
                 templateItem.tier(),
-                data,
+                data.rarity(),
+                entry,
                 0,
-                data.level());
+                entry.level());
         return Result.ready(
                 equipment,
                 template,
                 cost,
-                AffixTemplateDisplay.describeRemovedAffix(equipment, instance),
-                resultDescription);
+                resultDescriptions);
     }
 
     public static Result apply(boolean hyper, float blockedHyperPenalty, ItemStack equipmentInput, ItemStack templateInput) {
@@ -148,10 +151,9 @@ public class AffixTemplateOps {
         Result modeFailure = validateTemplateMode(templateItem.tier(), hyper);
         if (modeFailure != null)
             return modeFailure;
-        if (!data.isBound())
-            return invalid(FailureReason.UNBOUND_TEMPLATE_DATA);
-        if (AffixComposingRules.INSTANCE.denies(BlazeComposerMode.APPLY, hyper, data))
-            return invalid(FailureReason.AFFIX_DENIED_BY_RULE, AffixTemplateDisplay.affixName(data.toInstance(templateInput)), modeName(BlazeComposerMode.APPLY));
+        Result dataFailure = validateTemplateData(data);
+        if (dataFailure != null)
+            return dataFailure;
 
         ItemStack equipment = single(equipmentInput);
         DynamicHolder<LootRarity> existingRarity = AffixHelper.getRarity(equipment);
@@ -166,61 +168,72 @@ public class AffixTemplateOps {
         LootCategory category = LootCategory.forItem(equipment);
         if (category.isNone())
             return invalid(FailureReason.ITEM_HAS_NO_LOOT_CATEGORY, equipment.getHoverName().copy());
-        if (!data.affix().get().canApplyTo(equipment, category, data.rarity().get()))
-            return invalid(FailureReason.AFFIX_CANNOT_APPLY_TO_ITEM, AffixTemplateDisplay.affixName(data.toInstance(templateInput)), equipment.getHoverName().copy());
 
-        ItemAffixes currentNative = equipment.getOrDefault(Apoth.Components.AFFIXES, ItemAffixes.EMPTY);
-        ItemAffixes compatibilityAffixes = currentNative.toBuilder().remove(data.affix()).build();
-        boolean bypassExclusiveSet = hyper && CEIAXConfig.server().affixes().allowExclusiveSetBypassInHyperMode.get();
-        if (!bypassExclusiveSet && !data.affix().get().isCompatibleWith(compatibilityAffixes))
-            return invalid(FailureReason.AFFIX_INCOMPATIBLE_WITH_EQUIPMENT, AffixTemplateDisplay.affixName(data.toInstance(templateInput)), equipment.getHoverName().copy());
+        boolean allowExclusiveBypass = hyper && CEIAXConfig.server().affixes().allowExclusiveSetBypassInHyperApplying.get();
+        ItemAffixes.Builder compatibilityBuilder = equipment.getOrDefault(Apoth.Components.AFFIXES, ItemAffixes.EMPTY).toBuilder();
+        Map<DynamicHolder<Affix>, Float> currentLevels = new HashMap<>();
+        AffixHelper.getAffixes(equipment).forEach((affix, instance) -> currentLevels.put(affix, instance.level()));
+        Map<DynamicHolder<Affix>, Float> changedLevels = new LinkedHashMap<>();
+        List<AcceptedEntry> accepted = new ArrayList<>();
+        List<RejectedEntry> rejected = new ArrayList<>();
+        List<BlazeComposingCost.EntryCost> costs = new ArrayList<>();
+        int bypassedConflicts = 0;
 
-        AffixInstance current = AffixHelper.getAffixes(equipment).get(data.affix());
-        float currentLevel = current == null ? 0 : current.level();
-        float maxLevel = maxLevel(templateItem.tier(), data);
-        float resultLevel = currentLevel <= 0
-                ? data.level()
-                : nearlyEqual(currentLevel, data.level())
-                        ? Math.min(currentLevel + CEIAXConfig.server().affixes().affixTemplateMergeStep.getF(), maxLevel)
-                        : Math.max(currentLevel, data.level());
-        if (resultLevel > maxLevel + EPSILON)
-            return invalid(
-                    FailureReason.TEMPLATE_CANNOT_HOLD_LEVEL,
-                    AffixTemplateDisplay.formatLevel(resultLevel),
-                    AffixTemplateDisplay.formatLevel(maxLevel));
-        if (resultLevel <= currentLevel + EPSILON)
-            return currentLevel >= maxLevel - EPSILON
-                    ? invalid(FailureReason.ALREADY_AT_TEMPLATE_CAP, AffixTemplateDisplay.formatLevel(maxLevel))
-                    : invalid(FailureReason.WOULD_NOT_IMPROVE);
+        for (AffixTemplateEntry entry : data.entries()) {
+            RejectedEntry rejection = validateApplyingEntry(hyper, equipment, templateItem.tier(), data, entry, category, compatibilityBuilder, currentLevels, allowExclusiveBypass);
+            if (rejection != null) {
+                rejected.add(rejection);
+                continue;
+            }
 
-        float costLevel = resultLevel;
-        float minimumLevel = currentLevel <= 0
-                ? MINIMUM_LEVEL
-                : minimumImprovedLevel(currentLevel, resultLevel);
-        resultLevel = applyBlockedHyperPenalty(resultLevel, minimumLevel, blockedHyperPenalty);
-        OverlimitAffixHelper.setAffixLevel(equipment, data.affix(), resultLevel);
+            ItemAffixes compatibilityAffixes = compatibilityBuilder.build().toBuilder().remove(entry.affix()).build();
+            bypassedConflicts += countExclusiveConflicts(entry, compatibilityAffixes);
+
+            float currentLevel = currentLevels.getOrDefault(entry.affix(), 0F);
+            float maxLevel = maxLevel(templateItem.tier(), data.rarity(), entry);
+            float resultLevel = resultLevel(currentLevel, entry.level(), maxLevel);
+            float costLevel = resultLevel;
+            float minimumLevel = currentLevel <= 0
+                    ? MINIMUM_LEVEL
+                    : minimumImprovedLevel(currentLevel, resultLevel);
+            resultLevel = applyBlockedHyperPenalty(resultLevel, minimumLevel, blockedHyperPenalty);
+            changedLevels.put(entry.affix(), resultLevel);
+            currentLevels.put(entry.affix(), resultLevel);
+            compatibilityBuilder.put(entry.affix(), Math.min(resultLevel, Affix.MAX_LEVEL));
+            BlazeComposingCost.Operation operation = currentLevel <= 0
+                    ? BlazeComposingCost.Operation.APPLY_NEW_TEMPLATE
+                    : BlazeComposingCost.Operation.APPLY_UPGRADE_DELTA;
+            AffixTemplateEntry costEntry = entry.withLevel(costLevel);
+            costs.add(new BlazeComposingCost.EntryCost(operation, costEntry, currentLevel, costLevel));
+            accepted.add(new AcceptedEntry(entry, currentLevel, resultLevel, costLevel, minimumLevel));
+        }
+
+        if (accepted.isEmpty()) {
+            return Result.invalid(
+                    FailureReason.NO_APPLICABLE_AFFIXES.message(),
+                    rejected.stream()
+                            .map(rejection -> AffixTemplateDisplay.describeRejectedEntry(data, rejection.entry(), equipment, rejection.reason()))
+                            .toList());
+        }
+
+        OverlimitAffixHelper.setAffixLevels(equipment, changedLevels);
         rebuildAffixName(equipment);
-        AffixTemplateData costData = data.withLevel(costLevel);
-        int cost = BlazeComposingCost.calculate(
-                currentLevel <= 0 ? BlazeComposingCost.Operation.APPLY_NEW_TEMPLATE : BlazeComposingCost.Operation.APPLY_UPGRADE_DELTA,
-                BlazeComposerMode.APPLY,
-                templateItem.tier(),
-                costData,
-                currentLevel,
-                costLevel);
-        Component resultDescription = penaltyPreview.active()
-                ? AffixTemplateDisplay.describeEquipmentAffixUpgradeRange(
-                        equipment,
-                        data.affix(),
-                        currentLevel,
-                        penaltyPreview.minResultLevel(costLevel, minimumLevel),
-                        penaltyPreview.maxResultLevel(costLevel, minimumLevel))
-                : AffixTemplateDisplay.describeEquipmentAffixUpgrade(equipment, data.affix(), currentLevel, resultLevel);
+        float extraCost = BlazeComposingCost.exclusiveSetBypassCost(
+                bypassedConflicts,
+                CEIAXConfig.server().affixes().hyperExclusiveSetApplyExtraCostMultiplier.getF());
+        int cost = BlazeComposingCost.calculate(BlazeComposerMode.APPLY, templateItem.tier(), data.rarity(), costs, extraCost);
+        List<Component> descriptions = accepted.stream()
+                .map(acceptedEntry -> describeAcceptedApply(equipment, acceptedEntry, penaltyPreview))
+                .toList();
+        List<Component> warnings = rejected.stream()
+                .map(rejection -> AffixTemplateDisplay.describeLostEntry(data, rejection.entry(), equipment, rejection.reason()))
+                .toList();
         return Result.ready(
                 equipment,
                 ItemStack.EMPTY,
                 cost,
-                resultDescription);
+                descriptions,
+                warnings);
     }
 
     public static Result merge(boolean hyper, float blockedHyperPenalty, ItemStack firstTemplateInput, ItemStack secondTemplateInput) {
@@ -247,59 +260,99 @@ public class AffixTemplateOps {
         Result secondModeFailure = validateTemplateMode(secondItem.tier(), hyper);
         if (secondModeFailure != null)
             return secondModeFailure;
-        if (!firstData.isBound() || !secondData.isBound())
-            return invalid(FailureReason.UNBOUND_TEMPLATE_DATA);
-        if (!firstData.affix().equals(secondData.affix()))
-            return invalid(FailureReason.TEMPLATE_AFFIX_MISMATCH);
+        Result firstDataFailure = validateTemplateData(firstData);
+        if (firstDataFailure != null)
+            return firstDataFailure;
+        Result secondDataFailure = validateTemplateData(secondData);
+        if (secondDataFailure != null)
+            return secondDataFailure;
         if (!firstData.rarity().equals(secondData.rarity()))
             return invalid(FailureReason.TEMPLATE_RARITY_MISMATCH, AffixTemplateDisplay.rarityName(firstData), AffixTemplateDisplay.rarityName(secondData));
-        if (!canUpgrade(firstData, firstTemplateInput) || !canUpgrade(secondData, secondTemplateInput))
-            return invalid(FailureReason.LEVEL_INDEPENDENT_AFFIX, AffixTemplateDisplay.affixName(firstData.toInstance(firstTemplateInput)));
 
         AffixTemplateTier tier = AffixTemplateTier.highest(firstItem.tier(), secondItem.tier());
         ItemStack result = single(firstItem.tier().isAtLeast(secondItem.tier()) ? firstTemplateInput : secondTemplateInput);
-        float maxLevel = maxLevel(tier, firstData);
-        float highestInputLevel = Math.max(firstData.level(), secondData.level());
-        float resultLevel = nearlyEqual(firstData.level(), secondData.level())
-                ? Math.min(firstData.level() + CEIAXConfig.server().affixes().affixTemplateMergeStep.getF(), maxLevel)
-                : highestInputLevel;
-        if (resultLevel > maxLevel + EPSILON)
-            return invalid(
-                    FailureReason.TEMPLATE_CANNOT_HOLD_LEVEL,
-                    AffixTemplateDisplay.formatLevel(resultLevel),
-                    AffixTemplateDisplay.formatLevel(maxLevel));
-        if (resultLevel <= highestInputLevel + EPSILON)
-            return highestInputLevel >= maxLevel - EPSILON
-                    ? invalid(FailureReason.ALREADY_AT_TEMPLATE_CAP, AffixTemplateDisplay.formatLevel(maxLevel))
+        Result ruleFailure = validateMergingRules(hyper, tier, firstData, secondData, result);
+        if (ruleFailure != null)
+            return ruleFailure;
+
+        LinkedHashMap<ResourceLocation, AffixTemplateEntry> resultEntries = entryMap(firstData.entries());
+        Map<ResourceLocation, Float> penaltyMinimums = new HashMap<>();
+        List<BlazeComposingCost.EntryCost> costs = new ArrayList<>();
+        boolean changed = false;
+        boolean blockedByLevelIndependent = false;
+
+        for (AffixTemplateEntry entry : secondData.entries()) {
+            ResourceLocation id = entryId(entry);
+            AffixTemplateEntry existing = resultEntries.get(id);
+            if (existing == null) {
+                resultEntries.put(id, entry);
+                penaltyMinimums.put(id, MINIMUM_LEVEL);
+                costs.add(new BlazeComposingCost.EntryCost(BlazeComposingCost.Operation.MERGE_UPGRADE_DELTA, entry, 0, entry.level()));
+                changed = true;
+                continue;
+            }
+
+            float maxLevel = maxLevel(tier, firstData.rarity(), existing);
+            float lowerInputLevel = Math.min(existing.level(), entry.level());
+            float highestInputLevel = Math.max(existing.level(), entry.level());
+            float resultLevel = highestInputLevel;
+            if (nearlyEqual(existing.level(), entry.level())) {
+                if (canUpgrade(existing, firstData.rarity(), result)) {
+                    resultLevel = Math.min(existing.level() + CEIAXConfig.server().affixes().affixTemplateMergeStep.getF(), maxLevel);
+                } else {
+                    blockedByLevelIndependent = true;
+                }
+            }
+            if (resultLevel > maxLevel + EPSILON)
+                return invalid(
+                        FailureReason.TEMPLATE_CANNOT_HOLD_LEVEL,
+                        AffixTemplateDisplay.formatLevel(resultLevel),
+                        AffixTemplateDisplay.formatLevel(maxLevel));
+            AffixTemplateEntry merged = existing.mergeMetadata(entry, resultLevel);
+            resultEntries.put(id, merged);
+            if (resultLevel > lowerInputLevel + EPSILON) {
+                penaltyMinimums.put(id, minimumImprovedLevel(lowerInputLevel, resultLevel));
+                costs.add(new BlazeComposingCost.EntryCost(BlazeComposingCost.Operation.MERGE_UPGRADE_DELTA, merged, lowerInputLevel, resultLevel));
+                changed = true;
+            }
+        }
+
+        List<AffixTemplateEntry> mergedEntries = resultEntries.values().stream()
+                .sorted(Comparator.comparing(AffixTemplateOps::entryId))
+                .toList();
+        if (mergedEntries.size() > tier.getMaxAffixes())
+            return invalid(FailureReason.TEMPLATE_CANNOT_HOLD_AFFIX_COUNT, mergedEntries.size(), tier.getMaxAffixes());
+
+        List<ExclusiveConflict> conflicts = findExclusiveConflicts(mergedEntries);
+        if (!conflicts.isEmpty()) {
+            ExclusiveConflict conflict = conflicts.getFirst();
+            if (!hyper || !CEIAXConfig.server().affixes().allowExclusiveSetBypassInHyperMerging.get()) {
+                return invalid(
+                        FailureReason.TEMPLATE_AFFIXES_INCOMPATIBLE,
+                        AffixTemplateDisplay.affixName(conflict.first(), firstData.rarity(), result),
+                        AffixTemplateDisplay.affixName(conflict.second(), firstData.rarity(), result));
+            }
+        }
+
+        if (!changed) {
+            return blockedByLevelIndependent
+                    ? invalid(FailureReason.LEVEL_INDEPENDENT_AFFIX)
                     : invalid(FailureReason.WOULD_NOT_IMPROVE);
+        }
 
-        float costLevel = resultLevel;
-        resultLevel = applyBlockedHyperPenalty(resultLevel, minimumImprovedLevel(highestInputLevel, resultLevel), blockedHyperPenalty);
-        AffixTemplateData resultData = firstData.withLevel(resultLevel);
-        if (AffixComposingRules.INSTANCE.denies(BlazeComposerMode.MERGE, hyper, resultData))
-            return invalid(FailureReason.AFFIX_DENIED_BY_RULE, AffixTemplateDisplay.affixName(firstData.toInstance(firstTemplateInput)), modeName(BlazeComposerMode.MERGE));
-
+        List<AffixTemplateEntry> resultEntryList = applyBlockedHyperPenalty(mergedEntries, penaltyMinimums, blockedHyperPenalty);
+        AffixTemplateData resultData = new AffixTemplateData(firstData.rarity(), resultEntryList);
         setTemplateData(result, resultData);
-        int cost = BlazeComposingCost.calculate(
-                BlazeComposingCost.Operation.MERGE_UPGRADE_DELTA,
-                BlazeComposerMode.MERGE,
-                tier,
-                firstData.withLevel(costLevel),
-                highestInputLevel,
-                costLevel);
-        Component resultDescription = penaltyPreview.active()
-                ? AffixTemplateDisplay.describeTemplateUpgradeRange(
-                        firstData,
-                        resultData,
-                        penaltyPreview.minResultLevel(costLevel, minimumImprovedLevel(highestInputLevel, costLevel)),
-                        penaltyPreview.maxResultLevel(costLevel, minimumImprovedLevel(highestInputLevel, costLevel)),
-                        result)
-                : AffixTemplateDisplay.describeTemplateUpgrade(firstData, resultData, result);
+        float extraCost = BlazeComposingCost.exclusiveSetBypassCost(
+                conflicts.size(),
+                CEIAXConfig.server().affixes().hyperExclusiveSetMergeExtraCostMultiplier.getF());
+        int cost = BlazeComposingCost.calculate(BlazeComposerMode.MERGE, tier, firstData.rarity(), costs, extraCost);
+        List<Component> resultDescriptions = describeTemplateResult(resultData, result, penaltyPreview, penaltyMinimums);
         return Result.ready(
                 result,
                 ItemStack.EMPTY,
                 cost,
-                resultDescription);
+                resultDescriptions);
     }
 
     public static AffixTemplateItem getTemplateItem(ItemStack stack) {
@@ -339,6 +392,14 @@ public class AffixTemplateOps {
                 .withStyle(style -> rarity.isBound() ? style.withColor(rarity.get().color()) : style);
     }
 
+    private static Result validateTemplateData(AffixTemplateData data) {
+        if (data.isEmpty())
+            return invalid(FailureReason.EMPTY_TEMPLATE_DATA);
+        if (!data.isBound())
+            return invalid(FailureReason.UNBOUND_TEMPLATE_DATA);
+        return null;
+    }
+
     private static Result validateTemplateMode(AffixTemplateTier tier, boolean hyper) {
         if (tier.matchesHyperMode(hyper))
             return null;
@@ -347,33 +408,168 @@ public class AffixTemplateOps {
                 : invalid(FailureReason.APOTHEOTIC_TEMPLATE_REQUIRES_HYPER_MODE);
     }
 
-    private static Result validateExtractionLevel(AffixTemplateTier tier, boolean hyper, AffixTemplateData data) {
+    private static Result validateExtractionLevel(AffixTemplateTier tier, boolean hyper, AffixTemplateEntry entry) {
         if (hyper)
             return null;
-        if (data.level() > Affix.MAX_LEVEL + EPSILON)
+        if (entry.level() > Affix.MAX_LEVEL + EPSILON)
             return invalid(
                     FailureReason.OVERLIMIT_AFFIX_REQUIRES_HYPER_TEMPLATE,
-                    AffixTemplateDisplay.formatLevel(data.level()),
+                    AffixTemplateDisplay.formatLevel(entry.level()),
                     AffixTemplateDisplay.formatLevel(Affix.MAX_LEVEL));
-        if (tier == AffixTemplateTier.BRASS && data.level() > Affix.STANDARD_MAX_LEVEL + EPSILON)
+        if (tier == AffixTemplateTier.BRASS && entry.level() > Affix.STANDARD_MAX_LEVEL + EPSILON)
             return invalid(
                     FailureReason.ADVANCED_AFFIX_REQUIRES_CRYSTAL_TEMPLATE,
-                    AffixTemplateDisplay.formatLevel(data.level()),
+                    AffixTemplateDisplay.formatLevel(entry.level()),
                     AffixTemplateDisplay.formatLevel(Affix.STANDARD_MAX_LEVEL));
         return null;
     }
 
-    private static boolean canTemplateHold(AffixTemplateItem item, AffixTemplateData data) {
-        return data.level() <= maxLevel(item.tier(), data) + EPSILON;
+    private static Result validateEntryLevel(AffixTemplateTier tier, DynamicHolder<LootRarity> rarity, AffixTemplateEntry entry) {
+        float maxLevel = maxLevel(tier, rarity, entry);
+        if (entry.level() <= maxLevel + EPSILON)
+            return null;
+        return invalid(
+                FailureReason.TEMPLATE_CANNOT_HOLD_LEVEL,
+                AffixTemplateDisplay.formatLevel(entry.level()),
+                AffixTemplateDisplay.formatLevel(maxLevel));
     }
 
-    private static float maxLevel(AffixTemplateTier tier, AffixTemplateData data) {
-        return AffixComposingRules.INSTANCE.getMaxLevel(data, tier.getMaxLevel());
+    private static Result validateMergingRules(boolean hyper, AffixTemplateTier tier, AffixTemplateData firstData, AffixTemplateData secondData, ItemStack stack) {
+        for (AffixTemplateEntry entry : firstData.entries()) {
+            Result failure = validateMergeEntry(hyper, tier, firstData, entry, stack);
+            if (failure != null)
+                return failure;
+        }
+        for (AffixTemplateEntry entry : secondData.entries()) {
+            Result failure = validateMergeEntry(hyper, tier, firstData, entry, stack);
+            if (failure != null)
+                return failure;
+        }
+        return null;
     }
 
-    private static boolean canUpgrade(AffixTemplateData data, ItemStack stack) {
+    private static Result validateMergeEntry(boolean hyper, AffixTemplateTier tier, AffixTemplateData data, AffixTemplateEntry entry, ItemStack stack) {
+        Result levelFailure = validateEntryLevel(tier, data.rarity(), entry);
+        if (levelFailure != null)
+            return levelFailure;
+        if (AffixComposingRules.INSTANCE.denies(BlazeComposerMode.MERGE, hyper, entry, data.rarity()))
+            return invalid(FailureReason.AFFIX_DENIED_BY_RULE, AffixTemplateDisplay.affixName(entry, data.rarity(), stack), modeName(BlazeComposerMode.MERGE));
+        return null;
+    }
+
+    private static RejectedEntry validateApplyingEntry(
+            boolean hyper,
+            ItemStack equipment,
+            AffixTemplateTier tier,
+            AffixTemplateData data,
+            AffixTemplateEntry entry,
+            LootCategory category,
+            ItemAffixes.Builder compatibilityBuilder,
+            Map<DynamicHolder<Affix>, Float> currentLevels,
+            boolean allowExclusiveBypass) {
+        if (AffixComposingRules.INSTANCE.denies(BlazeComposerMode.APPLY, hyper, entry, data.rarity()))
+            return reject(entry, RejectionReason.DENIED_BY_RULE, modeName(BlazeComposerMode.APPLY));
+
+        float maxLevel = maxLevel(tier, data.rarity(), entry);
+        if (entry.level() > maxLevel + EPSILON)
+            return reject(
+                    entry,
+                    RejectionReason.TEMPLATE_CANNOT_HOLD_LEVEL,
+                    AffixTemplateDisplay.formatLevel(entry.level()),
+                    AffixTemplateDisplay.formatLevel(maxLevel));
+
+        if (!entry.affix().get().canApplyTo(equipment, category, data.rarity().get()))
+            return reject(entry, RejectionReason.CANNOT_APPLY_TO_ITEM, equipment.getHoverName().copy());
+
+        ItemAffixes compatibilityAffixes = compatibilityBuilder.build().toBuilder().remove(entry.affix()).build();
+        if (!entry.affix().get().isCompatibleWith(compatibilityAffixes) && !allowExclusiveBypass)
+            return reject(entry, RejectionReason.INCOMPATIBLE_WITH_EQUIPMENT, equipment.getHoverName().copy());
+
+        float currentLevel = currentLevels.getOrDefault(entry.affix(), 0F);
+        if (currentLevel > 0 && nearlyEqual(currentLevel, entry.level()) && !canUpgrade(entry, data.rarity(), equipment))
+            return reject(entry, RejectionReason.LEVEL_INDEPENDENT);
+
+        float resultLevel = resultLevel(currentLevel, entry.level(), maxLevel);
+        if (resultLevel > maxLevel + EPSILON)
+            return reject(
+                    entry,
+                    RejectionReason.TEMPLATE_CANNOT_HOLD_LEVEL,
+                    AffixTemplateDisplay.formatLevel(resultLevel),
+                    AffixTemplateDisplay.formatLevel(maxLevel));
+        if (resultLevel <= currentLevel + EPSILON) {
+            return currentLevel >= maxLevel - EPSILON
+                    ? reject(entry, RejectionReason.ALREADY_AT_TEMPLATE_CAP, AffixTemplateDisplay.formatLevel(maxLevel))
+                    : reject(entry, RejectionReason.WOULD_NOT_IMPROVE);
+        }
+        return null;
+    }
+
+    private static RejectedEntry reject(AffixTemplateEntry entry, RejectionReason reason, Object... args) {
+        return new RejectedEntry(entry, reason.message(args));
+    }
+
+    private static float resultLevel(float currentLevel, float templateLevel, float maxLevel) {
+        if (currentLevel <= 0)
+            return templateLevel;
+        if (nearlyEqual(currentLevel, templateLevel))
+            return Math.min(currentLevel + CEIAXConfig.server().affixes().affixTemplateMergeStep.getF(), maxLevel);
+        return Math.max(currentLevel, templateLevel);
+    }
+
+    private static float maxLevel(AffixTemplateTier tier, DynamicHolder<LootRarity> rarity, AffixTemplateEntry entry) {
+        return AffixComposingRules.INSTANCE.getMaxLevel(entry, rarity, tier.getMaxLevel());
+    }
+
+    private static boolean canUpgrade(AffixTemplateEntry entry, DynamicHolder<LootRarity> rarity, ItemStack stack) {
         return CEIAXConfig.server().affixes().allowLevelIndependentAffixUpgrade.get()
-                || !data.toInstance(stack).isLevelIndependent();
+                || !entry.toInstance(rarity, stack).isLevelIndependent();
+    }
+
+    private static Component describeAcceptedApply(ItemStack equipment, AcceptedEntry accepted, PenaltyPreview penaltyPreview) {
+        if (penaltyPreview.active()) {
+            return AffixTemplateDisplay.describeEquipmentAffixUpgradeRange(
+                    equipment,
+                    accepted.entry().affix(),
+                    accepted.beforeLevel(),
+                    penaltyPreview.minResultLevel(accepted.costLevel(), accepted.minimumLevel()),
+                    penaltyPreview.maxResultLevel(accepted.costLevel(), accepted.minimumLevel()));
+        }
+        return AffixTemplateDisplay.describeEquipmentAffixUpgrade(
+                equipment,
+                accepted.entry().affix(),
+                accepted.beforeLevel(),
+                accepted.resultLevel());
+    }
+
+    private static List<Component> describeTemplateResult(AffixTemplateData data, ItemStack stack, PenaltyPreview penaltyPreview, Map<ResourceLocation, Float> penaltyMinimums) {
+        List<Component> result = new ArrayList<>();
+        if (data.size() > 1)
+            result.add(AffixTemplateDisplay.describeTemplate(data, stack));
+        for (AffixTemplateEntry entry : data.entries()) {
+            Float minimumLevel = penaltyMinimums.get(entryId(entry));
+            if (penaltyPreview.active() && minimumLevel != null) {
+                result.add(AffixTemplateDisplay.describeTemplateEntryRange(
+                        data,
+                        entry,
+                        penaltyPreview.minResultLevel(entry.level(), minimumLevel),
+                        penaltyPreview.maxResultLevel(entry.level(), minimumLevel),
+                        stack));
+            } else {
+                result.add(AffixTemplateDisplay.describeTemplateEntry(data, entry, stack));
+            }
+        }
+        return result;
+    }
+
+    private static List<AffixTemplateEntry> applyBlockedHyperPenalty(List<AffixTemplateEntry> entries, Map<ResourceLocation, Float> minimumLevels, float penalty) {
+        if (penalty <= EPSILON)
+            return entries;
+        return entries.stream()
+                .map(entry -> {
+                    Float minimumLevel = minimumLevels.get(entryId(entry));
+                    return minimumLevel == null ? entry : entry.withLevel(applyBlockedHyperPenalty(entry.level(), minimumLevel, penalty));
+                })
+                .toList();
     }
 
     private static float applyBlockedHyperPenalty(float level, float minimumLevel, float penalty) {
@@ -392,6 +588,40 @@ public class AffixTemplateOps {
                 .sorted(Comparator.comparing(instance -> instance.affix().getId()))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private static LinkedHashMap<ResourceLocation, AffixTemplateEntry> entryMap(List<AffixTemplateEntry> entries) {
+        LinkedHashMap<ResourceLocation, AffixTemplateEntry> result = new LinkedHashMap<>();
+        entries.stream()
+                .sorted(Comparator.comparing(AffixTemplateOps::entryId))
+                .forEach(entry -> result.put(entryId(entry), entry));
+        return result;
+    }
+
+    private static List<ExclusiveConflict> findExclusiveConflicts(List<AffixTemplateEntry> entries) {
+        List<ExclusiveConflict> conflicts = new ArrayList<>();
+        for (int i = 0; i < entries.size(); i++) {
+            AffixTemplateEntry first = entries.get(i);
+            for (int j = i + 1; j < entries.size(); j++) {
+                AffixTemplateEntry second = entries.get(j);
+                if (!first.affix().get().isCompatibleWith(second.affix().get())) {
+                    conflicts.add(new ExclusiveConflict(first, second));
+                }
+            }
+        }
+        return conflicts;
+    }
+
+    private static int countExclusiveConflicts(AffixTemplateEntry entry, ItemAffixes affixes) {
+        if (affixes.isEmpty())
+            return 0;
+        return (int) affixes.liveAffixes()
+                .filter(affix -> !entry.affix().get().isCompatibleWith(affix))
+                .count();
+    }
+
+    private static ResourceLocation entryId(AffixTemplateEntry entry) {
+        return entry.affix().getId();
     }
 
     private static void rebuildAffixName(ItemStack stack) {
@@ -433,6 +663,12 @@ public class AffixTemplateOps {
         return Math.abs(first - second) <= EPSILON;
     }
 
+    private record AcceptedEntry(AffixTemplateEntry entry, float beforeLevel, float resultLevel, float costLevel, float minimumLevel) {}
+
+    private record RejectedEntry(AffixTemplateEntry entry, Component reason) {}
+
+    private record ExclusiveConflict(AffixTemplateEntry first, AffixTemplateEntry second) {}
+
     private record PenaltyPreview(float minPenalty, float maxPenalty) {
         public static PenaltyPreview none() {
             return new PenaltyPreview(0, 0);
@@ -466,21 +702,40 @@ public class AffixTemplateOps {
         READY
     }
 
-    public record Result(Status status, Component failure, ItemStack primaryOutput, ItemStack secondaryOutput, int cost, List<Component> outputDescriptions) {
+    public record Result(
+            Status status,
+            Component failure,
+            ItemStack primaryOutput,
+            ItemStack secondaryOutput,
+            int cost,
+            List<Component> outputDescriptions,
+            List<Component> warningDescriptions) {
         public static Result emptyInput() {
-            return new Result(Status.EMPTY_INPUT, Component.empty(), ItemStack.EMPTY, ItemStack.EMPTY, 0, List.of());
+            return new Result(Status.EMPTY_INPUT, Component.empty(), ItemStack.EMPTY, ItemStack.EMPTY, 0, List.of(), List.of());
         }
 
         public static Result incomplete(Component failure) {
-            return new Result(Status.INCOMPLETE_INPUT, failure, ItemStack.EMPTY, ItemStack.EMPTY, 0, List.of());
+            return new Result(Status.INCOMPLETE_INPUT, failure, ItemStack.EMPTY, ItemStack.EMPTY, 0, List.of(), List.of());
         }
 
         public static Result invalid(Component failure) {
-            return new Result(Status.INVALID, failure, ItemStack.EMPTY, ItemStack.EMPTY, 0, List.of());
+            return new Result(Status.INVALID, failure, ItemStack.EMPTY, ItemStack.EMPTY, 0, List.of(), List.of());
+        }
+
+        public static Result invalid(Component failure, List<Component> warnings) {
+            return new Result(Status.INVALID, failure, ItemStack.EMPTY, ItemStack.EMPTY, 0, List.of(), List.copyOf(warnings));
         }
 
         public static Result ready(ItemStack primaryOutput, ItemStack secondaryOutput, int cost, Component... descriptions) {
-            return new Result(Status.READY, Component.empty(), primaryOutput, secondaryOutput, cost, List.of(descriptions));
+            return ready(primaryOutput, secondaryOutput, cost, List.of(descriptions), List.of());
+        }
+
+        public static Result ready(ItemStack primaryOutput, ItemStack secondaryOutput, int cost, List<Component> descriptions) {
+            return ready(primaryOutput, secondaryOutput, cost, descriptions, List.of());
+        }
+
+        public static Result ready(ItemStack primaryOutput, ItemStack secondaryOutput, int cost, List<Component> descriptions, List<Component> warnings) {
+            return new Result(Status.READY, Component.empty(), primaryOutput, secondaryOutput, cost, List.copyOf(descriptions), List.copyOf(warnings));
         }
 
         public boolean valid() {
@@ -502,20 +757,21 @@ public class AffixTemplateOps {
         APOTHEOTIC_TEMPLATE_REQUIRES_HYPER_MODE("apotheotic_template_requires_hyper_mode"),
         ADVANCED_AFFIX_REQUIRES_CRYSTAL_TEMPLATE("advanced_affix_requires_crystal_template"),
         OVERLIMIT_AFFIX_REQUIRES_HYPER_TEMPLATE("overlimit_affix_requires_hyper_template"),
+        EMPTY_TEMPLATE_DATA("empty_template_data"),
         UNBOUND_TEMPLATE_DATA("unbound_template_data"),
         EQUIPMENT_HAS_NO_RARITY("equipment_has_no_rarity"),
         EQUIPMENT_HAS_NO_AFFIX("equipment_has_no_affix"),
         ITEM_HAS_NO_LOOT_CATEGORY("item_has_no_loot_category"),
         TEMPLATE_CANNOT_HOLD_LEVEL("template_cannot_hold_level"),
+        TEMPLATE_CANNOT_HOLD_AFFIX_COUNT("template_cannot_hold_affix_count"),
         AFFIX_DENIED_BY_RULE("affix_denied_by_rule"),
         RARITY_MISMATCH_DISALLOWED("rarity_mismatch_disallowed"),
-        AFFIX_CANNOT_APPLY_TO_ITEM("affix_cannot_apply_to_item"),
-        AFFIX_INCOMPATIBLE_WITH_EQUIPMENT("affix_incompatible_with_equipment"),
-        TEMPLATE_AFFIX_MISMATCH("template_affix_mismatch"),
+        TEMPLATE_AFFIXES_INCOMPATIBLE("template_affixes_incompatible"),
         TEMPLATE_RARITY_MISMATCH("template_rarity_mismatch"),
         LEVEL_INDEPENDENT_AFFIX("level_independent_affix"),
         WOULD_NOT_IMPROVE("would_not_improve"),
-        ALREADY_AT_TEMPLATE_CAP("already_at_template_cap");
+        ALREADY_AT_TEMPLATE_CAP("already_at_template_cap"),
+        NO_APPLICABLE_AFFIXES("no_applicable_affixes");
 
         private final String key;
 
@@ -525,6 +781,26 @@ public class AffixTemplateOps {
 
         public Component message(Object... args) {
             return Component.translatable("create_enchantment_industry.gui.goggles.blaze_composer.failure." + key, args);
+        }
+    }
+
+    private enum RejectionReason {
+        DENIED_BY_RULE("denied_by_rule"),
+        TEMPLATE_CANNOT_HOLD_LEVEL("template_cannot_hold_level"),
+        CANNOT_APPLY_TO_ITEM("cannot_apply_to_item"),
+        INCOMPATIBLE_WITH_EQUIPMENT("incompatible_with_equipment"),
+        LEVEL_INDEPENDENT("level_independent"),
+        WOULD_NOT_IMPROVE("would_not_improve"),
+        ALREADY_AT_TEMPLATE_CAP("already_at_template_cap");
+
+        private final String key;
+
+        RejectionReason(String key) {
+            this.key = key;
+        }
+
+        public Component message(Object... args) {
+            return Component.translatable("create_enchantment_industry.gui.goggles.blaze_composer.lost_reason." + key, args);
         }
     }
 }

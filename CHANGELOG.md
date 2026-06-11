@@ -26,7 +26,6 @@ Migration table:
 If you need any help on customization, please read https://github.com/DragonsPlusMinecraft/CreateEnchantmentIndustry/blob/1.21.1/6.0.0-dev/MODPACK-README.md
 
 ### Change
-* Blaze Composer Hyper charging now requires a configurable activator item, keeps the unlock on the machine after Hyper fuel runs out, and exposes only Normal Mode / Hyper Mode to players.
 * Affix Augmentor now selects the lowest-level valid affix deterministically, skips level-independent or rule-denied affixes, and prices each upgrade from the current Apotheosis Augmenting Table cost reference plus the actual level delta.
 * Affix Augmentor now has configurable maximum level and global cost multiplier, and affix composing rules can deny or reprice augmenting separately.
 * Blaze Forger now needs to select mode manually via side panel for better automation setup.

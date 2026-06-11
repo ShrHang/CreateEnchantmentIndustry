@@ -52,11 +52,19 @@ public class OverlimitAffixHelper {
     }
 
     public static void setAffixLevel(ItemStack stack, DynamicHolder<Affix> affix, float level) {
+        setAffixLevels(stack, Map.of(affix, level));
+    }
+
+    public static void setAffixLevels(ItemStack stack, Map<DynamicHolder<Affix>, Float> changedLevels) {
         ItemAffixes.Builder nativeBuilder = stack.getOrDefault(Apoth.Components.AFFIXES, ItemAffixes.EMPTY).toBuilder();
-        if (level <= 0) {
-            nativeBuilder.remove(affix);
-        } else {
-            nativeBuilder.put(affix, Math.min(level, Affix.MAX_LEVEL));
+        for (var entry : changedLevels.entrySet()) {
+            DynamicHolder<Affix> affix = entry.getKey();
+            float level = entry.getValue();
+            if (level <= 0) {
+                nativeBuilder.remove(affix);
+            } else {
+                nativeBuilder.put(affix, Math.min(level, Affix.MAX_LEVEL));
+            }
         }
         ItemAffixes nativeAffixes = nativeBuilder.build();
         if (nativeAffixes.isEmpty()) {
@@ -70,10 +78,14 @@ public class OverlimitAffixHelper {
         if (old != null) {
             levels.putAll(old.levels());
         }
-        if (level > Affix.MAX_LEVEL) {
-            levels.put(affix, level);
-        } else {
-            levels.remove(affix);
+        for (var entry : changedLevels.entrySet()) {
+            DynamicHolder<Affix> affix = entry.getKey();
+            float level = entry.getValue();
+            if (level > Affix.MAX_LEVEL) {
+                levels.put(affix, level);
+            } else {
+                levels.remove(affix);
+            }
         }
         if (levels.isEmpty()) {
             stack.remove(CEIAXDataComponents.OVERLIMIT_AFFIXES.get());

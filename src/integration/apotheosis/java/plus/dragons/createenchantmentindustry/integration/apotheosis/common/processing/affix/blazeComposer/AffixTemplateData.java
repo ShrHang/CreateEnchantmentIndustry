@@ -21,51 +21,83 @@ package plus.dragons.createenchantmentindustry.integration.apotheosis.common.pro
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.shadowsoffire.apotheosis.affix.Affix;
-import dev.shadowsoffire.apotheosis.affix.AffixInstance;
-import dev.shadowsoffire.apotheosis.affix.AffixRegistry;
 import dev.shadowsoffire.apotheosis.loot.LootRarity;
 import dev.shadowsoffire.apotheosis.loot.RarityRegistry;
 import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import io.netty.buffer.ByteBuf;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 
 public record AffixTemplateData(
-        DynamicHolder<Affix> affix,
-        float level,
         DynamicHolder<LootRarity> rarity,
-        ResourceLocation sourceCategory,
-        boolean transcendent) {
+        List<AffixTemplateEntry> entries) {
+    private static final int MAX_ENTRIES = 256;
 
     public static final Codec<AffixTemplateData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            AffixRegistry.INSTANCE.holderCodec().fieldOf("affix").forGetter(AffixTemplateData::affix),
-            Codec.floatRange(0, Float.MAX_VALUE).fieldOf("level").forGetter(AffixTemplateData::level),
             RarityRegistry.INSTANCE.holderCodec().fieldOf("rarity").forGetter(AffixTemplateData::rarity),
-            ResourceLocation.CODEC.fieldOf("source_category").forGetter(AffixTemplateData::sourceCategory),
-            Codec.BOOL.optionalFieldOf("transcendent", false).forGetter(AffixTemplateData::transcendent))
+            AffixTemplateEntry.CODEC.listOf().fieldOf("entries").forGetter(AffixTemplateData::entries))
             .apply(instance, AffixTemplateData::new));
+
     public static final StreamCodec<ByteBuf, AffixTemplateData> STREAM_CODEC = StreamCodec.composite(
-            AffixRegistry.INSTANCE.holderStreamCodec(), AffixTemplateData::affix,
-            ByteBufCodecs.FLOAT, AffixTemplateData::level,
             RarityRegistry.INSTANCE.holderStreamCodec(), AffixTemplateData::rarity,
-            ResourceLocation.STREAM_CODEC, AffixTemplateData::sourceCategory,
-            ByteBufCodecs.BOOL, AffixTemplateData::transcendent,
+            AffixTemplateEntry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_ENTRIES)), AffixTemplateData::entries,
             AffixTemplateData::new);
+
+    public AffixTemplateData {
+        entries = normalizeEntries(entries);
+    }
+
+    public static AffixTemplateData single(DynamicHolder<LootRarity> rarity, AffixTemplateEntry entry) {
+        return new AffixTemplateData(rarity, List.of(entry));
+    }
+
     public boolean isBound() {
-        return affix.isBound() && rarity.isBound();
+        return rarity.isBound() && entries.stream().allMatch(AffixTemplateEntry::isBound);
     }
 
-    public AffixTemplateData withLevel(float level) {
-        return new AffixTemplateData(affix, Math.max(0, level), rarity, sourceCategory, level > Affix.MAX_LEVEL || transcendent);
+    public boolean isEmpty() {
+        return entries.isEmpty();
     }
 
-    public AffixTemplateData withRarity(DynamicHolder<LootRarity> rarity) {
-        return new AffixTemplateData(affix, level, rarity, sourceCategory, transcendent);
+    public int size() {
+        return entries.size();
     }
 
-    public AffixInstance toInstance(ItemStack stack) {
-        return new AffixInstance(affix, level, rarity, stack);
+    public Optional<AffixTemplateEntry> get(DynamicHolder<Affix> affix) {
+        return entries.stream()
+                .filter(entry -> entry.affix().equals(affix))
+                .findFirst();
+    }
+
+    public boolean contains(DynamicHolder<Affix> affix) {
+        return get(affix).isPresent();
+    }
+
+    public AffixTemplateData withEntries(List<AffixTemplateEntry> entries) {
+        return new AffixTemplateData(rarity, entries);
+    }
+
+    private static List<AffixTemplateEntry> normalizeEntries(List<AffixTemplateEntry> entries) {
+        if (entries.isEmpty())
+            return List.of();
+        LinkedHashMap<ResourceLocation, AffixTemplateEntry> merged = new LinkedHashMap<>();
+        entries.stream()
+                .sorted(Comparator.comparing(entry -> entry.affix().getId()))
+                .forEach(entry -> {
+                    ResourceLocation id = entry.affix().getId();
+                    AffixTemplateEntry existing = merged.get(id);
+                    if (existing == null) {
+                        merged.put(id, entry);
+                    } else {
+                        merged.put(id, existing.mergeMetadata(entry, Math.max(existing.level(), entry.level())));
+                    }
+                });
+        return List.copyOf(new ArrayList<>(merged.values()));
     }
 }

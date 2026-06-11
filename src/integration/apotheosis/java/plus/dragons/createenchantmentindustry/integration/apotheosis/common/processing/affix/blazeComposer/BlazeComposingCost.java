@@ -19,17 +19,37 @@
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer;
 
 import dev.shadowsoffire.apotheosis.affix.Affix;
+import dev.shadowsoffire.apotheosis.loot.LootRarity;
+import dev.shadowsoffire.placebo.reload.DynamicHolder;
+import java.util.List;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.AffixOperationCosts;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
 
 public class BlazeComposingCost {
-    public static int calculate(Operation operation, BlazeComposerMode mode, AffixTemplateTier tier, AffixTemplateData data, float fromLevel, float resultLevel) {
-        float cost = baseCost(mode);
-        cost += levelCost(operation, fromLevel, resultLevel);
-        cost *= tierMultiplier(tier);
-        cost *= AffixOperationCosts.typeMultiplier(data.affix().get().definition().type());
-        cost *= AffixComposingRules.INSTANCE.getCostMultiplier(data);
+    public static int calculate(BlazeComposerMode mode, AffixTemplateTier tier, DynamicHolder<LootRarity> rarity, List<EntryCost> entries, float extraCost) {
+        float cost = baseCost(mode) + Math.max(0, extraCost);
+        for (EntryCost entry : entries) {
+            cost += entryCost(entry.operation(), tier, rarity, entry.entry(), entry.fromLevel(), entry.resultLevel());
+        }
         return AffixOperationCosts.roundCost(cost);
+    }
+
+    public static int calculate(Operation operation, BlazeComposerMode mode, AffixTemplateTier tier, DynamicHolder<LootRarity> rarity, AffixTemplateEntry entry, float fromLevel, float resultLevel) {
+        return calculate(mode, tier, rarity, List.of(new EntryCost(operation, entry, fromLevel, resultLevel)), 0);
+    }
+
+    public static float entryCost(Operation operation, AffixTemplateTier tier, DynamicHolder<LootRarity> rarity, AffixTemplateEntry entry, float fromLevel, float resultLevel) {
+        float cost = levelCost(operation, fromLevel, resultLevel);
+        cost *= tierMultiplier(tier);
+        cost *= AffixOperationCosts.typeMultiplier(entry.affix().get().definition().type());
+        cost *= AffixComposingRules.INSTANCE.getCostMultiplier(entry, rarity);
+        return cost;
+    }
+
+    public static float exclusiveSetBypassCost(int bypassedConflicts, float multiplier) {
+        if (bypassedConflicts <= 0 || multiplier <= 0)
+            return 0;
+        return AffixOperationCosts.apotheosisUpgradeReferenceCost() * bypassedConflicts * multiplier;
     }
 
     public static float levelCost(Operation operation, float fromLevel, float resultLevel) {
@@ -69,6 +89,8 @@ public class BlazeComposingCost {
             case APOTHEOTIC -> config.apotheoticAffixTemplateCostMultiplier.getF();
         };
     }
+
+    public record EntryCost(Operation operation, AffixTemplateEntry entry, float fromLevel, float resultLevel) {}
 
     public enum Operation {
         EXTRACT_SNAPSHOT,

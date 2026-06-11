@@ -47,6 +47,15 @@ public class CEIAXAffixConfig extends ConfigBase {
     public final ConfigFloat apotheoticAffixTemplateMaxLevel = f(4.0f, 0.01f,
             "apotheoticAffixTemplateMaxLevel",
             Comments.apotheoticAffixTemplateMaxLevel);
+    public final ConfigInt brassAffixTemplateMaxAffixes = i(1, 1,
+            "brassAffixTemplateMaxAffixes",
+            Comments.brassAffixTemplateMaxAffixes);
+    public final ConfigInt crystalAffixTemplateMaxAffixes = i(3, 1,
+            "crystalAffixTemplateMaxAffixes",
+            Comments.crystalAffixTemplateMaxAffixes);
+    public final ConfigInt apotheoticAffixTemplateMaxAffixes = i(6, 1,
+            "apotheoticAffixTemplateMaxAffixes",
+            Comments.apotheoticAffixTemplateMaxAffixes);
 
     public final ConfigFloat affixTemplateMergeStep = f(0.25f, 0.01f,
             "affixTemplateMergeStep",
@@ -116,9 +125,18 @@ public class CEIAXAffixConfig extends ConfigBase {
     public final ConfigBool allowRarityMismatchApplying = b(false,
             "allowRarityMismatchApplying",
             Comments.allowRarityMismatchApplying);
-    public final ConfigBool allowExclusiveSetBypassInHyperMode = b(false,
-            "allowExclusiveSetBypassInHyperMode",
-            Comments.allowExclusiveSetBypassInHyperMode);
+    public final ConfigBool allowExclusiveSetBypassInHyperApplying = b(false,
+            "allowExclusiveSetBypassInHyperApplying",
+            Comments.allowExclusiveSetBypassInHyperApplying);
+    public final ConfigBool allowExclusiveSetBypassInHyperMerging = b(false,
+            "allowExclusiveSetBypassInHyperMerging",
+            Comments.allowExclusiveSetBypassInHyperMerging);
+    public final ConfigFloat hyperExclusiveSetApplyExtraCostMultiplier = f(1.0f, 0.0f,
+            "hyperExclusiveSetApplyExtraCostMultiplier",
+            Comments.hyperExclusiveSetApplyExtraCostMultiplier);
+    public final ConfigFloat hyperExclusiveSetMergeExtraCostMultiplier = f(1.0f, 0.0f,
+            "hyperExclusiveSetMergeExtraCostMultiplier",
+            Comments.hyperExclusiveSetMergeExtraCostMultiplier);
     public final ConfigBool allowLevelIndependentAffixUpgrade = b(false,
             "allowLevelIndependentAffixUpgrade",
             Comments.allowLevelIndependentAffixUpgrade);
@@ -140,6 +158,9 @@ public class CEIAXAffixConfig extends ConfigBase {
         static final String brassAffixTemplateMaxLevel = "The maximum affix level a Brass Affix Template can hold. Default: 1.0, matching standard Apotheosis affixes.";
         static final String crystalAffixTemplateMaxLevel = "The maximum affix level a Crystal Affix Template can hold. Default: 2.0, matching Apotheosis' native upper range.";
         static final String apotheoticAffixTemplateMaxLevel = "The maximum affix level an Apotheotic Affix Template can hold. The implementation supports very high values; this config is the balancing cap.";
+        static final String brassAffixTemplateMaxAffixes = "The maximum number of affixes a Brass Affix Template can store.";
+        static final String crystalAffixTemplateMaxAffixes = "The maximum number of affixes a Crystal Affix Template can store.";
+        static final String apotheoticAffixTemplateMaxAffixes = "The maximum number of affixes an Apotheotic Affix Template can store.";
         static final String affixTemplateMergeStep = "The level gained when merging two templates with the same affix and level.";
         static final String blazeComposerExtractBaseCost = "The base Apotheotic Essence cost (mB) of extracting an affix into a blank template.";
         static final String blazeComposerApplyBaseCost = "The base Apotheotic Essence cost (mB) of applying a filled template to equipment.";
@@ -161,7 +182,10 @@ public class CEIAXAffixConfig extends ConfigBase {
         static final String affixAugmentorCostMultiplier = "Global multiplier for Affix Augmentor costs after Apotheosis upgrade reference, level delta, and datapack rule multipliers are applied.";
         static final String affixAugmentorMaxLevel = "The maximum affix level the Affix Augmentor can reach. Default: 1.0, matching standard Apotheosis Augmenting Table upgrades.";
         static final String allowRarityMismatchApplying = "Whether filled templates can be applied to equipment with a different existing rarity.";
-        static final String allowExclusiveSetBypassInHyperMode = "Whether Hyper Mode may ignore Apotheosis affix exclusive sets when applying Apotheotic templates.";
+        static final String allowExclusiveSetBypassInHyperApplying = "Whether Hyper Mode may ignore Apotheosis affix exclusive sets when applying Apotheotic templates to equipment.";
+        static final String allowExclusiveSetBypassInHyperMerging = "Whether Hyper Mode may ignore Apotheosis affix exclusive sets when merging Apotheotic templates.";
+        static final String hyperExclusiveSetApplyExtraCostMultiplier = "Extra Apotheotic Essence cost for each exclusive-set conflict bypassed while applying in Hyper Mode, expressed as a multiplier of the current Apotheosis upgrade reference cost.";
+        static final String hyperExclusiveSetMergeExtraCostMultiplier = "Extra Apotheotic Essence cost for each exclusive-set conflict bypassed while merging in Hyper Mode, expressed as a multiplier of the current Apotheosis upgrade reference cost.";
         static final String allowLevelIndependentAffixUpgrade = "Whether affixes marked as level-independent by Apotheosis may be upgraded by template merging.";
     }
 }

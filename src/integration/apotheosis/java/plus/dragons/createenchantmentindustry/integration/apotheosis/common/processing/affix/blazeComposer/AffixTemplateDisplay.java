@@ -21,20 +21,28 @@ package plus.dragons.createenchantmentindustry.integration.apotheosis.common.pro
 import dev.shadowsoffire.apotheosis.affix.Affix;
 import dev.shadowsoffire.apotheosis.affix.AffixHelper;
 import dev.shadowsoffire.apotheosis.affix.AffixInstance;
+import dev.shadowsoffire.apotheosis.loot.LootRarity;
 import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 public class AffixTemplateDisplay {
     public static List<Component> describeStack(ItemStack stack) {
         AffixTemplateData data = AffixTemplateOps.getTemplateData(stack);
-        if (data != null && data.isBound())
-            return List.of(describeTemplate(data, stack));
+        if (data != null && data.isBound()) {
+            List<Component> result = new ArrayList<>();
+            result.add(describeTemplate(data, stack));
+            if (data.size() > 1)
+                describeTemplateEntries(data, stack).forEach(result::add);
+            return result;
+        }
         List<Component> result = new ArrayList<>();
         result.add(stack.getHoverName().copy());
         AffixHelper.getAffixes(stack).values().stream()
@@ -46,39 +54,54 @@ public class AffixTemplateDisplay {
     }
 
     public static Component describeTemplate(AffixTemplateData data, ItemStack stack) {
+        if (data.size() == 1)
+            return describeTemplateEntry(data, data.entries().getFirst(), stack);
+        return Component.translatable(
+                "create_enchantment_industry.gui.goggles.blaze_composer.result.template_affixes",
+                data.size(),
+                rarityName(data));
+    }
+
+    public static List<Component> describeTemplateEntries(AffixTemplateData data, ItemStack stack) {
+        return data.entries().stream()
+                .map(entry -> describeTemplateEntry(data, entry, stack))
+                .toList();
+    }
+
+    public static Component describeTemplateEntry(AffixTemplateData data, AffixTemplateEntry entry, ItemStack stack) {
         return Component.translatable(
                 "create_enchantment_industry.gui.goggles.blaze_composer.result.template_affix",
-                affixName(data.toInstance(stack)),
-                formatLevel(data.level()),
+                affixName(entry, data.rarity(), stack),
+                formatLevel(entry.level()),
                 rarityName(data));
     }
 
-    public static Component describeTemplateRange(AffixTemplateData data, float minLevel, float maxLevel, ItemStack stack) {
+    public static Component describeTemplateEntryRange(AffixTemplateData data, AffixTemplateEntry entry, float minLevel, float maxLevel, ItemStack stack) {
         return Component.translatable(
                 "create_enchantment_industry.gui.goggles.blaze_composer.result.template_affix_range",
-                affixName(data.toInstance(stack)),
+                affixName(entry, data.rarity(), stack),
                 formatLevel(minLevel),
                 formatLevel(maxLevel),
                 rarityName(data));
     }
 
-    public static Component describeTemplateUpgrade(AffixTemplateData before, AffixTemplateData after, ItemStack stack) {
+    public static Component describeTemplateEntryUpgrade(AffixTemplateData data, AffixTemplateEntry before, AffixTemplateEntry after, ItemStack stack) {
         return Component.translatable(
                 "create_enchantment_industry.gui.goggles.blaze_composer.result.template_affix_upgrade",
-                affixName(after.toInstance(stack)),
+                affixName(after, data.rarity(), stack),
                 formatLevel(before.level()),
                 formatLevel(after.level()),
-                rarityName(after));
+                rarityName(data));
     }
 
-    public static Component describeTemplateUpgradeRange(AffixTemplateData before, AffixTemplateData after, float minLevel, float maxLevel, ItemStack stack) {
+    public static Component describeTemplateEntryUpgradeRange(AffixTemplateData data, AffixTemplateEntry before, AffixTemplateEntry after, float minLevel, float maxLevel, ItemStack stack) {
         return Component.translatable(
                 "create_enchantment_industry.gui.goggles.blaze_composer.result.template_affix_upgrade_range",
-                affixName(after.toInstance(stack)),
+                affixName(after, data.rarity(), stack),
                 formatLevel(before.level()),
                 formatLevel(minLevel),
                 formatLevel(maxLevel),
-                rarityName(after));
+                rarityName(data));
     }
 
     public static Component describeEquipmentAffix(ItemStack stack, AffixInstance instance) {
@@ -139,6 +162,27 @@ public class AffixTemplateDisplay {
                 formatLevel(instance.level()));
     }
 
+    public static Component describeLostEntry(AffixTemplateData data, AffixTemplateEntry entry, ItemStack stack, Component reason) {
+        return Component.translatable(
+                "create_enchantment_industry.gui.goggles.blaze_composer.result.lost_affix",
+                describeAffix(data, entry, stack),
+                reason);
+    }
+
+    public static Component describeRejectedEntry(AffixTemplateData data, AffixTemplateEntry entry, ItemStack stack, Component reason) {
+        return Component.translatable(
+                "create_enchantment_industry.gui.goggles.blaze_composer.result.rejected_affix",
+                describeAffix(data, entry, stack),
+                reason);
+    }
+
+    public static Component describeAffix(AffixTemplateData data, AffixTemplateEntry entry, ItemStack stack) {
+        return Component.translatable(
+                "create_enchantment_industry.gui.goggles.blaze_composer.result.affix",
+                affixName(entry, data.rarity(), stack),
+                formatLevel(entry.level()));
+    }
+
     public static Component describeAffix(AffixInstance instance) {
         return Component.translatable(
                 "create_enchantment_industry.gui.goggles.blaze_composer.result.affix",
@@ -146,7 +190,17 @@ public class AffixTemplateDisplay {
                 formatLevel(instance.level()));
     }
 
+    public static MutableComponent affixName(AffixTemplateEntry entry, DynamicHolder<LootRarity> rarity, ItemStack stack) {
+        if (!entry.isBound()) {
+            return Component.literal(entry.affix().getId().toString()).withStyle(ChatFormatting.RED);
+        }
+        return affixName(entry.toInstance(rarity, stack));
+    }
+
     public static MutableComponent affixName(AffixInstance instance) {
+        if (!instance.affix().isBound()) {
+            return Component.literal(instance.affix().getId().toString()).withStyle(ChatFormatting.RED);
+        }
         MutableComponent name = Component.empty().append(instance.getName(true));
         if (instance.rarity().isBound()) {
             name.withStyle(style -> style.withColor(instance.getRarity().color()));
@@ -157,15 +211,23 @@ public class AffixTemplateDisplay {
     }
 
     public static Component rarityName(AffixTemplateData data) {
-        if (!data.rarity().isBound())
-            return data.rarity().get().toComponent().withStyle(ChatFormatting.RED);
-        return data.rarity().get().toComponent().withStyle(style -> style.withColor(data.rarity().get().color()));
+        return rarityName(data.rarity());
+    }
+
+    public static Component rarityName(DynamicHolder<LootRarity> rarity) {
+        if (!rarity.isBound())
+            return Component.literal(rarity.getId().toString()).withStyle(ChatFormatting.RED);
+        return rarity.get().toComponent().withStyle(style -> style.withColor(rarity.get().color()));
+    }
+
+    public static Component sourceCategoryName(ResourceLocation category) {
+        return Component.translatable(category.toLanguageKey("loot_category"));
     }
 
     public static String formatLevel(float level) {
         if (level == (int) level) {
             return Integer.toString((int) level);
         }
-        return String.format("%.2f", level);
+        return String.format(Locale.ROOT, "%.2f", level);
     }
 }

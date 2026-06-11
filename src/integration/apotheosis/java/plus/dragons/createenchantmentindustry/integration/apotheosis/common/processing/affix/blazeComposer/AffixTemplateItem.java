@@ -21,9 +21,9 @@ package plus.dragons.createenchantmentindustry.integration.apotheosis.common.pro
 import dev.shadowsoffire.apotheosis.affix.AttributeProvidingAffix;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -75,40 +75,62 @@ public class AffixTemplateItem extends Item {
         if (data == null) {
             tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.blank")
                     .withStyle(ChatFormatting.GRAY));
-            tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.capacity", AffixTemplateDisplay.formatLevel(tier.getMaxLevel()))
+            tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.level_capacity", AffixTemplateDisplay.formatLevel(tier.getMaxLevel()))
+                    .withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.affix_capacity", tier.getMaxAffixes())
                     .withStyle(ChatFormatting.DARK_GRAY));
             return;
         }
         if (!data.isBound()) {
             tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.unbound")
                     .withStyle(ChatFormatting.RED));
-            tooltip.add(Component.literal(data.affix().getId().toString()).withStyle(ChatFormatting.DARK_GRAY));
+            data.entries().stream()
+                    .map(entry -> entry.affix().getId().toString())
+                    .map(id -> Component.literal(id).withStyle(ChatFormatting.DARK_GRAY))
+                    .forEach(tooltip::add);
             return;
         }
         var rarity = data.rarity().get();
-        var instance = data.toInstance(stack);
-        MutableComponent affixName = Component.empty().append(instance.getName(true));
-        tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.affix", affixName)
-                .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.rarity", data.rarity().get().toComponent()
                 .withStyle(style -> style.withColor(rarity.color())))
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.level", AffixTemplateDisplay.formatLevel(data.level()), AffixTemplateDisplay.formatLevel(tier.getMaxLevel()))
-                .withStyle(data.level() > tier.getMaxLevel() ? ChatFormatting.RED : data.transcendent() ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.category", Component.translatable(data.sourceCategory().toLanguageKey("loot_category")))
+        tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.affixes", data.size(), tier.getMaxAffixes())
+                .withStyle(data.size() > tier.getMaxAffixes() ? ChatFormatting.RED : ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.level_capacity", AffixTemplateDisplay.formatLevel(tier.getMaxLevel()))
                 .withStyle(ChatFormatting.DARK_GRAY));
-        if (data.transcendent()) {
-            tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.transcendent")
-                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+        for (AffixTemplateEntry entry : data.entries()) {
+            addEntryTooltip(stack, context, tooltip, flag, data, entry);
         }
-        addAffixEffectTooltip(stack, context, tooltip, flag, data);
         if (flag.isAdvanced()) {
-            tooltip.add(Component.literal(data.affix().getId().toString()).withStyle(ChatFormatting.DARK_GRAY));
+            data.entries().stream()
+                    .map(entry -> Component.literal(entry.affix().getId().toString()).withStyle(ChatFormatting.DARK_GRAY))
+                    .forEach(tooltip::add);
         }
     }
 
-    private static void addAffixEffectTooltip(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag, AffixTemplateData data) {
-        var instance = data.toInstance(stack);
+    private void addEntryTooltip(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag, AffixTemplateData data, AffixTemplateEntry entry) {
+        tooltip.add(Component.translatable(
+                "tooltip.create_enchantment_industry.affix_template.affix",
+                AffixTemplateDisplay.affixName(entry, data.rarity(), stack),
+                AffixTemplateDisplay.formatLevel(entry.level()))
+                .withStyle(entry.level() > tier.getMaxLevel() ? ChatFormatting.RED : entry.transcendent() ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GRAY));
+        if (!entry.sourceCategories().isEmpty()) {
+            Component categories = Component.literal(entry.sourceCategories().stream()
+                    .map(AffixTemplateDisplay::sourceCategoryName)
+                    .map(Component::getString)
+                    .collect(Collectors.joining(", ")));
+            tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.category", categories)
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        }
+        if (entry.transcendent()) {
+            tooltip.add(Component.translatable("tooltip.create_enchantment_industry.affix_template.transcendent")
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+        }
+        addAffixEffectTooltip(stack, context, tooltip, flag, data, entry);
+    }
+
+    private static void addAffixEffectTooltip(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag, AffixTemplateData data, AffixTemplateEntry entry) {
+        var instance = entry.toInstance(data.rarity(), stack);
         var tooltipContext = AttributeTooltipContext.of(null, context, flag);
         List<Component> effects = new ArrayList<>();
         Component description = instance.getDescription(tooltipContext);

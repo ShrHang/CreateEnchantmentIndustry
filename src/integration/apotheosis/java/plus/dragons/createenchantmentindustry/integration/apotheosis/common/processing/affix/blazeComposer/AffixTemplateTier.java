@@ -45,12 +45,26 @@ public enum AffixTemplateTier implements StringRepresentable {
         return level <= getMaxLevel() + 0.0001F;
     }
 
+    public boolean canHold(AffixTemplateData data) {
+        return data.size() <= getMaxAffixes()
+                && data.entries().stream().allMatch(entry -> canHold(entry.level()));
+    }
+
     public float getMaxLevel() {
         var config = CEIAXConfig.server().affixes();
         return switch (this) {
             case BRASS -> config.brassAffixTemplateMaxLevel.getF();
             case CRYSTAL -> config.crystalAffixTemplateMaxLevel.getF();
             case APOTHEOTIC -> config.apotheoticAffixTemplateMaxLevel.getF();
+        };
+    }
+
+    public int getMaxAffixes() {
+        var config = CEIAXConfig.server().affixes();
+        return switch (this) {
+            case BRASS -> config.brassAffixTemplateMaxAffixes.get();
+            case CRYSTAL -> config.crystalAffixTemplateMaxAffixes.get();
+            case APOTHEOTIC -> config.apotheoticAffixTemplateMaxAffixes.get();
         };
     }
 
