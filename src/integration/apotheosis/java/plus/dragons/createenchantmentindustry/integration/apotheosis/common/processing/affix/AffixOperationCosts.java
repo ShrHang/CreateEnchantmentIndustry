@@ -38,18 +38,21 @@ public class AffixOperationCosts {
         int configuredExperience = EnchantmentUtils.getTotalExperienceForLevel(Math.max(0, AdventureConfig.upgradeLevelCost));
         float experienceCost = fluids.affixAugmentorCostExperienceToApotheoticEssenceTotal.get() * configuredExperience / (float) defaultExperience;
         float sigilCost = AdventureConfig.upgradeSigilCost * fluids.affixAugmentorCostSigilToApotheoticEssenceRatio.get();
-        return roundCost(experienceCost + sigilCost);
+        return roundPositiveCost(experienceCost + sigilCost);
     }
 
     public static int augmentingCost(AffixInstance instance, float fromLevel, float toLevel) {
+        if (toLevel <= fromLevel + EPSILON)
+            return 0;
         var config = CEIAXConfig.server().affixes();
         float stepWeight = Math.max(EPSILON, weightedLevelSpan(0, APOTHEOSIS_AUGMENTING_STEP));
         float upgradeUnits = weightedLevelSpan(fromLevel, toLevel) / stepWeight;
         float cost = apotheosisUpgradeReferenceCost()
                 * upgradeUnits
+                * typeMultiplier(instance.affix().get().definition().type())
                 * config.affixAugmentorCostMultiplier.getF()
                 * AffixComposingRules.INSTANCE.getAugmentingCostMultiplier(instance);
-        return roundCost(cost);
+        return roundPositiveCost(cost);
     }
 
     public static float weightedLevelSpan(float fromLevel, float toLevel) {
@@ -81,6 +84,12 @@ public class AffixOperationCosts {
     }
 
     public static int roundCost(float cost) {
+        return Math.max(1, Math.round(cost));
+    }
+
+    public static int roundPositiveCost(float cost) {
+        if (cost <= EPSILON)
+            return 0;
         return Math.max(1, Math.round(cost));
     }
 }

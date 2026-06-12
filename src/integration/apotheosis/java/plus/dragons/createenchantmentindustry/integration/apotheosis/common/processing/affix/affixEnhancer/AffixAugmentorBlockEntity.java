@@ -29,6 +29,10 @@ import com.simibubi.create.content.kinetics.belt.behaviour.TransportedItemStackH
 import com.simibubi.create.content.kinetics.belt.transport.TransportedItemStack;
 import com.simibubi.create.content.logistics.depot.DepotBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import dev.shadowsoffire.apotheosis.affix.Affix;
+import dev.shadowsoffire.apotheosis.affix.AffixHelper;
+import dev.shadowsoffire.apotheosis.affix.AffixRegistry;
+import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import java.util.List;
 import java.util.Optional;
 import net.createmod.catnip.lang.LangBuilder;
@@ -36,10 +40,11 @@ import net.createmod.catnip.math.VecHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.network.chat.Component;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
@@ -49,6 +54,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import org.jetbrains.annotations.Nullable;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.AffixOperationCosts;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.kinetics.belt.lowerProcessingAppliance.LowerBeltProcessingBehaviour;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template.AffixTemplateDisplay;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
@@ -60,6 +67,8 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
     public int processingTicks = -1;
     public boolean powered;
     public float chargingPercentage;
+    @Nullable
+    private ActiveAugmenting activeAugmenting;
 
     public AffixAugmentorBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -108,13 +117,16 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         }
         if (processingTicks >= 0) {
             if (powered) {
+                if (!level.isClientSide && !hasValidActiveInput()) {
+                    cancelProcessing();
+                    return;
+                }
                 processingTicks--;
                 if (level.isClientSide && processingTicks > 25) {
                     spawnParticles();
                 }
             } else if (processingTicks != -1) {
-                processingTicks = -1;
-                notifyUpdate();
+                cancelProcessing();
             }
         }
     }
@@ -142,11 +154,14 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
     public BeltProcessingBehaviour.ProcessingResult onItemHeld(TransportedItemStack transported, TransportedItemStackHandlerBehaviour handler) {
         Level level = this.level;
         assert level != null;
-        if (processingTicks > COMPLETION_TICKS)
+        if (processingTicks > COMPLETION_TICKS) {
+            if (!validateTransportedInput(transported.stack))
+                return PASS;
             return HOLD;
+        }
         var context = getAugmentingContext(transported.stack);
         if (context.status().passesInput()) {
-            processingTicks = -1;
+            cancelProcessing();
             return PASS;
         }
         if (context.status() != AugmentingStatus.READY)
@@ -155,13 +170,25 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         var resultData = context.analysis().result();
         if (resultData.isEmpty())
             return PASS;
-        int cost = resultData.get().cost();
 
         if (processingTicks == -1) {
+            activeAugmenting = ActiveAugmenting.from(resultData.get());
             processingTicks = UNIT_PROCESSING_TIME;
             notifyUpdate();
             return HOLD;
         }
+
+        if (activeAugmenting == null) {
+            activeAugmenting = ActiveAugmenting.from(resultData.get());
+        }
+        var active = activeAugmenting;
+        var affix = active.resolveAffix();
+        if (affix.isEmpty() || !active.matchesInput(transported.stack, affix.get())) {
+            cancelProcessing();
+            return HOLD;
+        }
+        if (!canPay(context.tank(), active.cost()))
+            return HOLD;
 
         TransportedItemStack result = transported.copy();
         result.clearFanProcessingData();
@@ -171,15 +198,51 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
             remains.stack.shrink(1);
             result.stack.setCount(1);
         }
-        result.stack = AffixAugmenting.apply(result.stack, resultData.get());
+        result.stack = AffixAugmenting.apply(result.stack, affix.get(), active.toLevel());
         handler.handleProcessingOnItem(transported, TransportedItemStackHandlerBehaviour.TransportedResult.convertToAndLeaveHeld(List.of(result), remains));
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.EVOKER_CAST_SPELL, SoundSource.BLOCKS, 0.8f, .9f + 0.2f * level.random.nextFloat());
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.AMETHYST_CLUSTER_STEP, SoundSource.BLOCKS, 0.24f, .72f + 0.2f * level.random.nextFloat());
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS, 0.32f, .35f + 0.7f * level.random.nextFloat());
-        context.tank().get().getTankInventory().drain(cost, IFluidHandler.FluidAction.EXECUTE);
+        context.tank().get().getTankInventory().drain(active.cost(), IFluidHandler.FluidAction.EXECUTE);
         processingTicks = -1;
+        activeAugmenting = null;
         notifyUpdate();
         return HOLD;
+    }
+
+    private boolean validateTransportedInput(ItemStack stack) {
+        if (processingTicks < 0)
+            return true;
+        if (activeAugmenting == null)
+            return AffixAugmenting.canAugment(stack);
+        var affix = activeAugmenting.resolveAffix();
+        if (affix.isEmpty() || !activeAugmenting.matchesInput(stack, affix.get())) {
+            cancelProcessing();
+            return false;
+        }
+        return true;
+    }
+
+    private boolean hasValidActiveInput() {
+        if (processingTicks < 0)
+            return true;
+        var depot = getDepotBlockEntity();
+        if (depot.isEmpty())
+            return true;
+        if (activeAugmenting == null)
+            return getDepotInputStack(depot.get()).map(AffixAugmenting::canAugment).orElse(false);
+        var affix = activeAugmenting.resolveAffix();
+        return affix.isPresent() && getDepotInputStack(depot.get())
+                .map(stack -> activeAugmenting.matchesInput(stack, affix.get()))
+                .orElse(false);
+    }
+
+    private void cancelProcessing() {
+        if (processingTicks != -1 || activeAugmenting != null) {
+            processingTicks = -1;
+            activeAugmenting = null;
+            notifyUpdate();
+        }
     }
 
     private AugmentingContext getAugmentingContext(ItemStack stack) {
@@ -199,11 +262,22 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         if (!tank.getFluid().is(CEIAXFluids.APOTHEOTIC_ESSENCE))
             return AugmentingContext.withAnalysis(AugmentingStatus.WRONG_FLUID, fluidTank, analysis);
         int cost = analysis.result().map(AffixAugmenting.Result::cost).orElse(0);
+        if (cost <= 0)
+            return AugmentingContext.withAnalysis(AugmentingStatus.NO_UPGRADEABLE_AFFIXES, fluidTank, analysis);
         if (cost > tank.getCapacity())
             return AugmentingContext.withAnalysis(AugmentingStatus.TANK_TOO_SMALL, fluidTank, analysis);
         if (cost > tank.getFluidAmount())
             return AugmentingContext.withAnalysis(AugmentingStatus.INSUFFICIENT_ESSENCE, fluidTank, analysis);
         return AugmentingContext.withAnalysis(AugmentingStatus.READY, fluidTank, analysis);
+    }
+
+    private boolean canPay(Optional<FluidTankBlockEntity> fluidTank, int cost) {
+        if (cost <= 0 || fluidTank.isEmpty())
+            return false;
+        var tank = fluidTank.get().getTankInventory();
+        return tank.getFluid().is(CEIAXFluids.APOTHEOTIC_ESSENCE)
+                && cost <= tank.getCapacity()
+                && cost <= tank.getFluidAmount();
     }
 
     @Override
@@ -225,6 +299,12 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         super.write(tag, registries, clientPacket);
         tag.putInt("ProcessingTicks", processingTicks);
         tag.putBoolean("Powered", powered);
+        if (activeAugmenting != null) {
+            tag.putString("ActiveAffix", activeAugmenting.affixId().toString());
+            tag.putFloat("ActiveFromLevel", activeAugmenting.fromLevel());
+            tag.putFloat("ActiveToLevel", activeAugmenting.toLevel());
+            tag.putInt("ActiveCost", activeAugmenting.cost());
+        }
     }
 
     @Override
@@ -234,6 +314,16 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         if (processingTicks == 0)
             processingTicks = -1;
         powered = tag.getBoolean("Powered");
+        activeAugmenting = null;
+        if (processingTicks > 0 && tag.contains("ActiveAffix")) {
+            ResourceLocation affixId = ResourceLocation.tryParse(tag.getString("ActiveAffix"));
+            float fromLevel = tag.getFloat("ActiveFromLevel");
+            float toLevel = tag.getFloat("ActiveToLevel");
+            int cost = tag.getInt("ActiveCost");
+            if (affixId != null && toLevel > fromLevel + AffixOperationCosts.EPSILON && cost > 0) {
+                activeAugmenting = new ActiveAugmenting(affixId, fromLevel, toLevel, cost);
+            }
+        }
     }
 
     @Override
@@ -245,6 +335,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
             CEILang.translate("gui.goggles.affix_augmentor.processing", CEILang.number(progress).text("%").component())
                     .style(ChatFormatting.GREEN)
                     .forGoggles(tooltip);
+            addActiveAugmentingTooltip(tooltip);
         } else {
             var input = getDepotInputStack();
             if (input.isPresent())
@@ -257,59 +348,94 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         return true;
     }
 
+    private void addActiveAugmentingTooltip(List<Component> tooltip) {
+        if (activeAugmenting == null)
+            return;
+        CEILang.translate("gui.goggles.affix_augmentor.result")
+                .forGoggles(tooltip);
+        var input = getDepotInputStack();
+        var affix = activeAugmenting.resolveAffix();
+        if (input.isPresent() && affix.isPresent()) {
+            CEILang.builder()
+                    .add(AffixTemplateDisplay.describeEquipmentAffixUpgrade(input.get(), affix.get(), activeAugmenting.fromLevel(), activeAugmenting.toLevel()))
+                    .style(ChatFormatting.GREEN)
+                    .forGoggles(tooltip, 1);
+        } else if (affix.isPresent()) {
+            CEILang.builder()
+                    .add(affix.get().get().getName(true))
+                    .text(" ")
+                    .text(AffixTemplateDisplay.formatLevel(activeAugmenting.fromLevel()))
+                    .text(" -> ")
+                    .text(AffixTemplateDisplay.formatLevel(activeAugmenting.toLevel()))
+                    .style(ChatFormatting.GREEN)
+                    .forGoggles(tooltip, 1);
+        } else {
+            CEILang.builder()
+                    .text(activeAugmenting.affixId().toString())
+                    .text(" ")
+                    .text(AffixTemplateDisplay.formatLevel(activeAugmenting.fromLevel()))
+                    .text(" -> ")
+                    .text(AffixTemplateDisplay.formatLevel(activeAugmenting.toLevel()))
+                    .style(affix.isPresent() ? ChatFormatting.GREEN : ChatFormatting.RED)
+                    .forGoggles(tooltip, 1);
+        }
+        CEILang.translate("gui.goggles.affix_augmentor.cost", amount(activeAugmenting.cost()).component())
+                .style(ChatFormatting.GRAY)
+                .forGoggles(tooltip, 1);
+    }
+
     private Optional<ItemStack> getDepotInputStack() {
+        return getDepotBlockEntity().flatMap(this::getDepotInputStack);
+    }
+
+    private Optional<DepotBlockEntity> getDepotBlockEntity() {
         assert level != null;
         var be = level.getBlockEntity(worldPosition.below());
-        if (be instanceof DepotBlockEntity depot) {
-            var stack = depot.getHeldItem();
-            if (!stack.isEmpty())
-                return Optional.of(stack);
-        }
+        if (be instanceof DepotBlockEntity depot)
+            return Optional.of(depot);
+        return Optional.empty();
+    }
+
+    private Optional<ItemStack> getDepotInputStack(DepotBlockEntity depot) {
+        var stack = depot.getHeldItem();
+        if (!stack.isEmpty())
+            return Optional.of(stack);
         return Optional.empty();
     }
 
     private void addInputTooltip(List<Component> tooltip, ItemStack stack, boolean isPlayerSneaking) {
         var context = getAugmentingContext(stack);
-        if (context.status() == AugmentingStatus.READY) {
-            var result = context.analysis().result().orElseThrow();
-            CEILang.translate("gui.goggles.affix_augmentor.result")
-                    .forGoggles(tooltip);
-            CEILang.builder()
-                    .add(AffixTemplateDisplay.describeEquipmentAffixUpgrade(stack, result.target().affix(), result.currentLevel(), result.resultLevel()))
-                    .style(ChatFormatting.GREEN)
-                    .forGoggles(tooltip, 1);
-            CEILang.translate("gui.goggles.affix_augmentor.cost", amount(result.cost()).component())
-                    .style(ChatFormatting.GRAY)
-                    .forGoggles(tooltip, 1);
+        var result = context.analysis().result();
+        if (result.isPresent()) {
+            addResultTooltip(tooltip, stack, result.get(), ChatFormatting.GREEN);
             addRejectedAffixesTooltip(tooltip, context.analysis(), isPlayerSneaking);
+        }
+        if (context.status() == AugmentingStatus.READY) {
             return;
         }
         if (context.status() == AugmentingStatus.INSUFFICIENT_ESSENCE) {
             int available = context.tank()
                     .map(tank -> tank.getTankInventory().getFluidAmount())
                     .orElse(0);
-            int cost = context.analysis().result().map(AffixAugmenting.Result::cost).orElse(0);
+            int cost = result.map(AffixAugmenting.Result::cost).orElse(0);
             CEILang.translate(
                     "gui.goggles.affix_augmentor.insufficient_essence",
                     amount(available).component(),
                     amount(cost).component())
                     .style(ChatFormatting.RED)
                     .forGoggles(tooltip);
-            addRejectedAffixesTooltip(tooltip, context.analysis(), isPlayerSneaking);
             return;
         }
         if (context.status() == AugmentingStatus.TANK_TOO_SMALL) {
-            int cost = context.analysis().result().map(AffixAugmenting.Result::cost).orElse(0);
+            int cost = result.map(AffixAugmenting.Result::cost).orElse(0);
             CEILang.translate("gui.goggles.affix_augmentor.tank_too_small", amount(cost).component())
                     .style(ChatFormatting.RED)
                     .forGoggles(tooltip);
-            addRejectedAffixesTooltip(tooltip, context.analysis(), isPlayerSneaking);
             return;
         }
         if (context.status() == AugmentingStatus.MISSING_TANK
                 || context.status() == AugmentingStatus.EMPTY_TANK
                 || context.status() == AugmentingStatus.WRONG_FLUID) {
-            addRejectedAffixesTooltip(tooltip, context.analysis(), isPlayerSneaking);
             return;
         }
         switch (context.status()) {
@@ -329,6 +455,18 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
                     .style(ChatFormatting.GRAY)
                     .forGoggles(tooltip);
         }
+    }
+
+    private void addResultTooltip(List<Component> tooltip, ItemStack stack, AffixAugmenting.Result result, ChatFormatting style) {
+        CEILang.translate("gui.goggles.affix_augmentor.result")
+                .forGoggles(tooltip);
+        CEILang.builder()
+                .add(AffixTemplateDisplay.describeEquipmentAffixUpgrade(stack, result.target().affix(), result.currentLevel(), result.resultLevel()))
+                .style(style)
+                .forGoggles(tooltip, 1);
+        CEILang.translate("gui.goggles.affix_augmentor.cost", amount(result.cost()).component())
+                .style(ChatFormatting.GRAY)
+                .forGoggles(tooltip, 1);
     }
 
     private void addRejectedAffixesTooltip(List<Component> tooltip, AffixAugmenting.Analysis analysis, boolean show) {
@@ -440,6 +578,28 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
                 Optional<FluidTankBlockEntity> tank,
                 AffixAugmenting.Analysis analysis) {
             return new AugmentingContext(status, tank, analysis);
+        }
+    }
+
+    private record ActiveAugmenting(ResourceLocation affixId, float fromLevel, float toLevel, int cost) {
+        private static ActiveAugmenting from(AffixAugmenting.Result result) {
+            return new ActiveAugmenting(
+                    result.target().affix().getId(),
+                    result.currentLevel(),
+                    result.resultLevel(),
+                    result.cost());
+        }
+
+        private Optional<DynamicHolder<Affix>> resolveAffix() {
+            var affix = AffixRegistry.INSTANCE.holder(affixId);
+            return affix.isBound() ? Optional.of(affix) : Optional.empty();
+        }
+
+        private boolean matchesInput(ItemStack stack, DynamicHolder<Affix> affix) {
+            var instance = AffixHelper.getAffixes(stack).get(affix);
+            return instance != null
+                    && instance.isValid()
+                    && Math.abs(instance.level() - fromLevel) <= AffixOperationCosts.EPSILON;
         }
     }
 }

@@ -483,6 +483,7 @@ cost =
 ```
 
 With default configs and no datapack rule multiplier, a normal 0.25 upgrade costs the same as the current Apotheosis Augmenting Table reference cost.
+Partial upgrades, such as the final step into the configured cap, are charged proportionally by their weighted level delta. They are not forced up to a full 0.25-step cost.
 
 ### Affix Composing Rules
 

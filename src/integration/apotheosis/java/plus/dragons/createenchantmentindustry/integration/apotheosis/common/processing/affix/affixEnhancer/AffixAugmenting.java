@@ -20,6 +20,8 @@ package plus.dragons.createenchantmentindustry.integration.apotheosis.common.pro
 
 import dev.shadowsoffire.apotheosis.affix.AffixHelper;
 import dev.shadowsoffire.apotheosis.affix.AffixInstance;
+import dev.shadowsoffire.apotheosis.affix.Affix;
+import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -66,7 +68,7 @@ public class AffixAugmenting {
                 continue;
             }
             if (result == null)
-                result = createResult(instance, maxLevel);
+                result = createResult(instance, maxLevel).orElse(null);
         }
         if (validAffixes == 0)
             return Analysis.noAffixes(List.copyOf(rejected));
@@ -80,9 +82,13 @@ public class AffixAugmenting {
     }
 
     public static ItemStack apply(ItemStack stack, Result result) {
+        return apply(stack, result.target().affix(), result.resultLevel());
+    }
+
+    public static ItemStack apply(ItemStack stack, DynamicHolder<Affix> affix, float resultLevel) {
         ItemStack output = stack.copy();
         output.setCount(1);
-        OverlimitAffixHelper.setAffixLevel(output, result.target().affix(), result.resultLevel());
+        OverlimitAffixHelper.setAffixLevel(output, affix, resultLevel);
         return output;
     }
 
@@ -98,11 +104,13 @@ public class AffixAugmenting {
         return Optional.empty();
     }
 
-    private static Result createResult(AffixInstance instance, float maxLevel) {
+    private static Optional<Result> createResult(AffixInstance instance, float maxLevel) {
         float currentLevel = instance.level();
         float resultLevel = Math.min(currentLevel + CEIAXConfig.server().affixes().affixTemplateMergeStep.getF(), maxLevel);
         int cost = AffixOperationCosts.augmentingCost(instance, currentLevel, resultLevel);
-        return new Result(instance, currentLevel, resultLevel, cost);
+        if (cost <= 0)
+            return Optional.empty();
+        return Optional.of(new Result(instance, currentLevel, resultLevel, cost));
     }
 
     public record Result(AffixInstance target, float currentLevel, float resultLevel, int cost) {}
