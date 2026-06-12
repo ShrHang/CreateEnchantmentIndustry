@@ -147,8 +147,6 @@
     "create_enchantment_industry.gui.goggles.gem_cutter.insufficient_essence":  "Not enough Crystal Essence: %1$s / %2$s",
     "create_enchantment_industry.gui.goggles.gem_cutter.already_perfect":  "Gem is already perfect",
     "create_enchantment_industry.gui.goggles.gem_cutter.invalid_input":  "Current item is not an Apotheosis gem",
-    "create_enchantment_industry.gui.goggles.gem_cutter.costs":  "Cutting Costs:",
-    "create_enchantment_industry.gui.goggles.gem_cutter.cost":  "%1$s -> %2$s: %3$s",
     "create_enchantment_industry.gui.goggles.affix_augmentor":  "Affix Augmentor",
     "create_enchantment_industry.gui.goggles.affix_augmentor.processing":  "Augmenting: %1$s",
     "create_enchantment_industry.gui.goggles.affix_augmentor.waiting":  "Waiting for affixed equipment",

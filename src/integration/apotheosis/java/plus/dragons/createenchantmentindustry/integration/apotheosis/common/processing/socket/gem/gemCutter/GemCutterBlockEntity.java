@@ -248,7 +248,6 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
                         .style(ChatFormatting.GRAY)
                         .forGoggles(tooltip);
         }
-        addCostTooltip(tooltip);
         return true;
     }
 
@@ -350,26 +349,6 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
                     .style(ChatFormatting.YELLOW)
                     .forGoggles(tooltip, 1);
         }
-    }
-
-    private void addCostTooltip(List<Component> tooltip) {
-        CEILang.translate("gui.goggles.gem_cutter.costs")
-                .forGoggles(tooltip);
-        addCostLine(tooltip, Purity.CRACKED);
-        addCostLine(tooltip, Purity.CHIPPED);
-        addCostLine(tooltip, Purity.FLAWED);
-        addCostLine(tooltip, Purity.NORMAL);
-        addCostLine(tooltip, Purity.FLAWLESS);
-    }
-
-    private void addCostLine(List<Component> tooltip, Purity from) {
-        CEILang.translate(
-                "gui.goggles.gem_cutter.cost",
-                from.toComponent(),
-                GemCutting.resultPurity(from).toComponent(),
-                amount(GemCutting.getCutCost(from)).component())
-                .style(ChatFormatting.GRAY)
-                .forGoggles(tooltip, 1);
     }
 
     private static int maxCutCost() {
