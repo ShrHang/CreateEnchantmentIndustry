@@ -190,7 +190,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
         forger.advancement.trigger(switch (completedOperation) {
             case MERGE -> CEIAdvancements.BLAZING_FUSION.builtinTrigger();
             case APPLY -> CEIAdvancements.SIGIL_CASTING.builtinTrigger();
-            case SPLIT -> CEIAdvancements.MAGIC_UNBINDING.builtinTrigger();
+            case EXTRACT -> CEIAdvancements.MAGIC_UNBINDING.builtinTrigger();
         });
     }
 
@@ -231,7 +231,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
         Result modeResult = switch (mode) {
             case MERGE -> calculateMerge(base, addition);
             case APPLY -> calculateApply(base, addition);
-            case SPLIT -> calculateSplit(base, addition);
+            case EXTRACT -> calculateExtract(base, addition);
         };
         if (!modeResult.valid())
             return modeResult;
@@ -306,36 +306,36 @@ public class BlazeForgerInventory extends ItemStackHandler {
         return invalid(BlazeForgerMode.APPLY, FailureReason.APPLY_REQUIRES_ENCHANTED_ADDITION);
     }
 
-    private Result calculateSplit(ItemStack base, ItemStack addition) {
+    private Result calculateExtract(ItemStack base, ItemStack addition) {
         ItemEnchantments baseEnchantments = getEnchantments(base);
         ItemEnchantments additionEnchantments = getEnchantments(addition);
         if (!isTemplate(addition) || !additionEnchantments.isEmpty())
-            return invalid(BlazeForgerMode.SPLIT, FailureReason.REQUIRES_BLANK_TEMPLATE);
+            return invalid(BlazeForgerMode.EXTRACT, FailureReason.REQUIRES_BLANK_TEMPLATE);
         if (baseEnchantments.isEmpty())
-            return invalid(BlazeForgerMode.SPLIT, FailureReason.SOURCE_HAS_NO_ENCHANTMENTS);
+            return invalid(BlazeForgerMode.EXTRACT, FailureReason.SOURCE_HAS_NO_ENCHANTMENTS);
         if (!forger.special && baseEnchantments.keySet().stream().allMatch(holder -> holder.is(EnchantmentTags.CURSE)))
-            return invalid(BlazeForgerMode.SPLIT, FailureReason.CURSE_SPLITTING_REQUIRES_SUPER_MODE);
+            return invalid(BlazeForgerMode.EXTRACT, FailureReason.CURSE_EXTRACTION_REQUIRES_SUPER_MODE);
         if (base.is(Items.ENCHANTED_BOOK) && baseEnchantments.size() == 1) {
             ItemStack book = Items.BOOK.getDefaultInstance();
             var enchantment = baseEnchantments.entrySet().stream().findFirst().get();
-            int level = getSplitLevel(enchantment.getKey(), baseEnchantments);
+            int level = getExtractLevel(enchantment.getKey(), baseEnchantments);
             var extractedEnchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
             extractedEnchantments.set(enchantment.getKey(), level);
             EnchantmentHelper.setEnchantments(addition, extractedEnchantments.toImmutable());
             cost += EnchantmentProcessingRules.blazeForgerLevelCost(
                     enchantment.getKey(),
-                    BlazeForgerMode.SPLIT,
+                    BlazeForgerMode.EXTRACT,
                     forger.special,
                     enchantment.getKey().value().getAnvilCost(),
                     level);
-            return Result.ready(BlazeForgerMode.SPLIT, book, addition, cost, conflicting, overCap, false, 0, 0);
+            return Result.ready(BlazeForgerMode.EXTRACT, book, addition, cost, conflicting, overCap, false, 0, 0);
         }
-        if (!splitEnchantments(base, addition, baseEnchantments))
-            return invalid(BlazeForgerMode.SPLIT, FailureReason.SOURCE_HAS_NO_EXTRACTABLE_ENCHANTMENTS);
-        return Result.ready(BlazeForgerMode.SPLIT, base, addition, cost, conflicting, overCap, false, 0, 0);
+        if (!extractEnchantments(base, addition, baseEnchantments))
+            return invalid(BlazeForgerMode.EXTRACT, FailureReason.SOURCE_HAS_NO_EXTRACTABLE_ENCHANTMENTS);
+        return Result.ready(BlazeForgerMode.EXTRACT, base, addition, cost, conflicting, overCap, false, 0, 0);
     }
 
-    protected boolean splitEnchantments(ItemStack base, ItemStack addition, ItemEnchantments baseEnchantments) {
+    protected boolean extractEnchantments(ItemStack base, ItemStack addition, ItemEnchantments baseEnchantments) {
         if (baseEnchantments.isEmpty())
             return false;
         var registry = Objects.requireNonNull(forger.getLevel()).registryAccess().registryOrThrow(Registries.ENCHANTMENT);
@@ -350,23 +350,23 @@ public class BlazeForgerInventory extends ItemStackHandler {
         var removedEnchantments = new ItemEnchantments.Mutable(baseEnchantments);
         removedEnchantments.set(enchantment, 0);
         EnchantmentHelper.setEnchantments(base, removedEnchantments.toImmutable());
-        int level = getSplitLevel(enchantment, baseEnchantments);
+        int level = getExtractLevel(enchantment, baseEnchantments);
         addition.enchant(enchantment, level);
         cost += EnchantmentProcessingRules.blazeForgerLevelCost(
                 enchantment,
-                BlazeForgerMode.SPLIT,
+                BlazeForgerMode.EXTRACT,
                 forger.special,
                 enchantment.value().getAnvilCost(),
                 level);
         return true;
     }
 
-    private int getSplitLevel(Holder<Enchantment> enchantment, ItemEnchantments enchantments) {
+    private int getExtractLevel(Holder<Enchantment> enchantment, ItemEnchantments enchantments) {
         int level = enchantments.getLevel(enchantment);
         if (forger.special)
             return level;
         int maxLevel = CEIEnchantmentHelper.maxLevel(enchantment);
-        if (CEIConfig.enchantments().splitEnchantmentRespectLevelExtension.get())
+        if (CEIConfig.enchantments().extractEnchantmentRespectLevelExtension.get())
             maxLevel += EnchantmentProcessingRules.blazeForgerLevelExtension(enchantment);
         return Math.min(level, maxLevel);
     }
@@ -714,7 +714,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
         REQUIRES_ENCHANTED_ADDITION("requires_enchanted_addition"),
         SOURCE_HAS_NO_ENCHANTMENTS("source_has_no_enchantments"),
         SOURCE_HAS_NO_EXTRACTABLE_ENCHANTMENTS("source_has_no_extractable_enchantments"),
-        CURSE_SPLITTING_REQUIRES_SUPER_MODE("curse_splitting_requires_super_mode"),
+        CURSE_EXTRACTION_REQUIRES_SUPER_MODE("curse_extraction_requires_super_mode"),
         ENCHANTMENT_CANNOT_APPLY("enchantment_cannot_apply"),
         WOULD_NOT_IMPROVE("would_not_improve");
 

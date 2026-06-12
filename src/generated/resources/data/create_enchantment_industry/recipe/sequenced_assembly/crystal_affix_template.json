@@ -7,7 +7,7 @@
     ],
     "type": "create:sequenced_assembly",
     "ingredient": {
-        "item": "create_enchantment_industry:brass_affix_template"
+        "item": "minecraft:paper"
     },
     "results": [
         {
@@ -15,6 +15,22 @@
         }
     ],
     "sequence": [
+        {
+            "type": "create:deploying",
+            "ingredients": [
+                {
+                    "item": "create_enchantment_industry:incomplete_crystal_affix_template"
+                },
+                {
+                    "item": "create:brass_sheet"
+                }
+            ],
+            "results": [
+                {
+                    "id": "create_enchantment_industry:incomplete_crystal_affix_template"
+                }
+            ]
+        },
         {
             "type": "create:filling",
             "ingredients": [

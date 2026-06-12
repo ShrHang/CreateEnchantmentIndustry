@@ -25,7 +25,7 @@ import net.minecraft.util.StringRepresentable;
 public enum BlazeForgerMode implements StringRepresentable {
     MERGE("merge"),
     APPLY("apply"),
-    SPLIT("split");
+    EXTRACT("extract");
 
     public static final IntFunction<BlazeForgerMode> BY_ID = ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.CLAMP);
 
@@ -38,7 +38,7 @@ public enum BlazeForgerMode implements StringRepresentable {
     public static BlazeForgerMode fromLegacyOperation(int operation) {
         return switch (operation) {
             case 1 -> APPLY;
-            case 2 -> SPLIT;
+            case 2 -> EXTRACT;
             default -> MERGE;
         };
     }

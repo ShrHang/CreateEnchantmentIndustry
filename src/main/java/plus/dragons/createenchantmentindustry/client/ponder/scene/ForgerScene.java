@@ -156,7 +156,7 @@ public class ForgerScene {
         scene.idle(10);
 
         scene.overlay().showText(80)
-                .text("Switch it to Splitting Mode, and it can strip an enchantment from equipment, books or templates into a blank Enchanting Template!")
+                .text("Switch it to Extract Mode, and it can strip an enchantment from equipment, books or templates into a blank Enchanting Template!")
                 .attachKeyFrame()
                 .placeNearTarget()
                 .pointAt(util.vector().topOf(2, 2, 1));
@@ -165,7 +165,7 @@ public class ForgerScene {
         CEIPonderScenes.enchant(scene, sword4, Enchantments.SWEEPING_EDGE, 2);
         CEIPonderScenes.enchant(scene, sword4, Enchantments.BANE_OF_ARTHROPODS, 2);
         scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
-                be -> be.setMode(BlazeForgerMode.SPLIT));
+                be -> be.setMode(BlazeForgerMode.EXTRACT));
         scene.world().modifyBlockEntity(util.grid().at(2, 2, 1), BlazeForgerBlockEntity.class,
                 be -> be.insertItem(sword4, false));
         scene.idle(40);

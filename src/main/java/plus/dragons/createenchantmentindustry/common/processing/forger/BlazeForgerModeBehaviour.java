@@ -18,12 +18,12 @@
 
 package plus.dragons.createenchantmentindustry.common.processing.forger;
 
-import com.google.common.collect.ImmutableList;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
+import java.util.Arrays;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -70,23 +70,26 @@ public class BlazeForgerModeBehaviour extends ScrollValueBehaviour {
     public ValueSettingsBoard createBoard(Player player, BlockHitResult hitResult) {
         return new ValueSettingsBoard(
                 label,
-                BlazeForgerMode.values().length - 1,
-                1,
-                ImmutableList.of(label),
-                new ValueSettingsFormatter(valueSettings -> modeName(BlazeForgerMode.BY_ID.apply(valueSettings.value()))));
+                0,
+                BlazeForgerMode.values().length,
+                Arrays.stream(BlazeForgerMode.values())
+                        .map(BlazeForgerModeBehaviour::modeName)
+                        .map(Component.class::cast)
+                        .toList(),
+                new ValueSettingsFormatter(valueSettings -> modeName(BlazeForgerMode.BY_ID.apply(valueSettings.row()))));
     }
 
     @Override
     public void setValueSettings(Player player, ValueSettings valueSetting, boolean ctrlDown) {
         if (valueSetting.equals(getValueSettings()))
             return;
-        setValue(valueSetting.value());
+        setValue(valueSetting.row());
         playFeedbackSound(this);
     }
 
     @Override
     public ValueSettings getValueSettings() {
-        return new ValueSettings(0, getValue());
+        return new ValueSettings(getValue(), 0);
     }
 
     @Override

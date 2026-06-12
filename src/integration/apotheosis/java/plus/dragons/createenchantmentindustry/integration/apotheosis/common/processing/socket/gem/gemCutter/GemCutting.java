@@ -19,36 +19,30 @@
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.socket.gem.gemCutter;
 
 import dev.shadowsoffire.apotheosis.socket.gem.Purity;
-import java.util.HashMap;
-import java.util.Map;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
 
 public class GemCutting {
-    public static final Map<Purity, Integer> PURITY_COST = new HashMap<>();
+    private GemCutting() {}
 
-    protected static int getCutCost(Purity purity) {
-        if (PURITY_COST.isEmpty()) buildPurityCostMap();
-        return PURITY_COST.get(purity);
+    public static boolean canCut(Purity purity) {
+        return purity != Purity.PERFECT;
     }
 
-    private static void buildPurityCostMap() {
-        for (Purity purity : Purity.values()) {
-            if (purity == Purity.PERFECT) continue;
-            PURITY_COST.put(purity, getGemEqual(Purity.BY_ID.apply(purity.ordinal() + 1)));
-        }
+    public static Purity resultPurity(Purity purity) {
+        return canCut(purity) ? purity.next() : purity;
     }
 
-    private static int getGemEqual(Purity purity) {
-        if (purity == Purity.CRACKED) return CEIAXConfig.server().fluids().gemCutterCostCrackedGemToCrystalEssenceRatio.get();
-        else return (1 + purity.ordinal() * 2) * CEIAXConfig.server().fluids().gemCutterCostGemDustToCrystalEssenceRatio.get() +
-                getGemEqual(Purity.BY_ID.apply(purity.ordinal() - 1))
-                + pow3(purity.ordinal() + 1) * CEIAXConfig.server().fluids().gemCutterCostApotheoticEssenceCostToCrystalEssenceRatio.get();
-    }
-
-    private static int pow3(int exponent) {
-        int result = 1;
-        for (int i = 0; i < exponent; i++)
-            result *= 3;
-        return result;
+    public static int getCutCost(Purity purity) {
+        if (!canCut(purity))
+            return 0;
+        int cost = switch (purity) {
+            case CRACKED -> CEIAXConfig.server().fluids().gemCutterCostCrackedToChipped.get();
+            case CHIPPED -> CEIAXConfig.server().fluids().gemCutterCostChippedToFlawed.get();
+            case FLAWED -> CEIAXConfig.server().fluids().gemCutterCostFlawedToNormal.get();
+            case NORMAL -> CEIAXConfig.server().fluids().gemCutterCostNormalToFlawless.get();
+            case FLAWLESS -> CEIAXConfig.server().fluids().gemCutterCostFlawlessToPerfect.get();
+            case PERFECT -> 0;
+        };
+        return Math.max(1, Math.round(cost * CEIAXConfig.server().fluids().gemCutterCostMultiplier.getF()));
     }
 }

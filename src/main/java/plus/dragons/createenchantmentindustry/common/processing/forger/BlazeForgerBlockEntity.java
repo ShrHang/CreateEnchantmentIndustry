@@ -319,10 +319,10 @@ public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity implement
                     yield inventory.getStackInSlot(0).isEmpty() ? 0 : -1;
                 yield -1;
             }
-            case SPLIT -> {
+            case EXTRACT -> {
                 if (isBlankMatchingTemplate(stack))
                     yield inventory.getStackInSlot(1).isEmpty() ? 1 : -1;
-                if (isSplittingSource(stack))
+                if (isExtractingSource(stack))
                     yield inventory.getStackInSlot(0).isEmpty() ? 0 : -1;
                 yield -1;
             }
@@ -358,7 +358,7 @@ public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity implement
         return switch (mode) {
             case MERGE -> isMergeInput(stack);
             case APPLY -> slot == 0 ? isForgingTarget(stack) : isForgingAddition(stack);
-            case SPLIT -> slot == 0 ? isSplittingSource(stack) : isBlankMatchingTemplate(stack);
+            case EXTRACT -> slot == 0 ? isExtractingSource(stack) : isBlankMatchingTemplate(stack);
         };
     }
 
@@ -378,7 +378,7 @@ public class BlazeForgerBlockEntity extends BlazeExperienceBlockEntity implement
                 && !stack.is(Items.ENCHANTED_BOOK);
     }
 
-    private boolean isSplittingSource(ItemStack stack) {
+    private boolean isExtractingSource(ItemStack stack) {
         return !stack.isEmpty() && !isBlankTemplate(stack) && hasEnchantments(stack);
     }
 

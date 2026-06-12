@@ -193,7 +193,7 @@ Example:
           "super": 2.0,
           "merge": 1.0,
           "apply": 1.25,
-          "split": 0.75
+          "extract": 0.75
         }
       }
     },
@@ -223,7 +223,7 @@ Blaze Enchanter cost is based on its selected enchanting level, then multiplied 
 Blaze Forger cost is based on each affected enchantment's anvil cost and level, then multiplied by:
 
 * regular or Super Blaze Forger global cost multiplier
-* merge, apply, or split Blaze Forger global cost multiplier
+* merge, apply, or extract Blaze Forger global cost multiplier
 * the matching per-enchantment rule multipliers
 
 The generated rule data map sets Mending and Infinity level extension to `0` for both Blaze Enchanter and Blaze Forger.
@@ -554,7 +554,7 @@ When the Apothic Enchanting integration is active, its server config provides:
 * Multiple Brass Bookshelf max Eterna
 * Creative Bookshelf treasure setting
 * Infuser fluid capacity
-* Gem Cutter and Affix Enhancer fluid capacity placeholders used by integration machinery
+* Affix Enhancer fluid capacity placeholder used by integration machinery
 * Ender Woven Bag capacity, pull behaviour, boss pull toggle, pull radius, pull force, and contraption release cooldown
 * Integration stress values
 
@@ -562,7 +562,8 @@ When the Apothic Enchanting integration is active, its server config provides:
 
 When the Apotheosis integration is active, its server config provides:
 
-* Gem Cutter conversion ratios for Gem Dust, cracked gems, and Apotheotic Essence into Crystal Essence processing cost
+* Gem Cutter per-purity Crystal Essence costs for Cracked -> Chipped, Chipped -> Flawed, Flawed -> Normal, Normal -> Flawless, and Flawless -> Perfect upgrades
+* Gem Cutter global Crystal Essence cost multiplier
 * Apotheosis Augmenting Table cost conversion ratios used by Affix Augmentor and Blaze Composer
 * Blaze Composer template level limits, template level limits, Super fuel capacity, operation multipliers, level segment weights, template/type cost multipliers, and Super exclusive-set bypass controls
 * Affix Augmentor max level and global cost multiplier

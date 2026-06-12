@@ -89,7 +89,7 @@ public record EnchantmentProcessingRule(
             Optional<Float> super_,
             Optional<Float> merge,
             Optional<Float> apply,
-            Optional<Float> split) {
+            Optional<Float> extract) {
         public static final ForgerCostMultipliers DEFAULT = new ForgerCostMultipliers(
                 Optional.empty(),
                 Optional.empty(),
@@ -101,7 +101,7 @@ public record EnchantmentProcessingRule(
                 Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("super").forGetter(ForgerCostMultipliers::super_),
                 Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("merge").forGetter(ForgerCostMultipliers::merge),
                 Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("apply").forGetter(ForgerCostMultipliers::apply),
-                Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("split").forGetter(ForgerCostMultipliers::split))
+                Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("extract").forGetter(ForgerCostMultipliers::extract))
                 .apply(instance, ForgerCostMultipliers::new));
     }
 }

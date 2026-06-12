@@ -23,17 +23,29 @@ import net.createmod.catnip.config.ui.ConfigAnnotations;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public class CEIAXFluidConfig extends ConfigBase {
-    public final ConfigInt gemCutterCostGemDustToCrystalEssenceRatio = i(10, 1,
-            "gemCutterCostGemDustToCrystalEssenceRatio",
-            Comments.gemCutterCostGemDustToCrystalEssenceRatio);
+    public final ConfigInt gemCutterCostCrackedToChipped = i(100, 1,
+            "gemCutterCostCrackedToChipped",
+            Comments.gemCutterCostCrackedToChipped);
 
-    public final ConfigInt gemCutterCostCrackedGemToCrystalEssenceRatio = i(20, 1,
-            "gemCutterCostCrackedGemToCrystalEssenceRatio",
-            Comments.gemCutterCostCrackedGemToCrystalEssenceRatio);
+    public final ConfigInt gemCutterCostChippedToFlawed = i(300, 1,
+            "gemCutterCostChippedToFlawed",
+            Comments.gemCutterCostChippedToFlawed);
 
-    public final ConfigInt gemCutterCostApotheoticEssenceCostToCrystalEssenceRatio = i(10, 1,
-            "gemCutterCostApotheoticEssenceCostToCrystalEssenceRatio",
-            Comments.gemCutterCostApotheoticEssenceCostToCrystalEssenceRatio);
+    public final ConfigInt gemCutterCostFlawedToNormal = i(800, 1,
+            "gemCutterCostFlawedToNormal",
+            Comments.gemCutterCostFlawedToNormal);
+
+    public final ConfigInt gemCutterCostNormalToFlawless = i(2000, 1,
+            "gemCutterCostNormalToFlawless",
+            Comments.gemCutterCostNormalToFlawless);
+
+    public final ConfigInt gemCutterCostFlawlessToPerfect = i(5000, 1,
+            "gemCutterCostFlawlessToPerfect",
+            Comments.gemCutterCostFlawlessToPerfect);
+
+    public final ConfigFloat gemCutterCostMultiplier = f(1.0f, 0.0f,
+            "gemCutterCostMultiplier",
+            Comments.gemCutterCostMultiplier);
 
     public final ConfigInt affixAugmentorCostExperienceToApotheoticEssenceTotal = i(19347, 1,
             "affixAugmentorCostExperienceToApotheoticEssenceTotal",
@@ -54,19 +66,18 @@ public class CEIAXFluidConfig extends ConfigBase {
     }
 
     static class Comments {
-        static final String[] gemCutterCostGemDustToCrystalEssenceRatio = { "This setting affects the calculation of operating costs of Gem Cutter.",
-                "In Apotheosis, Gem cutting/upgrading requires consuming one Gem of the same type & purity,",
-                "a certain quantity of Gem Dust, and Rarity Materials.",
-                "Specifically, it typically requires 1 + (purity level) x 2 Gem Dust, alongside Rarity Materials equivalent to 3^(purity level) units of common Rarity Material.",
-                "Therefore, when calculating processing cost of Gem Cutter, both Gem Dust consumption and Gem consumption are converted into Crystal Essence,",
-                "while Rarity Material consumption is converted into Apotheotic Essence, which is then converted into Crystal Essence.",
-                "This config determines the conversion ratio of Gem Dust to Crystal Essence (mB) IN GEM CUTTING ONLY.",
+        static final String[] gemCutterCostCrackedToChipped = { "Crystal Essence cost (mB) for Gem Cutter to upgrade a Cracked gem into a Chipped gem.",
+                "Gem Cutter uses explicit per-purity costs so modpack authors can tune each upgrade step directly.",
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
-        static final String[] gemCutterCostCrackedGemToCrystalEssenceRatio = { "The config above has explained the calculation mechanism for the operating costs of Gem Cutter.",
-                "This config determines the conversion ratio of Gem of \"Cracked\" purity to Crystal Essence (mB) IN GEM CUTTING ONLY.",
+        static final String[] gemCutterCostChippedToFlawed = { "Crystal Essence cost (mB) for Gem Cutter to upgrade a Chipped gem into a Flawed gem.",
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
-        static final String[] gemCutterCostApotheoticEssenceCostToCrystalEssenceRatio = { "The config above has explained the calculation mechanism for the operating costs of Gem Cutter.",
-                "This config determines the conversion ratio of Apotheotic Essence (mB) to Crystal Essence (mB) IN GEM CUTTER ONLY.",
+        static final String[] gemCutterCostFlawedToNormal = { "Crystal Essence cost (mB) for Gem Cutter to upgrade a Flawed gem into a Normal gem.",
+                ConfigAnnotations.RequiresRestart.SERVER.asComment() };
+        static final String[] gemCutterCostNormalToFlawless = { "Crystal Essence cost (mB) for Gem Cutter to upgrade a Normal gem into a Flawless gem.",
+                ConfigAnnotations.RequiresRestart.SERVER.asComment() };
+        static final String[] gemCutterCostFlawlessToPerfect = { "Crystal Essence cost (mB) for Gem Cutter to upgrade a Flawless gem into a Perfect gem.",
+                ConfigAnnotations.RequiresRestart.SERVER.asComment() };
+        static final String[] gemCutterCostMultiplier = { "Global multiplier applied to all Gem Cutter Crystal Essence costs.",
                 ConfigAnnotations.RequiresRestart.SERVER.asComment() };
 
         static final String[] affixAugmentorCostExperienceToApotheoticEssenceTotal = { "This setting affects the Apotheosis upgrade reference cost used by Affix Augmentor and Blaze Composer.",

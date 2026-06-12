@@ -129,7 +129,7 @@ public class EnchantmentProcessingRules {
         multiplier *= switch (mode) {
             case MERGE -> CEIConfig.processing().blazeForgerMergeCostMultiplier.getF();
             case APPLY -> CEIConfig.processing().blazeForgerApplyCostMultiplier.getF();
-            case SPLIT -> CEIConfig.processing().blazeForgerSplitCostMultiplier.getF();
+            case EXTRACT -> CEIConfig.processing().blazeForgerExtractCostMultiplier.getF();
         };
 
         var rule = enchantment.getData(CEIDataMaps.ENCHANTMENT_PROCESSING_RULES);
@@ -139,7 +139,7 @@ public class EnchantmentProcessingRules {
             var operationMultiplier = switch (mode) {
                 case MERGE -> multipliers.merge();
                 case APPLY -> multipliers.apply();
-                case SPLIT -> multipliers.split();
+                case EXTRACT -> multipliers.extract();
             };
             if (operationMultiplier.isPresent())
                 return multiplier * operationMultiplier.get();
@@ -172,7 +172,7 @@ public class EnchantmentProcessingRules {
     }
 
     private static Float legacyForgerCost(Holder<Enchantment> enchantment, BlazeForgerMode mode) {
-        if (mode == BlazeForgerMode.SPLIT) {
+        if (mode == BlazeForgerMode.EXTRACT) {
             Float legacy = enchantment.getData(CEIDataMaps.SPLITTING_COST_MULTIPLIER);
             if (legacy != null) {
                 warnLegacySplittingCost(1);

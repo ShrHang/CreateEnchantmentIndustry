@@ -60,9 +60,9 @@ public class CEIProcessingConfig extends ConfigBase {
     public final ConfigFloat blazeForgerApplyCostMultiplier = f(1.0f, 0.0f,
             "blazeForgerApplyCostMultiplier",
             Comments.blazeForgerApplyCostMultiplier);
-    public final ConfigFloat blazeForgerSplitCostMultiplier = f(1.0f, 0.0f,
-            "blazeForgerSplitCostMultiplier",
-            Comments.blazeForgerSplitCostMultiplier);
+    public final ConfigFloat blazeForgerExtractCostMultiplier = f(1.0f, 0.0f,
+            "blazeForgerExtractCostMultiplier",
+            Comments.blazeForgerExtractCostMultiplier);
     public final ConfigInt blazeForgerConflictExtraLevelCost = i(1, 0,
             "blazeForgerConflictExtraLevelCost",
             Comments.blazeForgerConflictExtraLevelCost);
@@ -89,7 +89,7 @@ public class CEIProcessingConfig extends ConfigBase {
         static final String blazeForgerSuperForgingCostMultiplier = "Global experience cost multiplier for Super Blaze Forger operations.";
         static final String blazeForgerMergeCostMultiplier = "Experience cost multiplier for Blaze Forger merge operations.";
         static final String blazeForgerApplyCostMultiplier = "Experience cost multiplier for Blaze Forger apply operations.";
-        static final String blazeForgerSplitCostMultiplier = "Experience cost multiplier for Blaze Forger split operations.";
+        static final String blazeForgerExtractCostMultiplier = "Experience cost multiplier for Blaze Forger extract operations.";
         static final String blazeForgerConflictExtraLevelCost = "Extra level cost added when Super Forging ignores an enchantment conflict.";
         static final String blazeForgerDurabilityRepairLevelCost = "Level cost added when Blaze Forger repairs item durability during merge.";
     }
