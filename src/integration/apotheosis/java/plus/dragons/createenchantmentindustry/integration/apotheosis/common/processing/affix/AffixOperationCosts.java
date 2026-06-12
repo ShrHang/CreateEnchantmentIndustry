@@ -36,7 +36,8 @@ public class AffixOperationCosts {
         var fluids = CEIAXConfig.server().fluids();
         int defaultExperience = Math.max(1, EnchantmentUtils.getTotalExperienceForLevel(DEFAULT_APOTHEOSIS_UPGRADE_LEVEL_COST));
         int configuredExperience = EnchantmentUtils.getTotalExperienceForLevel(Math.max(0, AdventureConfig.upgradeLevelCost));
-        float experienceCost = fluids.affixAugmentorCostExperienceToApotheoticEssenceTotal.get() * configuredExperience / (float) defaultExperience;
+        float experienceCost = (float) fluids.affixAugmentorCostExperienceToApotheoticEssenceTotal.get()
+                * ((float) configuredExperience / defaultExperience);
         float sigilCost = AdventureConfig.upgradeSigilCost * fluids.affixAugmentorCostSigilToApotheoticEssenceRatio.get();
         return roundPositiveCost(experienceCost + sigilCost);
     }
