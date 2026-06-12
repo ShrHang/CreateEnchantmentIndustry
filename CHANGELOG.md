@@ -35,3 +35,4 @@ If you need any help on customization, please read https://github.com/DragonsPlu
 * Fixed optional integration block loot tables losing their `neoforge:conditions` during data generation.
 * Fixed Affix Augmentor idle processing state so belt-held items can start processing reliably.
 * Fixed how `curse` in Blaze Forger work.
+* Fixed Gem Cutter doesn't process flawless gem on depot.
