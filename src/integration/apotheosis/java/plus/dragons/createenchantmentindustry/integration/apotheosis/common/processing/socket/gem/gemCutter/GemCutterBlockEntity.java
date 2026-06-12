@@ -51,6 +51,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import org.jetbrains.annotations.Nullable;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.kinetics.belt.lowerProcessingAppliance.LowerBeltProcessingBehaviour;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
 import plus.dragons.createenchantmentindustry.util.CEILang;
@@ -58,9 +59,16 @@ import plus.dragons.createenchantmentindustry.util.CEILang;
 public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGoggleInformation {
     public static final int UNIT_PROCESSING_TIME = 200;
     public static final int COMPLETION_TICKS = 25;
+    private static final int HELD_INPUT_TIMEOUT = 3;
     public int processingTicks = -1;
     public boolean powered;
     public float chargingPercentage;
+    @Nullable
+    private ActiveCutting activeCutting;
+    @Nullable
+    private CuttingPreview heldPreview;
+    private int heldPreviewTicks;
+    private int heldInputTicks;
 
     public GemCutterBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -106,16 +114,20 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
                     }
                 }
             }
+            tickHeldInputTimeouts();
         }
         if (processingTicks >= 0) {
             if (powered) {
+                if (!level.isClientSide && !hasValidActiveInput()) {
+                    cancelProcessing();
+                    return;
+                }
                 processingTicks--;
                 if (level.isClientSide && processingTicks > 25) {
                     spawnParticles();
                 }
             } else if (processingTicks != -1) {
-                processingTicks = -1;
-                notifyUpdate();
+                cancelProcessing();
             }
         }
     }
@@ -143,19 +155,41 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
     public BeltProcessingBehaviour.ProcessingResult onItemHeld(TransportedItemStack transported, TransportedItemStackHandlerBehaviour handler) {
         Level level = this.level;
         assert level != null;
-        if (processingTicks > COMPLETION_TICKS)
-            return HOLD;
         var context = getCuttingContext(transported.stack);
-        if (context.status() == CuttingStatus.ALREADY_PERFECT)
+        rememberHeldPreview(context);
+        if (context.status() == CuttingStatus.ALREADY_PERFECT) {
+            cancelProcessing();
             return PASS;
-        if (context.status() == CuttingStatus.NOT_A_GEM)
+        }
+        if (context.status() == CuttingStatus.NOT_A_GEM) {
+            cancelProcessing();
             return PASS;
-        if (context.status() != CuttingStatus.READY)
-            return HOLD;
+        }
+        refreshHeldInput();
 
-        if (processingTicks == -1) {
-            processingTicks = UNIT_PROCESSING_TIME;
-            notifyUpdate();
+        if (processingTicks > COMPLETION_TICKS) {
+            if (!validateTransportedInput(transported.stack))
+                return PASS;
+            return HOLD;
+        }
+
+        if (processingTicks == -1)
+            return startProcessingIfReady(context);
+
+        if (activeCutting == null) {
+            if (context.status() != CuttingStatus.READY) {
+                cancelProcessing();
+                return HOLD;
+            }
+            activeCutting = ActiveCutting.from(context);
+        }
+        var active = activeCutting;
+        if (!active.matchesInput(transported.stack)) {
+            cancelProcessing();
+            return isUpgradableGem(transported.stack) ? startProcessingIfReady(context) : PASS;
+        }
+        if (context.status() != CuttingStatus.READY || !canPay(context.tank(), active.cost())) {
+            cancelProcessing();
             return HOLD;
         }
 
@@ -167,25 +201,108 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
             remains.stack.shrink(1);
             result.stack.setCount(1);
         }
-        GemItem.setPurity(result.stack, context.to());
+        GemItem.setPurity(result.stack, active.to());
         handler.handleProcessingOnItem(transported, TransportedItemStackHandlerBehaviour.TransportedResult.convertToAndLeaveHeld(List.of(result), remains));
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.AMETHYST_CLUSTER_HIT,
                 SoundSource.BLOCKS, 0.75f, .9f + 0.2f * level.random.nextFloat());
-        context.tank().get().getTankInventory().drain(context.cost(), IFluidHandler.FluidAction.EXECUTE);
-        processingTicks = -1;
+        context.tank().get().getTankInventory().drain(active.cost(), IFluidHandler.FluidAction.EXECUTE);
+        cancelProcessing();
+        return HOLD;
+    }
+
+    private BeltProcessingBehaviour.ProcessingResult startProcessingIfReady(CuttingContext context) {
+        if (context.status() != CuttingStatus.READY)
+            return HOLD;
+        activeCutting = ActiveCutting.from(context);
+        refreshHeldInput();
+        processingTicks = UNIT_PROCESSING_TIME;
         notifyUpdate();
         return HOLD;
     }
 
+    private void rememberHeldPreview(CuttingContext context) {
+        if (context.status() == CuttingStatus.NOT_A_GEM || context.status() == CuttingStatus.ALREADY_PERFECT) {
+            clearHeldPreview();
+            return;
+        }
+        CuttingPreview preview = CuttingPreview.from(context);
+        boolean changed = !preview.equals(heldPreview);
+        heldPreview = preview;
+        heldPreviewTicks = HELD_INPUT_TIMEOUT;
+        refreshHeldInput();
+        if (changed)
+            notifyUpdate();
+    }
+
+    private void refreshHeldInput() {
+        heldInputTicks = HELD_INPUT_TIMEOUT;
+    }
+
+    private void tickHeldInputTimeouts() {
+        boolean update = false;
+        if (heldPreviewTicks > 0 && --heldPreviewTicks == 0 && heldPreview != null) {
+            heldPreview = null;
+            update = true;
+        }
+        if (heldInputTicks > 0)
+            heldInputTicks--;
+        if (update)
+            notifyUpdate();
+    }
+
+    private void clearHeldPreview() {
+        if (heldPreview != null || heldPreviewTicks != 0) {
+            heldPreview = null;
+            heldPreviewTicks = 0;
+            notifyUpdate();
+        }
+    }
+
+    private boolean validateTransportedInput(ItemStack stack) {
+        if (processingTicks < 0)
+            return true;
+        if (activeCutting == null)
+            return isUpgradableGem(stack);
+        if (!activeCutting.matchesInput(stack)) {
+            cancelProcessing();
+            return false;
+        }
+        return true;
+    }
+
+    private boolean canPay(Optional<FluidTankBlockEntity> fluidTank, int cost) {
+        if (cost <= 0 || fluidTank.isEmpty())
+            return false;
+        var tank = fluidTank.get().getTankInventory();
+        return tank.getFluid().is(CEIAXFluids.CRYSTAL_ESSENCE)
+                && tank.getFluidAmount() >= cost
+                && tank.getCapacity() >= cost;
+    }
+
+    private boolean hasValidActiveInput() {
+        if (processingTicks < 0)
+            return true;
+        var depot = getDepotBlockEntity();
+        if (depot.isEmpty())
+            return heldInputTicks > 0;
+        if (activeCutting == null)
+            return getDepotInputStack(depot.get()).map(GemCutterBlockEntity::isUpgradableGem).orElse(false);
+        return getDepotInputStack(depot.get())
+                .map(activeCutting::matchesInput)
+                .orElse(false);
+    }
+
+    private void cancelProcessing() {
+        if (processingTicks != -1 || activeCutting != null) {
+            processingTicks = -1;
+            activeCutting = null;
+            heldInputTicks = 0;
+            notifyUpdate();
+        }
+    }
+
     private CuttingContext getCuttingContext(ItemStack stack) {
         var fluidTank = getExternalFluidTank();
-        if (fluidTank.isEmpty())
-            return CuttingContext.noTank();
-        var tank = fluidTank.get().getTankInventory();
-        if (tank.isEmpty())
-            return CuttingContext.withTank(CuttingStatus.EMPTY_TANK, fluidTank);
-        if (!tank.getFluid().is(CEIAXFluids.CRYSTAL_ESSENCE))
-            return CuttingContext.withTank(CuttingStatus.WRONG_FLUID, fluidTank);
         if (!stack.is(Apoth.Items.GEM))
             return CuttingContext.withTank(CuttingStatus.NOT_A_GEM, fluidTank);
         var from = GemItem.getPurity(stack);
@@ -193,6 +310,13 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
             return CuttingContext.withGem(CuttingStatus.ALREADY_PERFECT, fluidTank, from, from, 0);
         var to = GemCutting.resultPurity(from);
         int cost = GemCutting.getCutCost(from);
+        if (fluidTank.isEmpty())
+            return CuttingContext.withGem(CuttingStatus.MISSING_TANK, fluidTank, from, to, cost);
+        var tank = fluidTank.get().getTankInventory();
+        if (tank.isEmpty())
+            return CuttingContext.withGem(CuttingStatus.EMPTY_TANK, fluidTank, from, to, cost);
+        if (!tank.getFluid().is(CEIAXFluids.CRYSTAL_ESSENCE))
+            return CuttingContext.withGem(CuttingStatus.WRONG_FLUID, fluidTank, from, to, cost);
         if (cost > tank.getCapacity())
             return CuttingContext.withGem(CuttingStatus.TANK_TOO_SMALL, fluidTank, from, to, cost);
         if (cost > tank.getFluidAmount())
@@ -219,6 +343,18 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
         super.write(tag, registries, clientPacket);
         tag.putInt("ProcessingTicks", processingTicks);
         tag.putBoolean("Powered", powered);
+        if (activeCutting != null) {
+            tag.putString("ActiveFromPurity", activeCutting.from().name());
+            tag.putString("ActiveToPurity", activeCutting.to().name());
+            tag.putInt("ActiveCost", activeCutting.cost());
+        }
+        if (heldPreview != null) {
+            tag.putString("HeldPreviewStatus", heldPreview.status().name());
+            tag.putString("HeldPreviewFromPurity", heldPreview.from().name());
+            tag.putString("HeldPreviewToPurity", heldPreview.to().name());
+            tag.putInt("HeldPreviewCost", heldPreview.cost());
+            tag.putInt("HeldPreviewTicks", heldPreviewTicks);
+        }
     }
 
     @Override
@@ -228,6 +364,29 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
         if (processingTicks == 0)
             processingTicks = -1;
         powered = tag.getBoolean("Powered");
+        activeCutting = null;
+        if (processingTicks > 0 && tag.contains("ActiveFromPurity") && tag.contains("ActiveToPurity")) {
+            Purity from = purityByName(tag.getString("ActiveFromPurity"));
+            Purity to = purityByName(tag.getString("ActiveToPurity"));
+            int cost = tag.getInt("ActiveCost");
+            if (from != null && to != null && from != to && cost > 0) {
+                activeCutting = new ActiveCutting(from, to, cost);
+                heldInputTicks = HELD_INPUT_TIMEOUT;
+            }
+        }
+        heldPreview = null;
+        heldPreviewTicks = 0;
+        if (tag.contains("HeldPreviewStatus") && tag.contains("HeldPreviewFromPurity") && tag.contains("HeldPreviewToPurity")) {
+            CuttingStatus status = cuttingStatusByName(tag.getString("HeldPreviewStatus"));
+            Purity from = purityByName(tag.getString("HeldPreviewFromPurity"));
+            Purity to = purityByName(tag.getString("HeldPreviewToPurity"));
+            int cost = tag.getInt("HeldPreviewCost");
+            int ticks = tag.getInt("HeldPreviewTicks");
+            if (status != null && from != null && to != null && cost > 0 && ticks > 0) {
+                heldPreview = new CuttingPreview(status, from, to, cost);
+                heldPreviewTicks = ticks;
+            }
+        }
     }
 
     @Override
@@ -239,10 +398,13 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
             CEILang.translate("gui.goggles.gem_cutter.processing", CEILang.number(progress).text("%").component())
                     .style(ChatFormatting.GREEN)
                     .forGoggles(tooltip);
+            addActiveCuttingTooltip(tooltip);
         } else {
             var input = getDepotInputStack();
             if (input.isPresent())
                 addInputTooltip(tooltip, input.get());
+            else if (heldPreview != null)
+                addHeldPreviewTooltip(tooltip, heldPreview);
             else
                 CEILang.translate("gui.goggles.gem_cutter.waiting")
                         .style(ChatFormatting.GRAY)
@@ -251,65 +413,120 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
         return true;
     }
 
+    private void addActiveCuttingTooltip(List<Component> tooltip) {
+        if (activeCutting == null)
+            return;
+        addResultTooltip(tooltip, Optional.empty(), activeCutting.from(), activeCutting.to(), activeCutting.cost(), ChatFormatting.GREEN);
+    }
+
+    private void addHeldPreviewTooltip(List<Component> tooltip, CuttingPreview preview) {
+        addResultTooltip(tooltip, Optional.empty(), preview.from(), preview.to(), preview.cost(), ChatFormatting.GREEN);
+        addContextStatusTooltip(tooltip, preview.status(), Optional.empty(), preview.cost());
+    }
+
     private Optional<ItemStack> getDepotInputStack() {
+        return getDepotBlockEntity().flatMap(this::getDepotInputStack);
+    }
+
+    private Optional<DepotBlockEntity> getDepotBlockEntity() {
         assert level != null;
         var be = level.getBlockEntity(worldPosition.below());
-        if (be instanceof DepotBlockEntity depot) {
-            var stack = depot.getHeldItem();
-            if (!stack.isEmpty())
-                return Optional.of(stack);
-        }
+        if (be instanceof DepotBlockEntity depot)
+            return Optional.of(depot);
+        return Optional.empty();
+    }
+
+    private Optional<ItemStack> getDepotInputStack(DepotBlockEntity depot) {
+        var stack = depot.getHeldItem();
+        if (!stack.isEmpty())
+            return Optional.of(stack);
         return Optional.empty();
     }
 
     private void addInputTooltip(List<Component> tooltip, ItemStack stack) {
         var context = getCuttingContext(stack);
-        if (context.status() == CuttingStatus.READY) {
-            CEILang.translate(
-                    "gui.goggles.gem_cutter.ready",
-                    context.from().toComponent(),
-                    context.to().toComponent(),
-                    amount(context.cost()).component())
-                    .style(ChatFormatting.GREEN)
-                    .forGoggles(tooltip);
-            return;
+        if (context.hasResult()) {
+            addResultTooltip(tooltip, Optional.of(stack), context.from(), context.to(), context.cost(), ChatFormatting.GREEN);
         }
-        if (context.status() == CuttingStatus.INSUFFICIENT_ESSENCE) {
-            int available = context.tank()
-                    .map(tank -> tank.getTankInventory().getFluidAmount())
-                    .orElse(0);
-            CEILang.translate(
-                    "gui.goggles.gem_cutter.insufficient_essence",
-                    amount(available).component(),
-                    amount(context.cost()).component())
-                    .style(ChatFormatting.RED)
-                    .forGoggles(tooltip);
+        if (context.status() == CuttingStatus.READY)
             return;
-        }
-        if (context.status() == CuttingStatus.TANK_TOO_SMALL) {
-            int capacity = context.tank()
-                    .map(tank -> tank.getTankInventory().getCapacity())
-                    .orElse(0);
-            CEILang.translate("gui.goggles.gem_cutter.max_cost_tank_too_small", amount(context.cost(), capacity).component())
-                    .style(ChatFormatting.RED)
-                    .forGoggles(tooltip);
+        if (addContextStatusTooltip(tooltip, context.status(), context.tank(), context.cost()))
             return;
-        }
-        if (context.status() == CuttingStatus.ALREADY_PERFECT) {
-            CEILang.translate("gui.goggles.gem_cutter.already_perfect")
-                    .style(ChatFormatting.GRAY)
-                    .forGoggles(tooltip);
-            return;
-        }
-        if (context.status() == CuttingStatus.NOT_A_GEM) {
-            CEILang.translate("gui.goggles.gem_cutter.invalid_input")
-                    .style(ChatFormatting.YELLOW)
-                    .forGoggles(tooltip);
-            return;
-        }
         CEILang.translate("gui.goggles.gem_cutter.waiting")
                 .style(ChatFormatting.GRAY)
                 .forGoggles(tooltip);
+    }
+
+    private boolean addContextStatusTooltip(List<Component> tooltip, CuttingStatus status, Optional<FluidTankBlockEntity> tank, int cost) {
+        if (status == CuttingStatus.INSUFFICIENT_ESSENCE) {
+            int available = tank
+                    .map(fluidTank -> fluidTank.getTankInventory().getFluidAmount())
+                    .orElseGet(() -> getExternalFluidTank()
+                            .map(fluidTank -> fluidTank.getTankInventory().getFluidAmount())
+                            .orElse(0));
+            CEILang.translate(
+                    "gui.goggles.gem_cutter.insufficient_essence",
+                    amount(available).component(),
+                    amount(cost).component())
+                    .style(ChatFormatting.RED)
+                    .forGoggles(tooltip);
+            return true;
+        }
+        if (status == CuttingStatus.TANK_TOO_SMALL) {
+            int capacity = tank
+                    .map(fluidTank -> fluidTank.getTankInventory().getCapacity())
+                    .orElseGet(() -> getExternalFluidTank()
+                            .map(fluidTank -> fluidTank.getTankInventory().getCapacity())
+                            .orElse(0));
+            CEILang.translate("gui.goggles.gem_cutter.max_cost_tank_too_small", amount(cost, capacity).component())
+                    .style(ChatFormatting.RED)
+                    .forGoggles(tooltip);
+            return true;
+        }
+        if (status == CuttingStatus.ALREADY_PERFECT) {
+            CEILang.translate("gui.goggles.gem_cutter.already_perfect")
+                    .style(ChatFormatting.GRAY)
+                    .forGoggles(tooltip);
+            return true;
+        }
+        if (status == CuttingStatus.NOT_A_GEM) {
+            CEILang.translate("gui.goggles.gem_cutter.invalid_input")
+                    .style(ChatFormatting.YELLOW)
+                    .forGoggles(tooltip);
+            return true;
+        }
+        if (status == CuttingStatus.MISSING_TANK || status == CuttingStatus.EMPTY_TANK || status == CuttingStatus.WRONG_FLUID)
+            return true;
+        return false;
+    }
+
+    private void addResultTooltip(List<Component> tooltip, Optional<ItemStack> input, Purity from, Purity to, int cost, ChatFormatting style) {
+        CEILang.translate("gui.goggles.gem_cutter.result")
+                .forGoggles(tooltip);
+        resultLine(input, from, to)
+                .style(style)
+                .forGoggles(tooltip, 1);
+        CEILang.translate("gui.goggles.gem_cutter.result_cost", amount(cost).component())
+                .style(ChatFormatting.GRAY)
+                .forGoggles(tooltip, 1);
+    }
+
+    private LangBuilder resultLine(Optional<ItemStack> input, Purity from, Purity to) {
+        return input
+                .map(stack -> {
+                    ItemStack output = stack.copy();
+                    output.setCount(1);
+                    GemItem.setPurity(output, to);
+                    return CEILang.translate(
+                            "gui.goggles.gem_cutter.result_line",
+                            output.getHoverName(),
+                            from.toComponent(),
+                            to.toComponent());
+                })
+                .orElseGet(() -> CEILang.translate(
+                        "gui.goggles.gem_cutter.result_purity",
+                        from.toComponent(),
+                        to.toComponent()));
     }
 
     private void addTankTooltip(List<Component> tooltip) {
@@ -374,6 +591,24 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
         return GemItem.getPurity(stack) != Purity.PERFECT;
     }
 
+    @Nullable
+    private static Purity purityByName(String name) {
+        try {
+            return Purity.valueOf(name);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    @Nullable
+    private static CuttingStatus cuttingStatusByName(String name) {
+        try {
+            return CuttingStatus.valueOf(name);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
     private enum CuttingStatus {
         MISSING_TANK,
         EMPTY_TANK,
@@ -391,8 +626,8 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
             Purity from,
             Purity to,
             int cost) {
-        private static CuttingContext noTank() {
-            return new CuttingContext(CuttingStatus.MISSING_TANK, Optional.empty(), Purity.CRACKED, Purity.CRACKED, 0);
+        private boolean hasResult() {
+            return cost > 0 && from != to;
         }
 
         private static CuttingContext withTank(CuttingStatus status, Optional<FluidTankBlockEntity> tank) {
@@ -401,6 +636,22 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
 
         private static CuttingContext withGem(CuttingStatus status, Optional<FluidTankBlockEntity> tank, Purity from, Purity to, int cost) {
             return new CuttingContext(status, tank, from, to, cost);
+        }
+    }
+
+    private record ActiveCutting(Purity from, Purity to, int cost) {
+        private static ActiveCutting from(CuttingContext context) {
+            return new ActiveCutting(context.from(), context.to(), context.cost());
+        }
+
+        private boolean matchesInput(ItemStack stack) {
+            return stack.is(Apoth.Items.GEM) && GemItem.getPurity(stack) == from;
+        }
+    }
+
+    private record CuttingPreview(CuttingStatus status, Purity from, Purity to, int cost) {
+        private static CuttingPreview from(CuttingContext context) {
+            return new CuttingPreview(context.status(), context.from(), context.to(), context.cost());
         }
     }
 }

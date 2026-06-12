@@ -67,8 +67,14 @@ public class AffixAugmenting {
                 rejected.add(new RejectedAffix(instance, reason.get(), maxLevel));
                 continue;
             }
-            if (result == null)
-                result = createResult(instance, maxLevel).orElse(null);
+            if (result == null) {
+                var candidate = createResult(instance, maxLevel);
+                if (candidate.result().isPresent()) {
+                    result = candidate.result().get();
+                } else {
+                    rejected.add(new RejectedAffix(instance, candidate.rejectionReason(), maxLevel));
+                }
+            }
         }
         if (validAffixes == 0)
             return Analysis.noAffixes(List.copyOf(rejected));
@@ -104,13 +110,23 @@ public class AffixAugmenting {
         return Optional.empty();
     }
 
-    private static Optional<Result> createResult(AffixInstance instance, float maxLevel) {
+    private static ResultCandidate createResult(AffixInstance instance, float maxLevel) {
         float currentLevel = instance.level();
         float resultLevel = Math.min(currentLevel + CEIAXConfig.server().affixes().affixTemplateMergeStep.getF(), maxLevel);
         int cost = AffixOperationCosts.augmentingCost(instance, currentLevel, resultLevel);
         if (cost <= 0)
-            return Optional.empty();
-        return Optional.of(new Result(instance, currentLevel, resultLevel, cost));
+            return ResultCandidate.rejected(RejectionReason.ZERO_COST);
+        return ResultCandidate.ready(new Result(instance, currentLevel, resultLevel, cost));
+    }
+
+    private record ResultCandidate(Optional<Result> result, RejectionReason rejectionReason) {
+        private static ResultCandidate ready(Result result) {
+            return new ResultCandidate(Optional.of(result), RejectionReason.ZERO_COST);
+        }
+
+        private static ResultCandidate rejected(RejectionReason reason) {
+            return new ResultCandidate(Optional.empty(), reason);
+        }
     }
 
     public record Result(AffixInstance target, float currentLevel, float resultLevel, int cost) {}
@@ -154,6 +170,7 @@ public class AffixAugmenting {
         INVALID,
         LEVEL_INDEPENDENT,
         AT_AUGMENTOR_CAP,
-        DENIED_BY_RULE
+        DENIED_BY_RULE,
+        ZERO_COST
     }
 }

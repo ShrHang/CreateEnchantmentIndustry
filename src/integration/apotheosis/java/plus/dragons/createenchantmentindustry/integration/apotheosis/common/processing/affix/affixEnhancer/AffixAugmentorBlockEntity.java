@@ -31,9 +31,11 @@ import com.simibubi.create.content.logistics.depot.DepotBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import dev.shadowsoffire.apotheosis.affix.Affix;
 import dev.shadowsoffire.apotheosis.affix.AffixHelper;
+import dev.shadowsoffire.apotheosis.affix.AffixInstance;
 import dev.shadowsoffire.apotheosis.affix.AffixRegistry;
 import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import net.createmod.catnip.lang.LangBuilder;
 import net.createmod.catnip.math.VecHelper;
@@ -183,7 +185,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         }
         var active = activeAugmenting;
         var affix = active.resolveAffix();
-        if (affix.isEmpty() || !active.matchesInput(transported.stack, affix.get())) {
+        if (affix.isEmpty() || !active.matchesInput(transported.stack)) {
             cancelProcessing();
             return HOLD;
         }
@@ -216,7 +218,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         if (activeAugmenting == null)
             return AffixAugmenting.canAugment(stack);
         var affix = activeAugmenting.resolveAffix();
-        if (affix.isEmpty() || !activeAugmenting.matchesInput(stack, affix.get())) {
+        if (affix.isEmpty() || !activeAugmenting.matchesInput(stack)) {
             cancelProcessing();
             return false;
         }
@@ -233,7 +235,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
             return getDepotInputStack(depot.get()).map(AffixAugmenting::canAugment).orElse(false);
         var affix = activeAugmenting.resolveAffix();
         return affix.isPresent() && getDepotInputStack(depot.get())
-                .map(stack -> activeAugmenting.matchesInput(stack, affix.get()))
+                .map(activeAugmenting::matchesInput)
                 .orElse(false);
     }
 
@@ -499,6 +501,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
                     "gui.goggles.affix_augmentor.rejection.at_cap",
                     AffixTemplateDisplay.formatLevel(rejected.maxLevel())).component();
             case DENIED_BY_RULE -> CEILang.translate("gui.goggles.affix_augmentor.rejection.denied_by_rule").component();
+            case ZERO_COST -> CEILang.translate("gui.goggles.affix_augmentor.rejection.zero_cost").component();
         };
     }
 
@@ -595,11 +598,17 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
             return affix.isBound() ? Optional.of(affix) : Optional.empty();
         }
 
-        private boolean matchesInput(ItemStack stack, DynamicHolder<Affix> affix) {
-            var instance = AffixHelper.getAffixes(stack).get(affix);
-            return instance != null
-                    && instance.isValid()
-                    && Math.abs(instance.level() - fromLevel) <= AffixOperationCosts.EPSILON;
+        private boolean matchesInput(ItemStack stack) {
+            return findAffix(stack).map(instance -> instance.isValid()
+                    && Math.abs(instance.level() - fromLevel) <= AffixOperationCosts.EPSILON)
+                    .orElse(false);
+        }
+
+        private Optional<AffixInstance> findAffix(ItemStack stack) {
+            return AffixHelper.getAffixes(stack).entrySet().stream()
+                    .filter(entry -> entry.getKey().getId().equals(affixId))
+                    .map(Map.Entry::getValue)
+                    .findFirst();
         }
     }
 }

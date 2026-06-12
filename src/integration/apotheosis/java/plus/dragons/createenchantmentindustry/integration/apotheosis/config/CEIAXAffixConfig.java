@@ -106,7 +106,7 @@ public class CEIAXAffixConfig extends ConfigBase {
             "abilityAffixTypeCostMultiplier",
             Comments.abilityAffixTypeCostMultiplier);
 
-    public final ConfigFloat affixAugmentorCostMultiplier = f(1.0f, 0.0f,
+    public final ConfigFloat affixAugmentorCostMultiplier = f(0.55f, 0.0f,
             "affixAugmentorCostMultiplier",
             Comments.affixAugmentorCostMultiplier);
     public final ConfigFloat affixAugmentorMaxLevel = f(1.0f, 0.01f,
