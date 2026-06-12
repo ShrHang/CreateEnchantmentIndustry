@@ -6,7 +6,7 @@
 * Added more customizable options of Blaze Forger & Enchanter.
 * Improved Arm Interaction for Blaze Enchanter and Blaze Forger.
 * Improved goggle tooltips of Blaze Forger & Enchanter.
-* Added Goggle tooltip for Gem Cutter.
+* Added Goggle tooltip for Gem Cutter & Affix Augmentor.
 
 If you are **modpack developer**:
 

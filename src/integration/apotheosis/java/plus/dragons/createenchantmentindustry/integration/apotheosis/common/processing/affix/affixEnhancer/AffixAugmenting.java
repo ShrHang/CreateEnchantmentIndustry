@@ -20,7 +20,9 @@ package plus.dragons.createenchantmentindustry.integration.apotheosis.common.pro
 
 import dev.shadowsoffire.apotheosis.affix.AffixHelper;
 import dev.shadowsoffire.apotheosis.affix.AffixInstance;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.world.item.ItemStack;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.AffixOperationCosts;
@@ -29,20 +31,48 @@ import plus.dragons.createenchantmentindustry.integration.apotheosis.common.proc
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
 
 public class AffixAugmenting {
+    private static final Comparator<AffixInstance> TARGET_ORDER = Comparator
+            .comparingDouble(AffixInstance::level)
+            .thenComparing(instance -> instance.affix().getId());
+
     public static Optional<Result> getResult(ItemStack stack) {
+        return analyze(stack).result();
+    }
+
+    public static Analysis analyze(ItemStack stack) {
         if (stack.isEmpty())
-            return Optional.empty();
+            return Analysis.emptyInput();
         float maxLevel = CEIAXConfig.server().affixes().affixAugmentorMaxLevel.getF();
         if (maxLevel <= AffixOperationCosts.EPSILON)
-            return Optional.empty();
-        return AffixHelper.streamAffixes(stack)
-                .filter(AffixInstance::isValid)
-                .filter(instance -> canAugment(instance, maxLevel))
-                .sorted(Comparator
-                        .comparingDouble(AffixInstance::level)
-                        .thenComparing(instance -> instance.affix().getId()))
-                .findFirst()
-                .map(instance -> createResult(instance, maxLevel));
+            return Analysis.noUpgradeableAffixes(List.of(), 0);
+
+        List<AffixInstance> affixes = AffixHelper.streamAffixes(stack)
+                .sorted(TARGET_ORDER)
+                .toList();
+        if (affixes.isEmpty())
+            return Analysis.noAffixes();
+
+        int validAffixes = 0;
+        List<RejectedAffix> rejected = new ArrayList<>();
+        for (var instance : affixes) {
+            if (instance.isValid())
+                validAffixes++;
+        }
+        Result result = null;
+        for (var instance : affixes) {
+            var reason = rejectionReason(instance, maxLevel);
+            if (reason.isPresent()) {
+                rejected.add(new RejectedAffix(instance, reason.get(), maxLevel));
+                continue;
+            }
+            if (result == null)
+                result = createResult(instance, maxLevel);
+        }
+        if (validAffixes == 0)
+            return Analysis.noAffixes(List.copyOf(rejected));
+        if (result == null)
+            return Analysis.noUpgradeableAffixes(List.copyOf(rejected), validAffixes);
+        return Analysis.ready(result, List.copyOf(rejected), validAffixes);
     }
 
     public static boolean canAugment(ItemStack stack) {
@@ -56,10 +86,16 @@ public class AffixAugmenting {
         return output;
     }
 
-    private static boolean canAugment(AffixInstance instance, float maxLevel) {
-        return !instance.isLevelIndependent()
-                && instance.level() < maxLevel - AffixOperationCosts.EPSILON
-                && !AffixComposingRules.INSTANCE.deniesAugmenting(instance);
+    private static Optional<RejectionReason> rejectionReason(AffixInstance instance, float maxLevel) {
+        if (!instance.isValid())
+            return Optional.of(RejectionReason.INVALID);
+        if (instance.isLevelIndependent())
+            return Optional.of(RejectionReason.LEVEL_INDEPENDENT);
+        if (instance.level() >= maxLevel - AffixOperationCosts.EPSILON)
+            return Optional.of(RejectionReason.AT_AUGMENTOR_CAP);
+        if (AffixComposingRules.INSTANCE.deniesAugmenting(instance))
+            return Optional.of(RejectionReason.DENIED_BY_RULE);
+        return Optional.empty();
     }
 
     private static Result createResult(AffixInstance instance, float maxLevel) {
@@ -70,4 +106,46 @@ public class AffixAugmenting {
     }
 
     public record Result(AffixInstance target, float currentLevel, float resultLevel, int cost) {}
+
+    public record Analysis(
+            Status status,
+            Optional<Result> result,
+            List<RejectedAffix> rejectedAffixes,
+            int validAffixCount) {
+        private static Analysis emptyInput() {
+            return new Analysis(Status.EMPTY_INPUT, Optional.empty(), List.of(), 0);
+        }
+
+        private static Analysis noAffixes() {
+            return noAffixes(List.of());
+        }
+
+        private static Analysis noAffixes(List<RejectedAffix> rejected) {
+            return new Analysis(Status.NO_AFFIXES, Optional.empty(), rejected, 0);
+        }
+
+        private static Analysis noUpgradeableAffixes(List<RejectedAffix> rejected, int validAffixCount) {
+            return new Analysis(Status.NO_UPGRADEABLE_AFFIXES, Optional.empty(), rejected, validAffixCount);
+        }
+
+        private static Analysis ready(Result result, List<RejectedAffix> rejected, int validAffixCount) {
+            return new Analysis(Status.READY, Optional.of(result), rejected, validAffixCount);
+        }
+    }
+
+    public record RejectedAffix(AffixInstance instance, RejectionReason reason, float maxLevel) {}
+
+    public enum Status {
+        EMPTY_INPUT,
+        NO_AFFIXES,
+        NO_UPGRADEABLE_AFFIXES,
+        READY
+    }
+
+    public enum RejectionReason {
+        INVALID,
+        LEVEL_INDEPENDENT,
+        AT_AUGMENTOR_CAP,
+        DENIED_BY_RULE
+    }
 }

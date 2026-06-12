@@ -21,17 +21,22 @@ package plus.dragons.createenchantmentindustry.integration.apotheosis.common.pro
 import static com.simibubi.create.content.kinetics.belt.behaviour.BeltProcessingBehaviour.ProcessingResult.HOLD;
 import static com.simibubi.create.content.kinetics.belt.behaviour.BeltProcessingBehaviour.ProcessingResult.PASS;
 
+import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.belt.behaviour.BeltProcessingBehaviour;
 import com.simibubi.create.content.kinetics.belt.behaviour.TransportedItemStackHandlerBehaviour;
 import com.simibubi.create.content.kinetics.belt.transport.TransportedItemStack;
+import com.simibubi.create.content.logistics.depot.DepotBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import java.util.List;
 import java.util.Optional;
+import net.createmod.catnip.lang.LangBuilder;
 import net.createmod.catnip.math.VecHelper;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -45,10 +50,13 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.kinetics.belt.lowerProcessingAppliance.LowerBeltProcessingBehaviour;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template.AffixTemplateDisplay;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
+import plus.dragons.createenchantmentindustry.util.CEILang;
 
-public class AffixAugmentorBlockEntity extends KineticBlockEntity {
+public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHaveGoggleInformation {
     public static final int UNIT_PROCESSING_TIME = 200;
+    public static final int COMPLETION_TICKS = 25;
     public int processingTicks = -1;
     public boolean powered;
     public float chargingPercentage;
@@ -134,24 +142,20 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity {
     public BeltProcessingBehaviour.ProcessingResult onItemHeld(TransportedItemStack transported, TransportedItemStackHandlerBehaviour handler) {
         Level level = this.level;
         assert level != null;
-        if (processingTicks != -1 && processingTicks != 25)
+        if (processingTicks > COMPLETION_TICKS)
             return HOLD;
-        var fluidTank = getExternalFluidTank();
-        if (fluidTank.isEmpty())
-            return HOLD;
-        var tank = fluidTank.get().getTankInventory();
-        if (!tank.getFluid().is(CEIAXFluids.APOTHEOTIC_ESSENCE))
-            return HOLD;
-
-        var resultData = AffixAugmenting.getResult(transported.stack);
-        if (resultData.isEmpty()) {
+        var context = getAugmentingContext(transported.stack);
+        if (context.status().passesInput()) {
             processingTicks = -1;
             return PASS;
         }
-
-        int cost = resultData.get().cost();
-        if (cost > tank.getCapacity() || cost > tank.getFluidAmount())
+        if (context.status() != AugmentingStatus.READY)
             return HOLD;
+
+        var resultData = context.analysis().result();
+        if (resultData.isEmpty())
+            return PASS;
+        int cost = resultData.get().cost();
 
         if (processingTicks == -1) {
             processingTicks = UNIT_PROCESSING_TIME;
@@ -172,9 +176,34 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity {
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.EVOKER_CAST_SPELL, SoundSource.BLOCKS, 0.8f, .9f + 0.2f * level.random.nextFloat());
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.AMETHYST_CLUSTER_STEP, SoundSource.BLOCKS, 0.24f, .72f + 0.2f * level.random.nextFloat());
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS, 0.32f, .35f + 0.7f * level.random.nextFloat());
-        tank.drain(cost, IFluidHandler.FluidAction.EXECUTE);
+        context.tank().get().getTankInventory().drain(cost, IFluidHandler.FluidAction.EXECUTE);
+        processingTicks = -1;
         notifyUpdate();
         return HOLD;
+    }
+
+    private AugmentingContext getAugmentingContext(ItemStack stack) {
+        var fluidTank = getExternalFluidTank();
+        var analysis = AffixAugmenting.analyze(stack);
+        if (analysis.status() == AffixAugmenting.Status.EMPTY_INPUT)
+            return AugmentingContext.withAnalysis(AugmentingStatus.EMPTY_INPUT, fluidTank, analysis);
+        if (analysis.status() == AffixAugmenting.Status.NO_AFFIXES)
+            return AugmentingContext.withAnalysis(AugmentingStatus.NO_AFFIXES, fluidTank, analysis);
+        if (analysis.status() == AffixAugmenting.Status.NO_UPGRADEABLE_AFFIXES)
+            return AugmentingContext.withAnalysis(AugmentingStatus.NO_UPGRADEABLE_AFFIXES, fluidTank, analysis);
+        if (fluidTank.isEmpty())
+            return AugmentingContext.withAnalysis(AugmentingStatus.MISSING_TANK, fluidTank, analysis);
+        var tank = fluidTank.get().getTankInventory();
+        if (tank.isEmpty())
+            return AugmentingContext.withAnalysis(AugmentingStatus.EMPTY_TANK, fluidTank, analysis);
+        if (!tank.getFluid().is(CEIAXFluids.APOTHEOTIC_ESSENCE))
+            return AugmentingContext.withAnalysis(AugmentingStatus.WRONG_FLUID, fluidTank, analysis);
+        int cost = analysis.result().map(AffixAugmenting.Result::cost).orElse(0);
+        if (cost > tank.getCapacity())
+            return AugmentingContext.withAnalysis(AugmentingStatus.TANK_TOO_SMALL, fluidTank, analysis);
+        if (cost > tank.getFluidAmount())
+            return AugmentingContext.withAnalysis(AugmentingStatus.INSUFFICIENT_ESSENCE, fluidTank, analysis);
+        return AugmentingContext.withAnalysis(AugmentingStatus.READY, fluidTank, analysis);
     }
 
     @Override
@@ -202,10 +231,215 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity {
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         processingTicks = tag.contains("ProcessingTicks") ? tag.getInt("ProcessingTicks") : -1;
+        if (processingTicks == 0)
+            processingTicks = -1;
         powered = tag.getBoolean("Powered");
+    }
+
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        CEILang.translate("gui.goggles.affix_augmentor").forGoggles(tooltip);
+        addTankTooltip(tooltip);
+        if (processingTicks > 0) {
+            int progress = Math.round((UNIT_PROCESSING_TIME - processingTicks) * 100F / UNIT_PROCESSING_TIME);
+            CEILang.translate("gui.goggles.affix_augmentor.processing", CEILang.number(progress).text("%").component())
+                    .style(ChatFormatting.GREEN)
+                    .forGoggles(tooltip);
+        } else {
+            var input = getDepotInputStack();
+            if (input.isPresent())
+                addInputTooltip(tooltip, input.get(), isPlayerSneaking);
+            else
+                CEILang.translate("gui.goggles.affix_augmentor.waiting")
+                        .style(ChatFormatting.GRAY)
+                        .forGoggles(tooltip);
+        }
+        return true;
+    }
+
+    private Optional<ItemStack> getDepotInputStack() {
+        assert level != null;
+        var be = level.getBlockEntity(worldPosition.below());
+        if (be instanceof DepotBlockEntity depot) {
+            var stack = depot.getHeldItem();
+            if (!stack.isEmpty())
+                return Optional.of(stack);
+        }
+        return Optional.empty();
+    }
+
+    private void addInputTooltip(List<Component> tooltip, ItemStack stack, boolean isPlayerSneaking) {
+        var context = getAugmentingContext(stack);
+        if (context.status() == AugmentingStatus.READY) {
+            var result = context.analysis().result().orElseThrow();
+            CEILang.translate("gui.goggles.affix_augmentor.result")
+                    .forGoggles(tooltip);
+            CEILang.builder()
+                    .add(AffixTemplateDisplay.describeEquipmentAffixUpgrade(stack, result.target().affix(), result.currentLevel(), result.resultLevel()))
+                    .style(ChatFormatting.GREEN)
+                    .forGoggles(tooltip, 1);
+            CEILang.translate("gui.goggles.affix_augmentor.cost", amount(result.cost()).component())
+                    .style(ChatFormatting.GRAY)
+                    .forGoggles(tooltip, 1);
+            addRejectedAffixesTooltip(tooltip, context.analysis(), isPlayerSneaking);
+            return;
+        }
+        if (context.status() == AugmentingStatus.INSUFFICIENT_ESSENCE) {
+            int available = context.tank()
+                    .map(tank -> tank.getTankInventory().getFluidAmount())
+                    .orElse(0);
+            int cost = context.analysis().result().map(AffixAugmenting.Result::cost).orElse(0);
+            CEILang.translate(
+                    "gui.goggles.affix_augmentor.insufficient_essence",
+                    amount(available).component(),
+                    amount(cost).component())
+                    .style(ChatFormatting.RED)
+                    .forGoggles(tooltip);
+            addRejectedAffixesTooltip(tooltip, context.analysis(), isPlayerSneaking);
+            return;
+        }
+        if (context.status() == AugmentingStatus.TANK_TOO_SMALL) {
+            int cost = context.analysis().result().map(AffixAugmenting.Result::cost).orElse(0);
+            CEILang.translate("gui.goggles.affix_augmentor.tank_too_small", amount(cost).component())
+                    .style(ChatFormatting.RED)
+                    .forGoggles(tooltip);
+            addRejectedAffixesTooltip(tooltip, context.analysis(), isPlayerSneaking);
+            return;
+        }
+        if (context.status() == AugmentingStatus.MISSING_TANK
+                || context.status() == AugmentingStatus.EMPTY_TANK
+                || context.status() == AugmentingStatus.WRONG_FLUID) {
+            addRejectedAffixesTooltip(tooltip, context.analysis(), isPlayerSneaking);
+            return;
+        }
+        switch (context.status()) {
+            case EMPTY_INPUT -> CEILang.translate("gui.goggles.affix_augmentor.waiting")
+                    .style(ChatFormatting.GRAY)
+                    .forGoggles(tooltip);
+            case NO_AFFIXES -> CEILang.translate("gui.goggles.affix_augmentor.no_affixes")
+                    .style(ChatFormatting.YELLOW)
+                    .forGoggles(tooltip);
+            case NO_UPGRADEABLE_AFFIXES -> {
+                CEILang.translate("gui.goggles.affix_augmentor.no_upgradeable_affixes")
+                        .style(ChatFormatting.YELLOW)
+                        .forGoggles(tooltip);
+                addRejectedAffixesTooltip(tooltip, context.analysis(), true);
+            }
+            default -> CEILang.translate("gui.goggles.affix_augmentor.waiting")
+                    .style(ChatFormatting.GRAY)
+                    .forGoggles(tooltip);
+        }
+    }
+
+    private void addRejectedAffixesTooltip(List<Component> tooltip, AffixAugmenting.Analysis analysis, boolean show) {
+        if (!show || analysis.rejectedAffixes().isEmpty())
+            return;
+        CEILang.translate("gui.goggles.affix_augmentor.skipped")
+                .style(ChatFormatting.GRAY)
+                .forGoggles(tooltip);
+        analysis.rejectedAffixes().stream()
+                .limit(5)
+                .forEach(rejected -> CEILang.translate(
+                        "gui.goggles.affix_augmentor.rejected",
+                        AffixTemplateDisplay.describeAffix(rejected.instance()),
+                        rejectedReason(rejected))
+                        .style(ChatFormatting.DARK_GRAY)
+                        .forGoggles(tooltip, 1));
+        int hidden = analysis.rejectedAffixes().size() - 5;
+        if (hidden > 0) {
+            CEILang.translate("gui.goggles.affix_augmentor.skipped.more", hidden)
+                    .style(ChatFormatting.DARK_GRAY)
+                    .forGoggles(tooltip, 1);
+        }
+    }
+
+    private Component rejectedReason(AffixAugmenting.RejectedAffix rejected) {
+        return switch (rejected.reason()) {
+            case INVALID -> CEILang.translate("gui.goggles.affix_augmentor.rejection.invalid").component();
+            case LEVEL_INDEPENDENT -> CEILang.translate("gui.goggles.affix_augmentor.rejection.level_independent").component();
+            case AT_AUGMENTOR_CAP -> CEILang.translate(
+                    "gui.goggles.affix_augmentor.rejection.at_cap",
+                    AffixTemplateDisplay.formatLevel(rejected.maxLevel())).component();
+            case DENIED_BY_RULE -> CEILang.translate("gui.goggles.affix_augmentor.rejection.denied_by_rule").component();
+        };
+    }
+
+    private void addTankTooltip(List<Component> tooltip) {
+        var fluidTank = getExternalFluidTank();
+        if (fluidTank.isEmpty()) {
+            CEILang.translate("gui.goggles.affix_augmentor.missing_tank")
+                    .style(ChatFormatting.RED)
+                    .forGoggles(tooltip);
+            return;
+        }
+        var tank = fluidTank.get().getTankInventory();
+        CEILang.translate("gui.goggles.affix_augmentor.tank")
+                .style(ChatFormatting.GRAY)
+                .forGoggles(tooltip);
+        if (tank.isEmpty()) {
+            CEILang.translate("gui.goggles.affix_augmentor.empty_tank")
+                    .style(ChatFormatting.YELLOW)
+                    .forGoggles(tooltip, 1);
+            return;
+        }
+        var fluid = tank.getFluid();
+        var amount = amount(tank.getFluidAmount(), tank.getCapacity());
+        CEILang.builder()
+                .add(fluid.getHoverName())
+                .text(" ")
+                .add(amount)
+                .style(fluid.is(CEIAXFluids.APOTHEOTIC_ESSENCE) ? ChatFormatting.GREEN : ChatFormatting.RED)
+                .forGoggles(tooltip, 1);
+        if (!fluid.is(CEIAXFluids.APOTHEOTIC_ESSENCE)) {
+            CEILang.translate("gui.goggles.affix_augmentor.wrong_fluid")
+                    .style(ChatFormatting.RED)
+                    .forGoggles(tooltip, 1);
+        }
+    }
+
+    private static LangBuilder amount(int amount) {
+        return CEILang.number(amount).text(" mB");
+    }
+
+    private static LangBuilder amount(int amount, int capacity) {
+        return amount(amount).text(" / ").add(amount(capacity));
     }
 
     public static boolean hasUpgradableAffix(ItemStack stack) {
         return AffixAugmenting.canAugment(stack);
+    }
+
+    private enum AugmentingStatus {
+        MISSING_TANK(false),
+        EMPTY_TANK(false),
+        WRONG_FLUID(false),
+        EMPTY_INPUT(true),
+        NO_AFFIXES(true),
+        NO_UPGRADEABLE_AFFIXES(true),
+        TANK_TOO_SMALL(false),
+        INSUFFICIENT_ESSENCE(false),
+        READY(false);
+
+        private final boolean passesInput;
+
+        AugmentingStatus(boolean passesInput) {
+            this.passesInput = passesInput;
+        }
+
+        private boolean passesInput() {
+            return passesInput;
+        }
+    }
+
+    private record AugmentingContext(
+            AugmentingStatus status,
+            Optional<FluidTankBlockEntity> tank,
+            AffixAugmenting.Analysis analysis) {
+        private static AugmentingContext withAnalysis(
+                AugmentingStatus status,
+                Optional<FluidTankBlockEntity> tank,
+                AffixAugmenting.Analysis analysis) {
+            return new AugmentingContext(status, tank, analysis);
+        }
     }
 }
