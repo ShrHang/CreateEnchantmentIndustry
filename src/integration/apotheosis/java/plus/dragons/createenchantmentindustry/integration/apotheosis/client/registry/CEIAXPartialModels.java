@@ -40,6 +40,7 @@ public class CEIAXPartialModels {
     public static final PartialModel AFFIX_AUGMENTOR_BIG_COLUMN = block("affix_augmentor/big_column");
     public static final PartialModel AFFIX_AUGMENTOR_SMALL_COLUMN = block("affix_augmentor/small_column");
     public static final PartialModel AFFIX_AUGMENTOR_NEEDLE = block("affix_augmentor/needle");
+
     public static final PartialModel BLAZE_COMPOSER_HAT = block("blaze/composer_hat");
     public static final PartialModel BLAZE_COMPOSER_HAT_SMALL = block("blaze/composer_hat_small");
 
