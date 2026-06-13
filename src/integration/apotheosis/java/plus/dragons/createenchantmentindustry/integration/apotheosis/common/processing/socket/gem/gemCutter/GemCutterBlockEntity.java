@@ -348,7 +348,7 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
             tag.putString("ActiveToPurity", activeCutting.to().name());
             tag.putInt("ActiveCost", activeCutting.cost());
         }
-        if (heldPreview != null) {
+        if (clientPacket && heldPreview != null) {
             tag.putString("HeldPreviewStatus", heldPreview.status().name());
             tag.putString("HeldPreviewFromPurity", heldPreview.from().name());
             tag.putString("HeldPreviewToPurity", heldPreview.to().name());
@@ -365,6 +365,7 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
             processingTicks = -1;
         powered = tag.getBoolean("Powered");
         activeCutting = null;
+        heldInputTicks = 0;
         if (processingTicks > 0 && tag.contains("ActiveFromPurity") && tag.contains("ActiveToPurity")) {
             Purity from = purityByName(tag.getString("ActiveFromPurity"));
             Purity to = purityByName(tag.getString("ActiveToPurity"));
@@ -376,7 +377,7 @@ public class GemCutterBlockEntity extends KineticBlockEntity implements IHaveGog
         }
         heldPreview = null;
         heldPreviewTicks = 0;
-        if (tag.contains("HeldPreviewStatus") && tag.contains("HeldPreviewFromPurity") && tag.contains("HeldPreviewToPurity")) {
+        if (clientPacket && tag.contains("HeldPreviewStatus") && tag.contains("HeldPreviewFromPurity") && tag.contains("HeldPreviewToPurity")) {
             CuttingStatus status = cuttingStatusByName(tag.getString("HeldPreviewStatus"));
             Purity from = purityByName(tag.getString("HeldPreviewFromPurity"));
             Purity to = purityByName(tag.getString("HeldPreviewToPurity"));

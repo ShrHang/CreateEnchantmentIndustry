@@ -141,7 +141,6 @@
     "create_enchantment_industry.gui.goggles.gem_cutter.empty_tank": "宝石精粹储罐为空",
     "create_enchantment_industry.gui.goggles.gem_cutter.wrong_fluid": "需要宝石精粹",
     "create_enchantment_industry.gui.goggles.gem_cutter.max_cost_tank_too_small": "储罐无法容纳最高消耗：%1$s",
-    "create_enchantment_industry.gui.goggles.gem_cutter.ready": "准备切割：%1$s -> %2$s，消耗 %3$s",
     "create_enchantment_industry.gui.goggles.gem_cutter.result": "切割结果：",
     "create_enchantment_industry.gui.goggles.gem_cutter.result_line": "%1$s：%2$s -> %3$s",
     "create_enchantment_industry.gui.goggles.gem_cutter.result_purity": "%1$s -> %2$s",

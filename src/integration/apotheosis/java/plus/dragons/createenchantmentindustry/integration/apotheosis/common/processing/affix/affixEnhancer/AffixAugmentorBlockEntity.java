@@ -66,11 +66,16 @@ import plus.dragons.createenchantmentindustry.util.CEILang;
 public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHaveGoggleInformation {
     public static final int UNIT_PROCESSING_TIME = 200;
     public static final int COMPLETION_TICKS = 25;
+    private static final int HELD_INPUT_TIMEOUT = 3;
     public int processingTicks = -1;
     public boolean powered;
     public float chargingPercentage;
     @Nullable
     private ActiveAugmenting activeAugmenting;
+    @Nullable
+    private AugmentingPreview heldPreview;
+    private int heldPreviewTicks;
+    private int heldInputTicks;
 
     public AffixAugmentorBlockEntity(BlockEntityType<?> typeIn, BlockPos pos, BlockState state) {
         super(typeIn, pos, state);
@@ -116,6 +121,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
                     }
                 }
             }
+            tickHeldInputTimeouts();
         }
         if (processingTicks >= 0) {
             if (powered) {
@@ -156,41 +162,42 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
     public BeltProcessingBehaviour.ProcessingResult onItemHeld(TransportedItemStack transported, TransportedItemStackHandlerBehaviour handler) {
         Level level = this.level;
         assert level != null;
+        var context = getAugmentingContext(transported.stack);
+        rememberHeldPreview(context);
+        if (context.status().passesInput()) {
+            cancelProcessing();
+            return PASS;
+        }
+        refreshHeldInput();
+
         if (processingTicks > COMPLETION_TICKS) {
             if (!validateTransportedInput(transported.stack))
                 return PASS;
             return HOLD;
         }
-        var context = getAugmentingContext(transported.stack);
-        if (context.status().passesInput()) {
-            cancelProcessing();
-            return PASS;
-        }
-        if (context.status() != AugmentingStatus.READY)
-            return HOLD;
-
-        var resultData = context.analysis().result();
-        if (resultData.isEmpty())
-            return PASS;
 
         if (processingTicks == -1) {
-            activeAugmenting = ActiveAugmenting.from(resultData.get());
-            processingTicks = UNIT_PROCESSING_TIME;
-            notifyUpdate();
-            return HOLD;
+            return startProcessingIfReady(context);
         }
 
         if (activeAugmenting == null) {
+            var resultData = context.analysis().result();
+            if (resultData.isEmpty()) {
+                cancelProcessing();
+                return PASS;
+            }
             activeAugmenting = ActiveAugmenting.from(resultData.get());
         }
         var active = activeAugmenting;
         var affix = active.resolveAffix();
         if (affix.isEmpty() || !active.matchesInput(transported.stack)) {
             cancelProcessing();
+            return AffixAugmenting.canAugment(transported.stack) ? startProcessingIfReady(context) : PASS;
+        }
+        if (context.status() != AugmentingStatus.READY || !canPay(context.tank(), active.cost())) {
+            cancelProcessing();
             return HOLD;
         }
-        if (!canPay(context.tank(), active.cost()))
-            return HOLD;
 
         TransportedItemStack result = transported.copy();
         result.clearFanProcessingData();
@@ -206,10 +213,60 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.AMETHYST_CLUSTER_STEP, SoundSource.BLOCKS, 0.24f, .72f + 0.2f * level.random.nextFloat());
         level.playSound(null, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS, 0.32f, .35f + 0.7f * level.random.nextFloat());
         context.tank().get().getTankInventory().drain(active.cost(), IFluidHandler.FluidAction.EXECUTE);
-        processingTicks = -1;
-        activeAugmenting = null;
+        cancelProcessing();
+        return HOLD;
+    }
+
+    private BeltProcessingBehaviour.ProcessingResult startProcessingIfReady(AugmentingContext context) {
+        if (context.status() != AugmentingStatus.READY)
+            return HOLD;
+        var result = context.analysis().result();
+        if (result.isEmpty())
+            return HOLD;
+        activeAugmenting = ActiveAugmenting.from(result.get());
+        refreshHeldInput();
+        processingTicks = UNIT_PROCESSING_TIME;
         notifyUpdate();
         return HOLD;
+    }
+
+    private void rememberHeldPreview(AugmentingContext context) {
+        var result = context.analysis().result();
+        if (result.isEmpty()) {
+            clearHeldPreview();
+            return;
+        }
+        AugmentingPreview preview = AugmentingPreview.from(context.status(), result.get());
+        boolean changed = !preview.equals(heldPreview);
+        heldPreview = preview;
+        heldPreviewTicks = HELD_INPUT_TIMEOUT;
+        refreshHeldInput();
+        if (changed)
+            notifyUpdate();
+    }
+
+    private void refreshHeldInput() {
+        heldInputTicks = HELD_INPUT_TIMEOUT;
+    }
+
+    private void tickHeldInputTimeouts() {
+        boolean update = false;
+        if (heldPreviewTicks > 0 && --heldPreviewTicks == 0 && heldPreview != null) {
+            heldPreview = null;
+            update = true;
+        }
+        if (heldInputTicks > 0)
+            heldInputTicks--;
+        if (update)
+            notifyUpdate();
+    }
+
+    private void clearHeldPreview() {
+        if (heldPreview != null || heldPreviewTicks != 0) {
+            heldPreview = null;
+            heldPreviewTicks = 0;
+            notifyUpdate();
+        }
     }
 
     private boolean validateTransportedInput(ItemStack stack) {
@@ -230,7 +287,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
             return true;
         var depot = getDepotBlockEntity();
         if (depot.isEmpty())
-            return true;
+            return heldInputTicks > 0;
         if (activeAugmenting == null)
             return getDepotInputStack(depot.get()).map(AffixAugmenting::canAugment).orElse(false);
         var affix = activeAugmenting.resolveAffix();
@@ -243,6 +300,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         if (processingTicks != -1 || activeAugmenting != null) {
             processingTicks = -1;
             activeAugmenting = null;
+            heldInputTicks = 0;
             notifyUpdate();
         }
     }
@@ -307,6 +365,14 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
             tag.putFloat("ActiveToLevel", activeAugmenting.toLevel());
             tag.putInt("ActiveCost", activeAugmenting.cost());
         }
+        if (clientPacket && heldPreview != null) {
+            tag.putString("HeldPreviewStatus", heldPreview.status().name());
+            tag.putString("HeldPreviewAffix", heldPreview.affixId().toString());
+            tag.putFloat("HeldPreviewFromLevel", heldPreview.fromLevel());
+            tag.putFloat("HeldPreviewToLevel", heldPreview.toLevel());
+            tag.putInt("HeldPreviewCost", heldPreview.cost());
+            tag.putInt("HeldPreviewTicks", heldPreviewTicks);
+        }
     }
 
     @Override
@@ -317,6 +383,7 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
             processingTicks = -1;
         powered = tag.getBoolean("Powered");
         activeAugmenting = null;
+        heldInputTicks = 0;
         if (processingTicks > 0 && tag.contains("ActiveAffix")) {
             ResourceLocation affixId = ResourceLocation.tryParse(tag.getString("ActiveAffix"));
             float fromLevel = tag.getFloat("ActiveFromLevel");
@@ -324,6 +391,21 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
             int cost = tag.getInt("ActiveCost");
             if (affixId != null && toLevel > fromLevel + AffixOperationCosts.EPSILON && cost > 0) {
                 activeAugmenting = new ActiveAugmenting(affixId, fromLevel, toLevel, cost);
+                heldInputTicks = HELD_INPUT_TIMEOUT;
+            }
+        }
+        heldPreview = null;
+        heldPreviewTicks = 0;
+        if (clientPacket && tag.contains("HeldPreviewStatus") && tag.contains("HeldPreviewAffix")) {
+            AugmentingStatus status = augmentingStatusByName(tag.getString("HeldPreviewStatus"));
+            ResourceLocation affixId = ResourceLocation.tryParse(tag.getString("HeldPreviewAffix"));
+            float fromLevel = tag.getFloat("HeldPreviewFromLevel");
+            float toLevel = tag.getFloat("HeldPreviewToLevel");
+            int cost = tag.getInt("HeldPreviewCost");
+            int ticks = tag.getInt("HeldPreviewTicks");
+            if (status != null && affixId != null && toLevel > fromLevel + AffixOperationCosts.EPSILON && cost > 0 && ticks > 0) {
+                heldPreview = new AugmentingPreview(status, affixId, fromLevel, toLevel, cost);
+                heldPreviewTicks = ticks;
             }
         }
     }
@@ -342,6 +424,8 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
             var input = getDepotInputStack();
             if (input.isPresent())
                 addInputTooltip(tooltip, input.get(), isPlayerSneaking);
+            else if (heldPreview != null)
+                addHeldPreviewTooltip(tooltip, heldPreview);
             else
                 CEILang.translate("gui.goggles.affix_augmentor.waiting")
                         .style(ChatFormatting.GRAY)
@@ -356,34 +440,20 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         CEILang.translate("gui.goggles.affix_augmentor.result")
                 .forGoggles(tooltip);
         var input = getDepotInputStack();
-        var affix = activeAugmenting.resolveAffix();
-        if (input.isPresent() && affix.isPresent()) {
-            CEILang.builder()
-                    .add(AffixTemplateDisplay.describeEquipmentAffixUpgrade(input.get(), affix.get(), activeAugmenting.fromLevel(), activeAugmenting.toLevel()))
-                    .style(ChatFormatting.GREEN)
-                    .forGoggles(tooltip, 1);
-        } else if (affix.isPresent()) {
-            CEILang.builder()
-                    .add(affix.get().get().getName(true))
-                    .text(" ")
-                    .text(AffixTemplateDisplay.formatLevel(activeAugmenting.fromLevel()))
-                    .text(" -> ")
-                    .text(AffixTemplateDisplay.formatLevel(activeAugmenting.toLevel()))
-                    .style(ChatFormatting.GREEN)
-                    .forGoggles(tooltip, 1);
-        } else {
-            CEILang.builder()
-                    .text(activeAugmenting.affixId().toString())
-                    .text(" ")
-                    .text(AffixTemplateDisplay.formatLevel(activeAugmenting.fromLevel()))
-                    .text(" -> ")
-                    .text(AffixTemplateDisplay.formatLevel(activeAugmenting.toLevel()))
-                    .style(affix.isPresent() ? ChatFormatting.GREEN : ChatFormatting.RED)
-                    .forGoggles(tooltip, 1);
-        }
+        addAugmentingLine(tooltip, input, activeAugmenting, ChatFormatting.GREEN);
         CEILang.translate("gui.goggles.affix_augmentor.cost", amount(activeAugmenting.cost()).component())
                 .style(ChatFormatting.GRAY)
                 .forGoggles(tooltip, 1);
+    }
+
+    private void addHeldPreviewTooltip(List<Component> tooltip, AugmentingPreview preview) {
+        CEILang.translate("gui.goggles.affix_augmentor.result")
+                .forGoggles(tooltip);
+        addAugmentingLine(tooltip, Optional.empty(), preview.toActiveAugmenting(), ChatFormatting.GREEN);
+        CEILang.translate("gui.goggles.affix_augmentor.cost", amount(preview.cost()).component())
+                .style(ChatFormatting.GRAY)
+                .forGoggles(tooltip, 1);
+        addStatusTooltip(tooltip, preview.status(), Optional.empty(), preview.cost(), Optional.empty());
     }
 
     private Optional<ItemStack> getDepotInputStack() {
@@ -415,32 +485,41 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         if (context.status() == AugmentingStatus.READY) {
             return;
         }
-        if (context.status() == AugmentingStatus.INSUFFICIENT_ESSENCE) {
-            int available = context.tank()
-                    .map(tank -> tank.getTankInventory().getFluidAmount())
-                    .orElse(0);
-            int cost = result.map(AffixAugmenting.Result::cost).orElse(0);
+        if (addStatusTooltip(tooltip, context.status(), context.tank(), result.map(AffixAugmenting.Result::cost).orElse(0), Optional.of(context.analysis())))
+            return;
+    }
+
+    private boolean addStatusTooltip(
+            List<Component> tooltip,
+            AugmentingStatus status,
+            Optional<FluidTankBlockEntity> tank,
+            int cost,
+            Optional<AffixAugmenting.Analysis> analysis) {
+        if (status == AugmentingStatus.INSUFFICIENT_ESSENCE) {
+            int available = tank
+                    .map(fluidTank -> fluidTank.getTankInventory().getFluidAmount())
+                    .orElseGet(() -> getExternalFluidTank()
+                            .map(fluidTank -> fluidTank.getTankInventory().getFluidAmount())
+                            .orElse(0));
             CEILang.translate(
                     "gui.goggles.affix_augmentor.insufficient_essence",
                     amount(available).component(),
                     amount(cost).component())
                     .style(ChatFormatting.RED)
                     .forGoggles(tooltip);
-            return;
+            return true;
         }
-        if (context.status() == AugmentingStatus.TANK_TOO_SMALL) {
-            int cost = result.map(AffixAugmenting.Result::cost).orElse(0);
+        if (status == AugmentingStatus.TANK_TOO_SMALL) {
             CEILang.translate("gui.goggles.affix_augmentor.tank_too_small", amount(cost).component())
                     .style(ChatFormatting.RED)
                     .forGoggles(tooltip);
-            return;
+            return true;
         }
-        if (context.status() == AugmentingStatus.MISSING_TANK
-                || context.status() == AugmentingStatus.EMPTY_TANK
-                || context.status() == AugmentingStatus.WRONG_FLUID) {
-            return;
-        }
-        switch (context.status()) {
+        if (status == AugmentingStatus.MISSING_TANK
+                || status == AugmentingStatus.EMPTY_TANK
+                || status == AugmentingStatus.WRONG_FLUID)
+            return true;
+        switch (status) {
             case EMPTY_INPUT -> CEILang.translate("gui.goggles.affix_augmentor.waiting")
                     .style(ChatFormatting.GRAY)
                     .forGoggles(tooltip);
@@ -451,12 +530,13 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
                 CEILang.translate("gui.goggles.affix_augmentor.no_upgradeable_affixes")
                         .style(ChatFormatting.YELLOW)
                         .forGoggles(tooltip);
-                addRejectedAffixesTooltip(tooltip, context.analysis(), true);
+                analysis.ifPresent(value -> addRejectedAffixesTooltip(tooltip, value, true));
             }
             default -> CEILang.translate("gui.goggles.affix_augmentor.waiting")
                     .style(ChatFormatting.GRAY)
                     .forGoggles(tooltip);
         }
+        return true;
     }
 
     private void addResultTooltip(List<Component> tooltip, ItemStack stack, AffixAugmenting.Result result, ChatFormatting style) {
@@ -469,6 +549,34 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         CEILang.translate("gui.goggles.affix_augmentor.cost", amount(result.cost()).component())
                 .style(ChatFormatting.GRAY)
                 .forGoggles(tooltip, 1);
+    }
+
+    private void addAugmentingLine(List<Component> tooltip, Optional<ItemStack> input, ActiveAugmenting active, ChatFormatting style) {
+        var affix = active.resolveAffix();
+        if (input.isPresent() && affix.isPresent()) {
+            CEILang.builder()
+                    .add(AffixTemplateDisplay.describeEquipmentAffixUpgrade(input.get(), affix.get(), active.fromLevel(), active.toLevel()))
+                    .style(style)
+                    .forGoggles(tooltip, 1);
+        } else if (affix.isPresent()) {
+            CEILang.builder()
+                    .add(affix.get().get().getName(true))
+                    .text(" ")
+                    .text(AffixTemplateDisplay.formatLevel(active.fromLevel()))
+                    .text(" -> ")
+                    .text(AffixTemplateDisplay.formatLevel(active.toLevel()))
+                    .style(style)
+                    .forGoggles(tooltip, 1);
+        } else {
+            CEILang.builder()
+                    .text(active.affixId().toString())
+                    .text(" ")
+                    .text(AffixTemplateDisplay.formatLevel(active.fromLevel()))
+                    .text(" -> ")
+                    .text(AffixTemplateDisplay.formatLevel(active.toLevel()))
+                    .style(ChatFormatting.RED)
+                    .forGoggles(tooltip, 1);
+        }
     }
 
     private void addRejectedAffixesTooltip(List<Component> tooltip, AffixAugmenting.Analysis analysis, boolean show) {
@@ -546,6 +654,15 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
         return amount(amount).text(" / ").add(amount(capacity));
     }
 
+    @Nullable
+    private static AugmentingStatus augmentingStatusByName(String name) {
+        try {
+            return AugmentingStatus.valueOf(name);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
     public static boolean hasUpgradableAffix(ItemStack stack) {
         return AffixAugmenting.canAugment(stack);
     }
@@ -609,6 +726,21 @@ public class AffixAugmentorBlockEntity extends KineticBlockEntity implements IHa
                     .filter(entry -> entry.getKey().getId().equals(affixId))
                     .map(Map.Entry::getValue)
                     .findFirst();
+        }
+    }
+
+    private record AugmentingPreview(AugmentingStatus status, ResourceLocation affixId, float fromLevel, float toLevel, int cost) {
+        private static AugmentingPreview from(AugmentingStatus status, AffixAugmenting.Result result) {
+            return new AugmentingPreview(
+                    status,
+                    result.target().affix().getId(),
+                    result.currentLevel(),
+                    result.resultLevel(),
+                    result.cost());
+        }
+
+        private ActiveAugmenting toActiveAugmenting() {
+            return new ActiveAugmenting(affixId, fromLevel, toLevel, cost);
         }
     }
 }

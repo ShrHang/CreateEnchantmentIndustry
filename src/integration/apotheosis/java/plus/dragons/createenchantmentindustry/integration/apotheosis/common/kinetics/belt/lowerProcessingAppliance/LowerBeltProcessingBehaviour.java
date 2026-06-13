@@ -28,7 +28,7 @@ import plus.dragons.createdragonsplus.util.CodeReference;
  * depots 1 blocks above them.
  */
 @CodeReference(value = BeltProcessingBehaviour.class, source = "create", license = "mit")
-public class LowerBeltProcessingBehaviour extends BeltProcessingBehaviour { // Should we move this to C:DP?
+public class LowerBeltProcessingBehaviour extends BeltProcessingBehaviour {
     public static final BehaviourType<LowerBeltProcessingBehaviour> TYPE = new BehaviourType<>("above_belt_processing");
 
     public LowerBeltProcessingBehaviour(SmartBlockEntity be) {

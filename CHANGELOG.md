@@ -1,4 +1,6 @@
-## Create: Enchantment Industry 2.5.0
+## Create: Enchantment Industry 2.5.0-preview-alpha1
+
+PLEASE NOTICE: **DO NOT** ADD IT TO YOUR NORMAL SAVE OR MODPACK! IT IS ALPHA VERSION FOR CONTENT PREVIEW! BREAKING CHANGE MAY(CERTAINLY WILL) OCCUR IN FUTURE PREVIEW AND RELEASE VERSIONS!
 
 ### Update
 * Add Blaze Composer & Affix Templates for handling apotheosis affixes.

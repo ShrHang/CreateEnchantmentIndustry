@@ -29,7 +29,7 @@ public class BlazeComposerInventory extends ItemStackHandler {
     private AffixTemplateOps.Result result = AffixTemplateOps.Result.emptyInput();
 
     public BlazeComposerInventory(BlazeComposerBlockEntity composer) {
-        super(6);
+        super(4);
         this.composer = composer;
     }
 
@@ -120,8 +120,6 @@ public class BlazeComposerInventory extends ItemStackHandler {
     }
 
     public void updateResult() {
-        stacks.set(4, ItemStack.EMPTY);
-        stacks.set(5, ItemStack.EMPTY);
         result = AffixTemplateOps.compose(
                 composer.getMode(),
                 composer.isSuper(),
@@ -130,9 +128,5 @@ public class BlazeComposerInventory extends ItemStackHandler {
                 composer.getBlockedSuperPreviewMaxPenalty(),
                 stacks.get(0),
                 stacks.get(1));
-        if (!result.valid())
-            return;
-        stacks.set(4, result.primaryOutput().copy());
-        stacks.set(5, result.secondaryOutput().copy());
     }
 }

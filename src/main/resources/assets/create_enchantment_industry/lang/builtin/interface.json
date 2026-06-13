@@ -143,7 +143,6 @@
     "create_enchantment_industry.gui.goggles.gem_cutter.empty_tank":  "Empty Crystal Essence tank",
     "create_enchantment_industry.gui.goggles.gem_cutter.wrong_fluid":  "Requires Crystal Essence",
     "create_enchantment_industry.gui.goggles.gem_cutter.max_cost_tank_too_small":  "Tank cannot hold the highest cost: %1$s",
-    "create_enchantment_industry.gui.goggles.gem_cutter.ready":  "Ready: %1$s -> %2$s, consumes %3$s",
     "create_enchantment_industry.gui.goggles.gem_cutter.result":  "Cutting Result:",
     "create_enchantment_industry.gui.goggles.gem_cutter.result_line":  "%1$s: %2$s -> %3$s",
     "create_enchantment_industry.gui.goggles.gem_cutter.result_purity":  "%1$s -> %2$s",
