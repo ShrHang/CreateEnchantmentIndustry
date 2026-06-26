@@ -29,7 +29,6 @@ import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -42,12 +41,12 @@ import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.neoforged.neoforge.fluids.FluidStack;
 import plus.dragons.createdragonsplus.util.Pairs;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.CEIEnchantmentHelper;
 import plus.dragons.createenchantmentindustry.common.registry.CEIDataMaps;
 import plus.dragons.createenchantmentindustry.common.registry.CEIEnchantments;
 import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
-import plus.dragons.createenchantmentindustry.util.CEIIntIntPair;
 
 import java.util.List;
 import java.util.Optional;
@@ -100,13 +99,15 @@ public class EnchantedBookPrintingRecipeJEI implements PrintingRecipeJEI {
     }
 
     private int getCost(Holder.Reference<Enchantment> enchantment, int level) {
-        Optional<CEIIntIntPair> optional = Optional.empty();
         var customCost = enchantment.getData(CEIDataMaps.PRINTING_ENCHANTED_BOOK_COST);
-        if (customCost != null) optional = customCost.stream().filter(pair -> pair.level() == level).findFirst();
-        return optional
-                .map(CEIIntIntPair::value)
-                .orElseGet(() -> (int) (CEIEnchantmentHelper.getEnchantmentCost(enchantment, level)
-                        * CEIConfig.fluids().printingEnchantedBookCostMultiplier.get()));
+        if (customCost != null) {
+            for (var pair : customCost) {
+                if (pair.level() == level)
+                    return pair.value();
+            }
+        }
+        return (int) (CEIEnchantmentHelper.getEnchantmentCost(enchantment, level)
+                * CEIConfig.fluids().printingEnchantedBookCostMultiplier.get());
     }
 
     private void addAllLevels(IRecipeSlotBuilder slot) {
@@ -132,9 +133,6 @@ public class EnchantedBookPrintingRecipeJEI implements PrintingRecipeJEI {
         resolveEnchantment().ifPresent(enchantment -> {
             for (int level = enchantment.value().getMinLevel(); level <= CEIEnchantmentHelper.maxLevel(enchantment); level++) {
                 int cost = getCost(enchantment, level);
-                if (cost <= 0)
-                    continue;
-
                 slot.addFluidStack(CEIFluids.EXPERIENCE.get(), cost);
                 CEIDataMaps.getSourceFluidEntries(CEIDataMaps.FLUID_UNIT_EXPERIENCE)
                         .forEach(Pairs.accept((fluid, unit) -> slot.addFluidStack(fluid, (long) unit * cost)));
@@ -158,37 +156,24 @@ public class EnchantedBookPrintingRecipeJEI implements PrintingRecipeJEI {
     }
 
     @Override
-    public void onDisplayedIngredientsUpdate(IRecipeSlotDrawable baseSlot, IRecipeSlotDrawable templateSlot,
-                                             IRecipeSlotDrawable fluidSlot, IRecipeSlotDrawable outputSlot,
-                                             IFocusGroup focuses) {
+    public void onDisplayedIngredientsUpdate(IRecipeSlotDrawable baseSlot, IRecipeSlotDrawable templateSlot, IRecipeSlotDrawable fluidSlot, IRecipeSlotDrawable outputSlot, IFocusGroup focuses) {
         resolveEnchantment().ifPresent(enchantment -> {
             boolean hasOutputFocus = focuses.getFocuses(RecipeIngredientRole.OUTPUT).findAny().isPresent();
-            ItemStack displayed = (hasOutputFocus ? outputSlot : templateSlot)
-                    .getDisplayedItemStack()
-                    .orElse(ItemStack.EMPTY);
+            ItemStack displayed = (hasOutputFocus ? outputSlot : templateSlot).getDisplayedItemStack().orElse(ItemStack.EMPTY);
 
             int level = EnchantmentHelper.getEnchantmentsForCrafting(displayed).getLevel(enchantment);
-            if (level <= 0)
-                level = enchantment.value().getMinLevel();
+            if (level <= 0) level = enchantment.value().getMinLevel();
 
             var stack = createEnchantmentBook(enchantment, level);
-            if (hasOutputFocus)
-                templateSlot.createDisplayOverrides().addItemStack(stack);
-            else
-                outputSlot.createDisplayOverrides().addItemStack(stack);
+            if (hasOutputFocus) templateSlot.createDisplayOverrides().addItemStack(stack);
+            else outputSlot.createDisplayOverrides().addItemStack(stack);
 
             int cost = getCost(enchantment, level);
-            if (cost <= 0) return;
-            var displayedFluid = fluidSlot.getDisplayedIngredient(NeoForgeTypes.FLUID_STACK).orElse(FluidStack.EMPTY);
-            var fluid = displayedFluid.isEmpty() ? CEIFluids.EXPERIENCE.get() : displayedFluid.getFluid();
-            if (fluid != CEIFluids.EXPERIENCE.get()) {
-                var unit = BuiltInRegistries.FLUID.wrapAsHolder(fluid).getData(CEIDataMaps.FLUID_UNIT_EXPERIENCE);
-                if (unit != null) {
-                    fluidSlot.createDisplayOverrides().addIngredient(NeoForgeTypes.FLUID_STACK, new FluidStack(fluid, Math.toIntExact((long) unit * cost)));
-                    return;
-                }
-            }
-            fluidSlot.createDisplayOverrides().addIngredient(NeoForgeTypes.FLUID_STACK, new FluidStack(CEIFluids.EXPERIENCE.get(), cost));
+            var displayedFluid = fluidSlot.getDisplayedIngredient(NeoForgeTypes.FLUID_STACK)
+                    .orElse(new FluidStack(CEIFluids.EXPERIENCE.get(), cost));
+
+            fluidSlot.createDisplayOverrides().addIngredient(NeoForgeTypes.FLUID_STACK,
+                    displayedFluid.copyWithAmount(ExperienceHelper.getFluidFromExperience(displayedFluid, cost)));
         });
     }
 }
