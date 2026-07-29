@@ -33,9 +33,9 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.level.Level;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
+import plus.dragons.createenchantmentindustry.common.processing.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.CEIEnchantmentHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.EnchantingTemplateItem;
-import plus.dragons.createenchantmentindustry.common.processing.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.registry.CEIEnchantments;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
 

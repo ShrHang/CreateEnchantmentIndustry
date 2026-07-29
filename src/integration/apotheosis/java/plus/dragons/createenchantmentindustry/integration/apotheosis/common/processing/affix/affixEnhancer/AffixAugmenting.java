@@ -18,9 +18,9 @@
 
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.affixEnhancer;
 
+import dev.shadowsoffire.apotheosis.affix.Affix;
 import dev.shadowsoffire.apotheosis.affix.AffixHelper;
 import dev.shadowsoffire.apotheosis.affix.AffixInstance;
-import dev.shadowsoffire.apotheosis.affix.Affix;
 import dev.shadowsoffire.placebo.reload.DynamicHolder;
 import java.util.ArrayList;
 import java.util.Comparator;
