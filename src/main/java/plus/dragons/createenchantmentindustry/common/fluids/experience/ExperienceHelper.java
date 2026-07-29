@@ -50,7 +50,7 @@ public class ExperienceHelper {
         if (level >= 31)
             return (9 * level * level - 325 * level) / 2 + 2220;
         if (level >= 16)
-            return (5 * level * level - 91 * level) / 2 + 360;
+            return (5 * level * level - 81 * level) / 2 + 360;
         return level * level + 6 * level;
     }
 
