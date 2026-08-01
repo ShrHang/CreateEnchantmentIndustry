@@ -47,7 +47,7 @@ public class CEIAJeiRuntime {
         registration.addRecipes(InfusingCategory.TYPE, recipeManager
                 .getAllRecipesFor(Ench.RecipeTypes.INFUSION)
                 .stream()
-                .map(InfusingRecipe::convertInfusionRecipe)
+                .map(InfusingRecipe::createDisplayRecipe)
                 .collect(Collectors.toList()));
     }
 

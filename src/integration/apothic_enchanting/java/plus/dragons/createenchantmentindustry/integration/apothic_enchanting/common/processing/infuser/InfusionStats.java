@@ -24,17 +24,21 @@ import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.util.CEIALang;
 
 public record InfusionStats(float eterna, float quanta, float arcana) implements IHaveGoggleInformation {
 
-    public static InfusionStats EMPTY = new InfusionStats(0f, 15f, 0f);
+    private static final Logger LOGGER = LoggerFactory.getLogger(InfusionStats.class);
+    public static final InfusionStats EMPTY = new InfusionStats(0f, 15f, 0f);
 
     public static Codec<InfusionStats> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.floatRange(0, 100).fieldOf("eterna").forGetter(InfusionStats::eterna),
@@ -47,15 +51,21 @@ public record InfusionStats(float eterna, float quanta, float arcana) implements
             ByteBufCodecs.FLOAT, InfusionStats::arcana,
             InfusionStats::new);
     public static InfusionStats parse(HolderLookup.Provider lookupProvider, Tag tag) {
-        return CODEC.parse(lookupProvider.createSerializationContext(NbtOps.INSTANCE), tag).result().get();
+        if (tag == null)
+            return EMPTY;
+        return CODEC.parse(lookupProvider.createSerializationContext(NbtOps.INSTANCE), tag)
+                .resultOrPartial(error -> LOGGER.warn("Failed to read infuser stats: {}", error))
+                .orElse(EMPTY);
     }
 
     public Tag tag(HolderLookup.Provider lookupProvider) {
-        return CODEC.encodeStart(lookupProvider.createSerializationContext(NbtOps.INSTANCE), this).getOrThrow();
+        return CODEC.encodeStart(lookupProvider.createSerializationContext(NbtOps.INSTANCE), this)
+                .resultOrPartial(error -> LOGGER.warn("Failed to write infuser stats: {}", error))
+                .orElseGet(CompoundTag::new);
     }
 
-    public boolean qualifid(InfusionStats input) {
-        return input.eterna >= this.eterna && input.eterna >= this.quanta && input.arcana >= this.arcana;
+    public boolean qualified(InfusionStats input) {
+        return input.eterna() >= eterna && input.quanta() >= quanta && input.arcana() >= arcana;
     }
 
     @Override

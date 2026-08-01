@@ -29,6 +29,7 @@ import com.simibubi.create.foundation.recipe.RecipeFinder;
 import dev.shadowsoffire.apothic_enchanting.table.EnchantmentTableStats;
 import dev.shadowsoffire.apothic_enchanting.table.infusion.InfusionRecipe;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import net.createmod.catnip.math.VecHelper;
@@ -220,9 +221,9 @@ public class InfuserBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     private static void collectRecipeCache(Level level) {
         if (CACHED_RECIPES.isEmpty()) {
             CACHED_RECIPES.addAll(RecipeFinder.get(null, level, r -> r.value().getType() == CEIARecipes.INFUSING.getType()));
-            RecipeFinder.get(null, level, InfuserBlockEntity::matchStaticFilters).forEach(r -> {
-                CACHED_RECIPES.add(InfusingRecipe.convertInfusionRecipe(r));
-            });
+            List<RecipeHolder<? extends Recipe<?>>> apothicRecipes = new ArrayList<>(RecipeFinder.get(null, level, InfuserBlockEntity::matchStaticFilters));
+            apothicRecipes.sort(Comparator.comparingDouble((RecipeHolder<? extends Recipe<?>> holder) -> ((InfusionRecipe) holder.value()).getRequirements().eterna()).reversed());
+            CACHED_RECIPES.addAll(apothicRecipes);
         }
     }
 
@@ -318,10 +319,6 @@ public class InfuserBlockEntity extends SmartBlockEntity implements IHaveGoggleI
 
     public static Boolean canBeInfused(ItemStack stack, Level level) {
         collectRecipeCache(level);
-        return CACHED_RECIPES.stream().anyMatch(holder -> {
-            if (holder.value().getIngredients().isEmpty())
-                return false;
-            return holder.value().getIngredients().getFirst().test(stack);
-        });
+        return CACHED_RECIPES.stream().anyMatch(holder -> InfusingRecipe.canProcessInput(holder.value(), stack));
     }
 }
