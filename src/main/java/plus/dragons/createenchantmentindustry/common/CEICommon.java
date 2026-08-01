@@ -34,6 +34,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import plus.dragons.createdragonsplus.common.CDPRegistrate;
+import plus.dragons.createenchantmentindustry.common.fluids.printer.behaviour.CEIPrintingBehaviours;
 import plus.dragons.createenchantmentindustry.common.processing.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.registry.*;
 import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
@@ -60,6 +61,7 @@ public class CEICommon {
         CEIStats.register(modBus);
         CEIMountedStorageTypes.register(modBus);
         CEIItemAttributes.register(modBus);
+        CEIPrintingBehaviours.register(modBus);
         modBus.register(this);
         modBus.register(new CEIConfig(modContainer));
         NeoForge.EVENT_BUS.addListener(CEICommon::serverStarted);
