@@ -39,36 +39,24 @@ public class ConnectivityHandlerMixin {
     private static <T extends BlockEntity & IMultiBlockEntityContainer> void splitMulti$dropExperienceFluidSingle(T be, @Coerce Object cache, boolean tryReconnect, CallbackInfo ci) {
         if (!(be.getLevel() instanceof ServerLevel level && be.isRemoved()))
             return;
-        if (!ExperienceFluidDropContext.shouldDropExperienceFluid(level))
-            return;
         if (!(be instanceof IMultiBlockEntityContainer.Fluid fluidContainer))
             return;
         if (!fluidContainer.hasTank() || fluidContainer.getTank(0) instanceof CreativeFluidTankBlockEntity.CreativeSmartFluidTank)
             return;
         var dropped = fluidContainer.getFluid(0);
         int experience = ExperienceHelper.getExperienceFromFluid(dropped);
-        if (experience > 0) {
-            var state = be.getBlockState();
-            var pos = be.getBlockPos();
-            state.getBlock().popExperience(level, pos, experience);
-        }
+        ExperienceFluidDropContext.dropExperience(level, be.getBlockState(), be.getBlockPos(), experience);
     }
 
     @Inject(method = "splitMultiAndInvalidate", at = @At("TAIL"))
     private static <T extends BlockEntity & IMultiBlockEntityContainer> void splitMulti$dropExperienceFluidMulti(T be, @Coerce Object cache, boolean tryReconnect, CallbackInfo ci, @Local FluidStack dropped) {
         if (!(be.getLevel() instanceof ServerLevel level))
             return;
-        if (!ExperienceFluidDropContext.shouldDropExperienceFluid(level))
-            return;
         if (!(be instanceof IMultiBlockEntityContainer.Fluid fluidContainer))
             return;
         if (!fluidContainer.hasTank() || fluidContainer.getTank(0) instanceof CreativeFluidTankBlockEntity.CreativeSmartFluidTank)
             return;
         int experience = ExperienceHelper.getExperienceFromFluid(dropped);
-        if (experience > 0) {
-            var state = be.getBlockState();
-            var pos = be.getBlockPos();
-            state.getBlock().popExperience(level, pos, experience);
-        }
+        ExperienceFluidDropContext.dropExperience(level, be.getBlockState(), be.getBlockPos(), experience);
     }
 }
