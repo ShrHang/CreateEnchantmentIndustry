@@ -65,9 +65,11 @@ public class EnchantingBehaviour {
         if (CEIConfig.enchantments().blazeEnchanterBlockedLightningCurseCount.get() <= 0)
             return new ArrayList<>(0);
         var possible = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT)
-                .getTag(EnchantmentTags.CURSE)
+                .getTag(CEIEnchantments.MOD_TAGS.penaltyCurses)
                 .stream()
                 .flatMap(HolderSet::stream)
+                .filter(enchantment -> enchantment.is(EnchantmentTags.CURSE))
+                .filter(enchantment -> !enchantment.is(CEIEnchantments.MOD_TAGS.penaltyCursesDeny))
                 .filter(enchantment -> stack.is(Items.BOOK) || stack.supportsEnchantment(enchantment));
         return CEIEnchantmentHelper.getAvailablePenaltyCurseResults(
                 possible,
