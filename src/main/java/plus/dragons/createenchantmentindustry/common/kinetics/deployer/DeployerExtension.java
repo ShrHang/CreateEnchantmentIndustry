@@ -68,7 +68,7 @@ public class DeployerExtension {
         event.setCanceled(true);
     }
 
-    private static void collectExperience(DeployerFakePlayer deployer, int experience) {
+    public static void collectExperience(DeployerFakePlayer deployer, int experience) {
         if (experience <= 0)
             return;
         if (CEIConfig.kinetics().deployerMendItem.get()) {

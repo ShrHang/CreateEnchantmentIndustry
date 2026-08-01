@@ -11,6 +11,7 @@
     "DeployerHandlerMixin",
     "EnchantmentHelperMixin",
     "FillingBySpoutMixin",
+    "FishingHookMixin",
     "LightningBoltMixin",
     "PlayerMixin",
     "SmartBlockEntityMixin",
