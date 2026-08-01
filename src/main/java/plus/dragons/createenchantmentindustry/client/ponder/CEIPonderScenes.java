@@ -18,6 +18,7 @@
 
 package plus.dragons.createenchantmentindustry.client.ponder;
 
+import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 import com.simibubi.create.infrastructure.ponder.AllCreatePonderTags;
@@ -43,6 +44,9 @@ public class CEIPonderScenes {
                 .addStoryBoard("experience/advance", ExperienceScene::advance, CEIPonderTags.SUPER_EXPERIENCE_APPLIANCES)
                 .addStoryBoard("experience/prepare_for_super_enchant", ExperienceScene::prepare)
                 .addStoryBoard("experience/beacon_base", ExperienceScene::beaconBase);
+
+        HELPER.forComponents(AllBlocks.EXPERIENCE_BLOCK, CEIBlocks.SUPER_EXPERIENCE_BLOCK)
+                .addStoryBoard("experience/prepare_for_super_enchant", ExperienceScene::prepare, CEIPonderTags.SUPER_EXPERIENCE_APPLIANCES);
 
         HELPER.forComponents(CEIBlocks.EXPERIENCE_HATCH)
                 .addStoryBoard("experience_hatch", MiscScene::experienceHatch, CEIPonderTags.EXPERIENCE_APPLIANCES);
