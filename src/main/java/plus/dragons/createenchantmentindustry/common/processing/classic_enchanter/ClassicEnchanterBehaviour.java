@@ -67,27 +67,27 @@ public class ClassicEnchanterBehaviour extends FilteringBehaviour implements IHa
     public ItemStack getResult(ItemStack stack) {
         var result = stack.copy();
         var availableEnchantment = filterAvailableEnchantment(stack);
-        var apply = WeightedRandom.getRandomItem(enchanter.getLevel().random, availableEnchantment.stream().map(entry -> new EnchantmentInstance(entry.getKey(), entry.getIntValue())).toList()).get();
-        var applyLevel = apply.level;
+        var apply = WeightedRandom.getRandomItem(
+                enchanter.getLevel().random,
+                availableEnchantment.stream()
+                        .map(entry -> new EnchantmentInstance(entry.getKey(), entry.getIntValue()))
+                        .toList());
+        if (apply.isEmpty())
+            return stack;
+        var enchantment = apply.get();
+        var applyLevel = getProposedLevel(stack, enchantment.enchantment, enchantment.level);
         if (enchanter.special) {
-            var stackEnchantment = EnchantmentHelper.getEnchantmentsForCrafting(stack);
-            var level = stackEnchantment.getLevel(apply.enchantment);
-            if (applyLevel == level) {
-                applyLevel += 1;
-                if (applyLevel > CEIEnchantmentHelper.maxLevel(apply.enchantment) + EnchantmentProcessingRules.blazeEnchanterLevelExtension(apply.enchantment))
-                    applyLevel -= 1;
-            }
             if (enchanter.cursed) {
                 if (enchanter.getLevel().random.nextFloat() < CEIConfig.processing().classicBlazeEnchanterSuperEnchantingCurseLevelDroppingRate.get()) {
-                    applyLevel = Math.max(1, apply.level - 1);
+                    applyLevel = Math.max(1, enchantment.level - 1);
                 }
             }
         }
         var removedEnchantments = new ItemEnchantments.Mutable(stack.getOrDefault(EnchantmentHelper.getComponentType(stack), ItemEnchantments.EMPTY));
-        removedEnchantments.set(apply.enchantment, 0);
+        removedEnchantments.set(enchantment.enchantment, 0);
         EnchantmentHelper.setEnchantments(result, removedEnchantments.toImmutable());
-        result.enchant(apply.enchantment, applyLevel);
-        if (applyLevel > CEIEnchantmentHelper.maxLevel(apply.enchantment)) {
+        result.enchant(enchantment.enchantment, applyLevel);
+        if (applyLevel > CEIEnchantmentHelper.maxLevel(enchantment.enchantment)) {
             enchanter.advancement.trigger(CEIAdvancements.TRANSCENDENT_OVERCLOCK.builtinTrigger());
             enchanter.advancement.awardStat(CEIStats.SUPER_ENCHANT.get(), 1);
         }
@@ -104,12 +104,23 @@ public class ClassicEnchanterBehaviour extends FilteringBehaviour implements IHa
         return targetEnchantment.entrySet().stream()
                 .filter(entry -> {
                     if (!stack.supportsEnchantment(entry.getKey())) return false;
-                    int level = stackEnchantment.getLevel(entry.getKey());
-                    if ((level >= entry.getIntValue() && !enchanter.special) || (enchanter.special && level > entry.getIntValue())) return false;
+                    int currentLevel = stackEnchantment.getLevel(entry.getKey());
+                    int proposedLevel = getProposedLevel(stack, entry.getKey(), entry.getIntValue());
+                    int levelLimit = CEIEnchantmentHelper.maxLevel(entry.getKey());
+                    if (enchanter.special)
+                        levelLimit += EnchantmentProcessingRules.blazeEnchanterLevelExtension(entry.getKey());
+                    if (proposedLevel <= currentLevel || proposedLevel > levelLimit) return false;
                     var removedIdentical = stackEnchantment.keySet().stream().filter(e -> !e.value().equals(entry.getKey().value())).toList();
                     if (!EnchantmentHelper.isEnchantmentCompatible(removedIdentical, entry.getKey())) return false;
                     return true;
                 }).toList();
+    }
+
+    private int getProposedLevel(ItemStack stack, Holder<Enchantment> enchantment, int templateLevel) {
+        int currentLevel = EnchantmentHelper.getEnchantmentsForCrafting(stack).getLevel(enchantment);
+        if (enchanter.special && currentLevel == templateLevel)
+            return currentLevel + 1;
+        return templateLevel;
     }
 
     @Override

@@ -67,9 +67,6 @@ public class ClassicBlazeEnchanterArmInteractionPoint extends ArmInteractionPoin
         if (!CEIConfig.features().classicBlazeEnchanter.get())
             return ItemStack.EMPTY;
         if (level.getBlockEntity(pos) instanceof ClassicBlazeEnchanterBlockEntity enchanter) {
-            var ifExtract = enchanter.extractItem(false, true);
-            if (ifExtract.isEmpty() || enchanter.enchanter.canProcess(ifExtract))
-                return ItemStack.EMPTY;
             return enchanter.extractItem(false, simulate);
         }
         return ItemStack.EMPTY;
