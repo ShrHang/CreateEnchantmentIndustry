@@ -35,7 +35,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BannerPattern;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import net.neoforged.neoforge.fluids.FluidStack;
-import plus.dragons.createdragonsplus.common.fluids.dye.DyeFluidType;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.fluids.printer.PrinterBlockEntity;
 import plus.dragons.createenchantmentindustry.common.registry.CEIDataMaps;
@@ -78,16 +77,21 @@ public class BannerPatternPrintingBehavior implements PrintingBehaviour {
 
     @Override
     public int getRequiredFluidAmount(Level level, ItemStack stack, FluidStack fluidStack) {
+        if (CEIDyeFluids.color(fluidStack).isEmpty())
+            return 0;
         var cost = fluidStack.getFluidHolder().getData(CEIDataMaps.PRINTING_BANNER_PATTERN_INGREDIENT);
         return cost == null ? 0 : cost;
     }
 
     @Override
     public ItemStack getResult(Level level, ItemStack stack, FluidStack fluidStack) {
+        var color = CEIDyeFluids.color(fluidStack);
+        if (color.isEmpty())
+            return stack;
         BannerPatternLayers layers = stack.get(DataComponents.BANNER_PATTERNS);
         ArrayList<BannerPatternLayers.Layer> l = new ArrayList<>();
         l.addAll(layers.layers());
-        l.add(new BannerPatternLayers.Layer(pattern, CEIDyeFluids.color((DyeFluidType) fluidStack.getFluidType())));
+        l.add(new BannerPatternLayers.Layer(pattern, color.get()));
         var result = stack.copy();
         result.set(DataComponents.BANNER_PATTERNS, new BannerPatternLayers(l));
         return result;
@@ -107,10 +111,11 @@ public class BannerPatternPrintingBehavior implements PrintingBehaviour {
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         CEILang.translate("gui.goggles.printing.banner_pattern").forGoggles(tooltip);
-        var amount = tank.getPrimaryHandler().getFluid().getFluidHolder().getData(CEIDataMaps.PRINTING_BANNER_PATTERN_INGREDIENT);
-        if (amount != null) {
-            var color = CEIDyeFluids.color((DyeFluidType) tank.getPrimaryHandler().getFluid().getFluidType());
-            var p = Component.literal("→ ").append(Component.translatable(pattern.value().translationKey() + "." + color.getName())).withStyle(ChatFormatting.GOLD);
+        var fluid = tank.getPrimaryHandler().getFluid();
+        var amount = fluid.getFluidHolder().getData(CEIDataMaps.PRINTING_BANNER_PATTERN_INGREDIENT);
+        var color = CEIDyeFluids.color(fluid);
+        if (amount != null && color.isPresent()) {
+            var p = Component.literal("→ ").append(Component.translatable(pattern.value().translationKey() + "." + color.get().getName())).withStyle(ChatFormatting.GOLD);
             CEILang.builder().add(p).forGoggles(tooltip, 1);
             CEILang.translate("gui.goggles.printing.cost",
                     CEILang.number(amount)
@@ -119,7 +124,7 @@ public class BannerPatternPrintingBehavior implements PrintingBehaviour {
                                     ? ChatFormatting.GREEN
                                     : ChatFormatting.RED))
                     .forGoggles(tooltip, 1);
-        } else if (!tank.getPrimaryHandler().getFluid().isEmpty()) {
+        } else if (!fluid.isEmpty()) {
             CEILang.translate("gui.goggles.printing.incorrect_liquid").style(ChatFormatting.RED).forGoggles(tooltip);
         }
         return true;
