@@ -6,7 +6,42 @@
 * `create_enchantment_industry:blaze_enchanter/enchanting_exclusive` for enchantments that should only appear in regular Blaze Enchanter enchanting.
 * `create_enchantment_industry:blaze_enchanter/super_enchanting` for enchantments available to Super Enchanting. It includes `create_enchantment_industry:blaze_enchanter/super_enchanting_exclusive` and `minecraft:in_enchanting_table`, and excludes `create_enchantment_industry:blaze_enchanter/enchanting_exclusive`.
 * `create_enchantment_industry:blaze_enchanter/super_enchanting_exclusive` for enchantments that should only appear in Super Enchanting. The generated tag includes `minecraft:treasure` and excludes `minecraft:curse`.
+* `create_enchantment_industry:blaze_enchanter/penalty_curses` is the allow-list for curses that the Blaze Enchanter may apply when its lightning is blocked. The generated tag includes the vanilla enchanting, trading, mob-equipment, traded-equipment, and random-loot source tags.
+* `create_enchantment_industry:blaze_enchanter/penalty_curses_deny` excludes matching curses from the penalty pool after the allow-list is evaluated. It is empty by default.
 * `create_enchantment_industry:printer/deny` for enchantments that the Printer should not copy onto Enchanted Books.
+
+#### Blaze Enchanter Penalty Curses
+
+An enchantment can be selected as a blocked-lightning penalty only when all of the following are true:
+
+* It is in `create_enchantment_industry:blaze_enchanter/penalty_curses`.
+* It is also in `minecraft:curse`.
+* It is not in `create_enchantment_industry:blaze_enchanter/penalty_curses_deny`.
+* The target item supports it, unless the target is a Book.
+
+Add another obtainable curse without replacing the generated defaults in `data/create_enchantment_industry/tags/enchantment/blaze_enchanter/penalty_curses.json`:
+
+```json
+{
+  "replace": false,
+  "values": [
+    "examplemod:custom_curse"
+  ]
+}
+```
+
+Exclude an internal, unsafe, or otherwise unwanted curse in `data/create_enchantment_industry/tags/enchantment/blaze_enchanter/penalty_curses_deny.json`:
+
+```json
+{
+  "replace": false,
+  "values": [
+    "examplemod:hidden_curse"
+  ]
+}
+```
+
+Set `replace` to `true` in the allow-list only when the datapack should replace the entire generated penalty pool. The deny-list always takes precedence over the allow-list.
 
 ### Fluid
 
@@ -30,7 +65,25 @@
 * `create_enchantment_industry:fan_processing_catalysts/salvaging` for block Bulk Salvaging catalysts when Apotheosis integration is active.
 * `minecraft:mineable/pickaxe` includes Create: Enchantment Industry machinery and optional integration machinery.
 * `minecraft:beacon_base_blocks` includes Block of Super Experience.
-* `c:lightning_rods` can be used by datapacks and integrations that need to treat compatible blocks as lightning rods.
+* The `c:lightning_rods` block tag marks blocks that can receive CEI experience-charging lightning and redirect a lightning strike into an adjacent Experience Block.
+* The `c:lightning_rods` point-of-interest-type tag lets registered lightning-rod POIs attract CEI-created lightning efficiently.
+
+#### Lightning Rod Compatibility
+
+For a block-only integration, add the compatible block to `data/c/tags/block/lightning_rods.json`:
+
+```json
+{
+  "replace": false,
+  "values": [
+    "examplemod:copper_lightning_rod"
+  ]
+}
+```
+
+When CEI creates lightning, it first searches up to 128 blocks for a surface POI in the `c:lightning_rods` point-of-interest-type tag. If none is found, it falls back to the nearest loaded surface block in the `c:lightning_rods` block tag. A mod that already registers a lightning-rod POI can also add that POI type to `data/c/tags/point_of_interest_type/lightning_rods.json`; adding a POI is optional because the block-tag fallback is sufficient.
+
+When lightning strikes a tagged block, CEI checks for an Experience Block on the attachment side and converts it into a Block of Super Experience. A block state using the vanilla lightning-rod `facing` property targets the block opposite that direction; other tagged blocks target the block immediately below them.
 
 ### Sable Block (normally you won't need these)
 
@@ -119,6 +172,8 @@ Each entry maps a fluid or fluid tag to a positive integer mB cost:
 }
 ```
 
+For banner-pattern printing, a matching ingredient entry is not sufficient by itself: the fluid must also resolve to a Minecraft `DyeColor`. Vanilla dye fluids and Dye Depot's extended dye fluids are supported. An unknown custom dye variant is rejected instead of silently producing a black banner pattern.
+
 ### Custom Name Styles
 
 `create_enchantment_industry:printing/custom_name/style` is a fluid data map that controls the text style applied by custom-name printing.
@@ -139,7 +194,7 @@ Example:
 }
 ```
 
-The value uses Minecraft's `Style` codec. The generated entries provide text colors for common dye fluid tags.
+The value uses Minecraft's `Style` codec. The generated entries provide text colors for the 16 vanilla common dye fluid tags. An explicit data-map entry takes precedence. If no entry exists and the fluid is a Create: Dragons Plus dye fluid, the Printer falls back to the dye variant's RGB color; this also covers Dye Depot's extended colors.
 
 ### Enchanted Book Printing Costs
 
@@ -227,6 +282,44 @@ Blaze Forger cost is based on each affected enchantment's anvil cost and level, 
 * the matching per-enchantment rule multipliers
 
 The generated rule data map sets Mending and Infinity level extension to `0` for both Blaze Enchanter and Blaze Forger.
+
+## Java Integration API
+
+### Printer Behaviour Providers
+
+Addons can register custom Printer template behaviours through NeoForge's standard registry lifecycle:
+
+```java
+private static final DeferredRegister<PrintingBehaviourProvider> PRINTING_BEHAVIOURS =
+        DeferredRegister.create(CEIRegistries.PRINTING_BEHAVIOUR_PROVIDER, MOD_ID);
+
+public static final DeferredHolder<PrintingBehaviourProvider, PrintingBehaviourProvider> WAX_SEAL =
+        PRINTING_BEHAVIOURS.register("wax_seal", () ->
+                new PrintingBehaviourProvider(MyPrintingBehaviour::create));
+
+public ExampleMod(IEventBus modBus) {
+    PRINTING_BEHAVIOURS.register(modBus);
+}
+```
+
+Every provider receives the registering mod's namespace and must have a unique id. NeoForge handles duplicate ids, the registration window, and registry freezing. The registry is not synchronized over the network because its entries contain Java callbacks.
+
+The one-argument `PrintingBehaviourProvider` constructor uses `PrintingBehaviourProvider.DEFAULT_PRIORITY`. Providers with a higher priority are queried first, while equal priorities retain registry order. CEI's built-in providers use `PrintingBehaviourProvider.BUILTIN_PRIORITY`, so default-priority addon providers run after built-in behaviours. An addon that intentionally needs to take precedence can specify a priority:
+
+```java
+PRINTING_BEHAVIOURS.register("wax_seal_override", () ->
+        new PrintingBehaviourProvider(
+                PrintingBehaviourProvider.BUILTIN_PRIORITY + 1,
+                MyPrintingBehaviour::create));
+```
+
+A provider must return:
+
+* `Optional.empty()` when it does not handle the supplied template, allowing lookup to continue.
+* `Optional.of(DataResult.success(behaviour))` when it accepts the template.
+* `Optional.of(DataResult.error(...))` when it recognizes but rejects the template. A present error stops lookup and can be shown to the player.
+
+Recipe-based printing is not registered as a provider and always remains the final fallback after every registered provider.
 
 ## Recipes
 

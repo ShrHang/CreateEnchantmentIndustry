@@ -180,9 +180,6 @@ public class CEIDataMaps {
                 .add(ResourceLocation.fromNamespaceAndPath("mob_grinding_utils", "fluid_xp"),
                         20, false,
                         new ModLoadedCondition("mob_grinding_utils"))
-                .add(ResourceLocation.fromNamespaceAndPath("industrialforegoing", "essence"),
-                        20, false,
-                        new ModLoadedCondition("industrialforegoing"))
                 .add(ResourceLocation.fromNamespaceAndPath("pneumaticcraft", "memory_essence"),
                         20, false,
                         new ModLoadedCondition("pneumaticcraft"))
