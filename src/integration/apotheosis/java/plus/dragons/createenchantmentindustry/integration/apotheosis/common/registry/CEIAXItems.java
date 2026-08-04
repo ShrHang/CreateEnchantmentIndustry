@@ -88,7 +88,7 @@ public class CEIAXItems {
             super(CEIACommon.ID);
             addOptional(Tags.Items.BUCKETS, CEICommon.asResource("apotheotic_essence_bucket"));
             addOptional(Tags.Items.BUCKETS, CEICommon.asResource("crystal_essence_bucket"));
-            addOptional(blazeComposerSuperActivators, ResourceLocation.fromNamespaceAndPath("apotheosis", "mythic_material"));
+            addOptional(blazeComposerSuperActivators, ResourceLocation.fromNamespaceAndPath("apotheosis", "godforged_pearl"));
         }
     }
 }

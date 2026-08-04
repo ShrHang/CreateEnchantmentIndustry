@@ -8,7 +8,7 @@
     "type": "create:mixing",
     "ingredients": [
         {
-            "item": "apotheosis:mythic_material"
+            "item": "apotheosis:godforged_pearl"
         }
     ],
     "processing_time": 8,
