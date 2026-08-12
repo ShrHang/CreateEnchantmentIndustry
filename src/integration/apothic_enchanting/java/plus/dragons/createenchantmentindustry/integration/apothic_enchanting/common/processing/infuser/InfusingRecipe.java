@@ -175,11 +175,7 @@ public class InfusingRecipe extends ProcessingRecipe<SingleRecipeInput, Infusing
             return true;
 
         ItemStack extracted = availableItems.extractItem(inputSlot, 1, false);
-        if (!recipe.matches(
-                extracted,
-                infuser.infusionStats.eterna(),
-                infuser.infusionStats.quanta(),
-                infuser.infusionStats.arcana()))
+        if (!matchesIgnoringMaxRequirements(recipe, extracted, infuser.infusionStats))
             return false;
         if (!drainInfusingIngredient(infusingIngredient, reagent))
             return false;
@@ -197,10 +193,24 @@ public class InfusingRecipe extends ProcessingRecipe<SingleRecipeInput, Infusing
     private static int findMatchingItemSlot(IItemHandler items, InfusionRecipe recipe, InfusionStats stats) {
         for (int slot = 0; slot < items.getSlots(); slot++) {
             ItemStack input = items.extractItem(slot, 1, true);
-            if (recipe.matches(input, stats.eterna(), stats.quanta(), stats.arcana()))
+            if (matchesIgnoringMaxRequirements(recipe, input, stats))
                 return slot;
         }
         return -1;
+    }
+
+    private static boolean matchesIgnoringMaxRequirements(
+            InfusionRecipe recipe, ItemStack input, InfusionStats stats) {
+        var maxRequirements = recipe.getMaxRequirements();
+        return recipe.matches(
+                input,
+                capAtMaximum(stats.eterna(), maxRequirements.eterna()),
+                capAtMaximum(stats.quanta(), maxRequirements.quanta()),
+                capAtMaximum(stats.arcana(), maxRequirements.arcana()));
+    }
+
+    private static float capAtMaximum(float value, float maximum) {
+        return maximum > -1 ? Math.min(value, maximum) : value;
     }
 
     private static FluidStack findMatchingFluid(IFluidHandler fluids, SizedFluidIngredient ingredient) {
