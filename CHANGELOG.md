@@ -1,4 +1,8 @@
-## Create: Enchantment Industry 2.5.1b
+## Create: Enchantment Industry 2.5.2
 
-### Fixed
-* Restored the Infuser's documented behavior of ignoring maximum Eterna, Quanta, and Arcana requirements while preserving dynamic infusion recipe outputs ([#475](https://github.com/DragonsPlusMinecraft/CreateEnchantmentIndustry/issues/475)).
+### Added
+* Added a complete three-part Ponder tutorial for the Blaze Composer:
+  * Normal composing demonstrates Apotheotic Essence supply, the Extract, Merge, and Apply modes, goggle previews, and the full input-to-output workflow.
+  * Super composing explains how to unlock and supply the second essence tank, which templates it accepts, how server configuration affects costs and limits, and how lightning rods or a blocked sky change the outcome.
+  * Mechanical Arm automation demonstrates automatic input handling and retrieval of both Composer outputs.
+* Added Simplified Chinese translations for all new Blaze Composer tutorial scenes.
