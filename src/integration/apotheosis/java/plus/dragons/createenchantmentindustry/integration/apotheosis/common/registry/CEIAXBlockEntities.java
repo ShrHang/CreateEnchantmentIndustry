@@ -18,7 +18,7 @@
 
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry;
 
-import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon.REGISTRATE;
+import static plus.dragons.createenchantmentindustry.common.CEICommon.REGISTRATE;
 
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import net.neoforged.bus.api.IEventBus;

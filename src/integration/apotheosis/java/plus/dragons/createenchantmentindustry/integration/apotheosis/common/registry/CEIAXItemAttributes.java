@@ -18,7 +18,7 @@
 
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry;
 
-import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon.REGISTRATE;
+import static plus.dragons.createenchantmentindustry.common.CEICommon.REGISTRATE;
 
 import com.simibubi.create.api.registry.CreateRegistries;
 import com.simibubi.create.content.logistics.item.filter.attribute.ItemAttributeType;
@@ -34,14 +34,14 @@ import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.logistics.attributes.GemPurityAttributes;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.affixEnhancer.AffixAugmentorBlockEntity;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.socket.gem.gemCutter.GemCutterBlockEntity;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAXItemAttributes {
     private static final DeferredRegister<ItemAttributeType> ITEM_ATTRIBUTES = DeferredRegister
-            .create(CreateRegistries.ITEM_ATTRIBUTE_TYPE, CEIACommon.ID);
+            .create(CreateRegistries.ITEM_ATTRIBUTE_TYPE, CEICommon.ID);
 
     public static final Holder<ItemAttributeType> CAN_BE_SALVAGED = singleton("can_be_salvaged",
             "can be Salvaged",
@@ -83,15 +83,15 @@ public class CEIAXItemAttributes {
             GemPurityAttributes.Type::new);
 
     private static Holder<ItemAttributeType> singleton(String name, String description, String invertedDescription, BiPredicate<ItemStack, Level> predicate) {
-        String descriptionKey = "create.item_attributes." + CEIACommon.ID + "." + name;
+        String descriptionKey = "create.item_attributes." + CEICommon.ID + "." + name;
         String invertedDescriptionKey = descriptionKey + ".inverted";
         REGISTRATE.addRawLang(descriptionKey, description);
         REGISTRATE.addRawLang(invertedDescriptionKey, invertedDescription);
-        return ITEM_ATTRIBUTES.register(name, () -> new SingletonItemAttribute.Type(type -> new SingletonItemAttribute(type, predicate, CEIACommon.ID + "." + name)));
+        return ITEM_ATTRIBUTES.register(name, () -> new SingletonItemAttribute.Type(type -> new SingletonItemAttribute(type, predicate, CEICommon.ID + "." + name)));
     }
 
     private static Holder<ItemAttributeType> complex(String name, String description, String invertedDescription, Supplier<ItemAttributeType> supplier) {
-        String descriptionKey = "create.item_attributes." + CEIACommon.ID + "." + name;
+        String descriptionKey = "create.item_attributes." + CEICommon.ID + "." + name;
         String invertedDescriptionKey = descriptionKey + ".inverted";
         REGISTRATE.addRawLang(descriptionKey, description);
         REGISTRATE.addRawLang(invertedDescriptionKey, invertedDescription);

@@ -25,14 +25,17 @@ import static plus.dragons.createdragonsplus.data.recipe.VanillaRecipeBuilders.s
 import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIABlocks.*;
 import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIAItems.INCOMPLETE_BRASS_BOOKSHELF;
 
+import com.simibubi.create.content.fluids.transfer.EmptyingRecipe;
 import com.simibubi.create.content.fluids.transfer.FillingRecipe;
 import com.simibubi.create.content.kinetics.deployer.DeployerApplicationRecipe;
+import com.simibubi.create.content.processing.recipe.StandardProcessingRecipe;
 import dev.shadowsoffire.apothic_enchanting.Ench;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import plus.dragons.createdragonsplus.common.registry.CDPFluids;
@@ -79,6 +82,20 @@ public class CEIARecipeProvider extends RecipeProvider {
                 .withCondition(ModIntegration.APOTHIC_ENCHANTING.condition())
                 .require(SizedFluidIngredient.of(CDPFluids.DRAGON_BREATH.get().getSource(), 250))
                 .output(new FluidStack(CEIAFluids.INFUSED_DRAGON_BREATH, 750))
+                .build(output);
+
+        new StandardProcessingRecipe.Builder<>(EmptyingRecipe::new, CEICommon.asResource("infused_dragon_breath"))
+                .withCondition(ModIntegration.APOTHIC_ENCHANTING.condition())
+                .require(Ench.Items.INFUSED_BREATH.value())
+                .output(CEIAFluids.INFUSED_DRAGON_BREATH.get(), 250)
+                .output(Items.GLASS_BOTTLE)
+                .build(output);
+
+        new StandardProcessingRecipe.Builder<>(FillingRecipe::new, CEICommon.asResource("infused_dragon_breath"))
+                .withCondition(ModIntegration.APOTHIC_ENCHANTING.condition())
+                .require(CEIAFluids.INFUSED_DRAGON_BREATH.get(), 250)
+                .require(Items.GLASS_BOTTLE)
+                .output(Ench.Items.INFUSED_BREATH.value())
                 .build(output);
 
         CreateRecipeBuilders.sequencedAssembly(BRASS_BOOKSHELF.getId())

@@ -18,12 +18,14 @@
 
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common;
 
+import net.createmod.ponder.foundation.PonderIndex;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLConstructModEvent;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
@@ -40,11 +42,12 @@ import plus.dragons.createenchantmentindustry.integration.apotheosis.common.regi
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.data.CEIAXConditionalLootTableProvider;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.data.CEIAXRecipeProvider;
+import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIAFluids;
 
 @Mod(CEICommon.ID)
 public class CEIAXCommon {
     public CEIAXCommon(IEventBus modBus, ModContainer modContainer) {
-        if (ModIntegration.APOTHEOSIS.enabled() && ModIntegration.APOTHIC_ENCHANTING.enabled()) {
+        if (ModIntegration.APOTHEOSIS.enabled()) {
             modBus.register(new Common(modBus, modContainer));
             if (FMLLoader.getDist() == Dist.CLIENT)
                 modBus.register(new Client());
@@ -63,6 +66,7 @@ public class CEIAXCommon {
         @SubscribeEvent
         public void construct(final FMLConstructModEvent event) {
             CEIAXItems.register();
+            CEIAFluids.registerItemTags();
             CEIAXDataComponents.register(modBus);
             CEIAXBlocks.register(modBus);
             CEIAXBlockEntities.register(modBus);
@@ -98,7 +102,11 @@ public class CEIAXCommon {
         @SubscribeEvent
         public void construct(final FMLConstructModEvent event) {
             CEIAXPartialModels.register();
-            CEIAXPonderPlugin.register();
+        }
+
+        @SubscribeEvent
+        public void setup(final FMLClientSetupEvent event) {
+            event.enqueueWork(() -> PonderIndex.addPlugin(new CEIAXPonderPlugin()));
         }
 
         @SubscribeEvent

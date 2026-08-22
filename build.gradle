@@ -44,17 +44,13 @@ def requestedIntegrationSourceSets = allIntegrationSourceSets.findAll { name ->
 
 def enabledIntegrationSourceSets = requestedIntegrationSourceSets.findAll { name ->
     if (name == "sable_apotheosis") {
-        return ["apothic_enchanting", "apotheosis", "sable"].every { requestedIntegrationSourceSets.contains(it) }
+        return ["apotheosis", "sable"].every { requestedIntegrationSourceSets.contains(it) }
     }
     return true
 }
 
 def hasIntegration = { name ->
     enabledIntegrationSourceSets.contains(name)
-}
-
-if (hasIntegration("apotheosis") && !hasIntegration("apothic_enchanting")) {
-    throw new org.gradle.api.GradleException("The apotheosis integration requires the apothic_enchanting integration")
 }
 
 sourceSets {
@@ -67,11 +63,7 @@ sourceSets {
                 srcDir "src/integration/${name}/resources"
             }
             compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
-            if (name == "apotheosis" && hasIntegration("apothic_enchanting")) {
-                compileClasspath += sourceSets.apothic_enchanting.output + sourceSets.apothic_enchanting.compileClasspath
-            }
             if (name == "sable_apotheosis") {
-                compileClasspath += sourceSets.apothic_enchanting.output + sourceSets.apothic_enchanting.compileClasspath
                 compileClasspath += sourceSets.apotheosis.output + sourceSets.apotheosis.compileClasspath
                 compileClasspath += sourceSets.sable.output + sourceSets.sable.compileClasspath
             }
@@ -230,9 +222,8 @@ dependencies {
     }
 
     if (hasIntegration("apotheosis")) {
-        apothic_enchantingLocalImplementation("dev.shadowsoffire:Placebo:${minecraft_version}-${placebo_version}")
-        apothic_enchantingLocalImplementation("dev.shadowsoffire:ApothicAttributes:${minecraft_version}-${apothic_attributes_version}")
-        apothic_enchantingLocalImplementation("dev.shadowsoffire:ApothicEnchanting:${minecraft_version}-${apothic_enchanting_version}")
+        apotheosisLocalImplementation("dev.shadowsoffire:Placebo:${minecraft_version}-${placebo_version}")
+        apotheosisLocalImplementation("dev.shadowsoffire:ApothicAttributes:${minecraft_version}-${apothic_attributes_version}")
         apotheosisLocalImplementation("dev.shadowsoffire:ApothicSpawners:${minecraft_version}-${apothic_spawners_version}")
         apotheosisLocalImplementation("dev.shadowsoffire:Apotheosis:${minecraft_version}-${apotheosis_version}")
         apotheosisLocalImplementation("dev.shadowsoffire:GatewaysToEternity:${minecraft_version}-${gateway_to_eternity_version}") // Apotheosis needs this, datagen

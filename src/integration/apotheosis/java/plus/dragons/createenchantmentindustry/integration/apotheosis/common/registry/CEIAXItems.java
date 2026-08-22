@@ -18,7 +18,7 @@
 
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry;
 
-import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon.REGISTRATE;
+import static plus.dragons.createenchantmentindustry.common.CEICommon.REGISTRATE;
 
 import com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem;
 import com.tterrag.registrate.util.entry.ItemEntry;
@@ -30,7 +30,6 @@ import net.neoforged.neoforge.common.Tags;
 import plus.dragons.createdragonsplus.data.tag.ItemTagRegistry;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template.AffixTemplateItem;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAXItems {
     public static final ModTags MOD_TAGS = new ModTags();
@@ -85,7 +84,7 @@ public class CEIAXItems {
         public final TagKey<Item> blazeComposerSuperActivators = tag("blaze_composer/super_activators", "Blaze Composer Super Activators");
 
         public ModTags() {
-            super(CEIACommon.ID);
+            super(CEICommon.ID);
             addOptional(Tags.Items.BUCKETS, CEICommon.asResource("apotheotic_essence_bucket"));
             addOptional(Tags.Items.BUCKETS, CEICommon.asResource("crystal_essence_bucket"));
             addOptional(blazeComposerSuperActivators, ResourceLocation.fromNamespaceAndPath("apotheosis", "godforged_pearl"));

@@ -18,15 +18,16 @@
 
 package plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry;
 
-import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIABlocks.*;
-
 import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.util.CEILang;
 
 public class CEIACreativeModeTabs {
@@ -41,17 +42,27 @@ public class CEIACreativeModeTabs {
     private static CreativeModeTab base(ResourceLocation id) {
         return CreativeModeTab.builder()
                 .title(CEILang.description("itemGroup", id).component())
-                .icon(BRASS_BOOKSHELF::asStack)
+                .icon(CEIACreativeModeTabs::icon)
                 .displayItems(CEIACreativeModeTabs::buildBaseContents)
                 .withTabsBefore(CEICommon.asResource("base"))
                 .build();
     }
 
+    private static ItemStack icon() {
+        if (ModIntegration.APOTHIC_ENCHANTING.enabled()) {
+            var brassBookshelf = BuiltInRegistries.ITEM.getOptional(CEICommon.asResource("brass_bookshelf"));
+            if (brassBookshelf.isPresent())
+                return brassBookshelf.get().getDefaultInstance();
+        }
+        if (ModIntegration.APOTHEOSIS.enabled()) {
+            var gemCutter = BuiltInRegistries.ITEM.getOptional(CEICommon.asResource("gem_cutter"));
+            if (gemCutter.isPresent())
+                return gemCutter.get().getDefaultInstance();
+        }
+        return CEIAFluids.INFUSED_DRAGON_BREATH.getBucket().get().getDefaultInstance();
+    }
+
     private static void buildBaseContents(CreativeModeTab.ItemDisplayParameters parameters, CreativeModeTab.Output output) {
-        output.accept(INFUSER);
-        output.accept(BRASS_BOOKSHELF);
-        output.accept(CREATIVE_BOOKSHELF);
-        output.accept(ENDER_WOVEN_BAG);
         output.accept(CEIAFluids.INFUSED_DRAGON_BREATH.getBucket().get());
     }
 }

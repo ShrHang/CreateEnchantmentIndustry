@@ -18,7 +18,7 @@
 
 package plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry;
 
-import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon.REGISTRATE;
+import static plus.dragons.createenchantmentindustry.common.CEICommon.REGISTRATE;
 
 import com.simibubi.create.AllTags;
 import com.tterrag.registrate.providers.RegistrateTagsProvider;
@@ -35,7 +35,6 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import plus.dragons.createdragonsplus.common.fluids.SolidRenderFluidType;
 import plus.dragons.createdragonsplus.data.tag.IntrinsicTagRegistry;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAXFluids {
     public static final ModTags MOD_TAGS = new ModTags();
@@ -92,7 +91,7 @@ public class CEIAXFluids {
         public final TagKey<Fluid> fanSalvagingCatalysts = tag("fan_processing_catalysts/salvaging", "Bulk Salvaging Catalysts");
 
         public ModTags() {
-            super(CEIACommon.ID, Registries.FLUID);
+            super(CEICommon.ID, Registries.FLUID);
         }
 
         @Override

@@ -16,29 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package plus.dragons.createenchantmentindustry.integration.sable_apotheosis.common;
+package plus.dragons.createenchantmentindustry.integration.apotheosis.data;
 
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.data.loading.DatagenModLoader;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
-import plus.dragons.createenchantmentindustry.integration.ModIntegration;
-import plus.dragons.createenchantmentindustry.integration.sable_apotheosis.common.fluids.tank.CEISAXFragileFluidTankBreakEffectHandlers;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.client.ponder.CEIAXPonderPlugin;
 
 @Mod(CEICommon.ID)
-public class CEISAXCommon {
-    public CEISAXCommon(IEventBus modBus, ModContainer modContainer) {
-        if (ModIntegration.APOTHEOSIS.enabled() && ModIntegration.SABLE.enabled()) {
-            modBus.register(new Common());
-        }
-    }
-
-    public static class Common {
-        @SubscribeEvent
-        public void commonSetup(final FMLCommonSetupEvent event) {
-            event.enqueueWork(CEISAXFragileFluidTankBreakEffectHandlers::register);
-        }
+public class CEIAXData {
+    public CEIAXData(IEventBus modBus) {
+        if (!DatagenModLoader.isRunningDataGen())
+            return;
+        CEICommon.REGISTRATE.registerPonderLocalization(CEIAXPonderPlugin::new);
     }
 }

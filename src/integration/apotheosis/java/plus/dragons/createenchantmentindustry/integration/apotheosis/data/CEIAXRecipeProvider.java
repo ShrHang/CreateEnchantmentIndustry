@@ -47,10 +47,14 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.SmithingTransformRecipeBuilder;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.conditions.NotCondition;
+import plus.dragons.createdragonsplus.common.registry.CDPFluids;
 import plus.dragons.createdragonsplus.data.recipe.CreateRecipeBuilders;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
 import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
+import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIAFluids;
 
 public class CEIAXRecipeProvider extends RecipeProvider {
     public CEIAXRecipeProvider(PackOutput output, CompletableFuture<Provider> registries) {
@@ -59,6 +63,14 @@ public class CEIAXRecipeProvider extends RecipeProvider {
 
     @Override
     protected void buildRecipes(RecipeOutput output) {
+        CreateRecipeBuilders.mixing(CEICommon.asResource("infused_dragon_breath"))
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
+                .withCondition(new NotCondition(ModIntegration.APOTHIC_ENCHANTING.condition()))
+                .require(CDPFluids.DRAGON_BREATH.get(), 250)
+                .require(CEIFluids.EXPERIENCE.get(), 552)
+                .output(CEIAFluids.INFUSED_DRAGON_BREATH.get(), 750)
+                .build(output);
+
         CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_common_material"))
                 .withCondition(ModIntegration.APOTHEOSIS.condition())
                 .require(Apoth.Items.MYSTERIOUS_SCRAP_METAL.value())

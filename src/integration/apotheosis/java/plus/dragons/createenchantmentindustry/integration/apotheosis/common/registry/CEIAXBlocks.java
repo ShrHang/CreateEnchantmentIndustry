@@ -20,7 +20,7 @@ package plus.dragons.createenchantmentindustry.integration.apotheosis.common.reg
 
 import static com.simibubi.create.foundation.data.ModelGen.customItemModel;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
-import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon.REGISTRATE;
+import static plus.dragons.createenchantmentindustry.common.CEICommon.REGISTRATE;
 
 import com.simibubi.create.AllTags.AllBlockTags;
 import com.simibubi.create.Create;
@@ -38,11 +38,11 @@ import net.neoforged.bus.api.IEventBus;
 import plus.dragons.createdragonsplus.common.processing.blaze.BlazeBlock;
 import plus.dragons.createdragonsplus.common.processing.blaze.BlazeMovementBehaviour;
 import plus.dragons.createdragonsplus.data.tag.IntrinsicTagRegistry;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.kinetics.belt.lowerProcessingAppliance.LowerAssemblyOperatorBlockItem;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.affixEnhancer.AffixAugmentorBlock;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.BlazeComposerBlock;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.socket.gem.gemCutter.GemCutterBlock;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 @SuppressWarnings("removal")
 public class CEIAXBlocks {
@@ -94,7 +94,7 @@ public class CEIAXBlocks {
         public final TagKey<Block> fanSalvagingCatalysts = tag("fan_processing_catalysts/salvaging", "Bulk Salvaging Catalysts");
 
         public ModTags() {
-            super(CEIACommon.ID, Registries.BLOCK);
+            super(CEICommon.ID, Registries.BLOCK);
         }
 
         @Override
