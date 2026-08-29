@@ -69,16 +69,15 @@ public class CEIACommon {
         public void construct(final FMLConstructModEvent event) {
             CEIABlocks.register(modBus);
             CEIAItems.register();
+            CEIAFluids.registerItemTags();
             CEIABlockEntities.register(modBus);
-            CEIAFluids.register(modBus);
-            CEIACreativeModeTabs.register(modBus);
+            CEIACreativeModeTabContents.register(modBus);
             CEIARecipes.register(modBus);
             CEIADataComponents.register(modBus);
             CEIAItemAttributes.register(modBus);
             modBus.register(CEIAPackets.class);
             modBus.register(new CEIAConfig(modContainer));
             NeoForge.EVENT_BUS.addListener(Common::addReloadListeners);
-            NeoForge.EVENT_BUS.register(CEIAFluids.Events.class);
         }
 
         @SubscribeEvent

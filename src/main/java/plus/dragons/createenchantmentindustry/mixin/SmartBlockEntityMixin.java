@@ -55,8 +55,6 @@ public abstract class SmartBlockEntityMixin extends CachedRenderBBBlockEntity {
     private void setRemoved$dropExperienceFluid(CallbackInfo ci) {
         if (!(this.level instanceof ServerLevel serverLevel))
             return;
-        if (!ExperienceFluidDropContext.shouldDropExperienceFluid(serverLevel))
-            return;
         var state = this.getBlockState();
         for (var behaviour : this.getAllBehaviours()) {
             IFluidHandler handler;
@@ -69,9 +67,7 @@ public abstract class SmartBlockEntityMixin extends CachedRenderBBBlockEntity {
             for (int tank = 0; tank < tanks; tank++) {
                 var fluid = handler.getFluidInTank(tank);
                 int experience = ExperienceHelper.getExperienceFromFluid(fluid);
-                if (experience > 0) {
-                    state.getBlock().popExperience(serverLevel, this.worldPosition, experience);
-                }
+                ExperienceFluidDropContext.dropExperience(serverLevel, state, this.worldPosition, experience);
             }
         }
     }

@@ -18,11 +18,14 @@
 
 package plus.dragons.createenchantmentindustry.util;
 
+import java.util.Optional;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
+import net.neoforged.neoforge.fluids.FluidStack;
 import plus.dragons.createdragonsplus.common.fluids.dye.DyeFluidType;
 import plus.dragons.createdragonsplus.common.registry.CDPFluids;
 
@@ -39,9 +42,28 @@ public class CEIDyeFluids {
         return CDPFluids.COMMON_TAGS.dyesByVariant.get(variantId(color));
     }
 
-    public static DyeColor color(DyeFluidType type) {
-        var color = type.getVariant().vanillaColor();
-        return color == null ? DyeColor.BLACK : color;
+    public static Optional<DyeColor> color(FluidStack stack) {
+        return color(stack.getFluid());
+    }
+
+    public static Optional<DyeColor> color(Fluid fluid) {
+        if (fluid.getFluidType() instanceof DyeFluidType type)
+            return color(type);
+        return Optional.empty();
+    }
+
+    public static Optional<DyeColor> color(DyeFluidType type) {
+        var variant = type.getVariant();
+        if (variant.vanillaColor() != null)
+            return Optional.of(variant.vanillaColor());
+        return Optional.ofNullable(DyeColor.byName(variant.id().getPath(), null))
+                .filter(color -> color.getId() > DyeColor.BLACK.getId());
+    }
+
+    public static Optional<Style> style(FluidStack stack) {
+        if (stack.getFluidType() instanceof DyeFluidType type)
+            return Optional.of(Style.EMPTY.withColor(type.getVariant().color()));
+        return Optional.empty();
     }
 
     private static ResourceLocation variantId(DyeColor color) {

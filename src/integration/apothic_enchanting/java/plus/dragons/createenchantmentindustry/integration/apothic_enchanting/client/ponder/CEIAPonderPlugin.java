@@ -18,9 +18,6 @@
 
 package plus.dragons.createenchantmentindustry.integration.apothic_enchanting.client.ponder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 import net.createmod.ponder.api.registration.PonderPlugin;
 import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper;
 import net.createmod.ponder.api.registration.PonderTagRegistrationHelper;
@@ -28,9 +25,6 @@ import net.minecraft.resources.ResourceLocation;
 import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAPonderPlugin implements PonderPlugin {
-    public static final List<Consumer<PonderSceneRegistrationHelper<ResourceLocation>>> SCENES = new ArrayList<>();
-    public static final List<Consumer<PonderTagRegistrationHelper<ResourceLocation>>> TAGS = new ArrayList<>();
-
     @Override
     public String getModId() {
         return CEIACommon.ID;
@@ -39,14 +33,10 @@ public class CEIAPonderPlugin implements PonderPlugin {
     @Override
     public void registerScenes(PonderSceneRegistrationHelper<ResourceLocation> helper) {
         CEIAPonderScenes.register(helper);
-        for (var scene : SCENES)
-            scene.accept(helper);
     }
 
     @Override
     public void registerTags(PonderTagRegistrationHelper<ResourceLocation> helper) {
         CEIAPonderTags.register(helper);
-        for (var tag : TAGS)
-            tag.accept(helper);
     }
 }

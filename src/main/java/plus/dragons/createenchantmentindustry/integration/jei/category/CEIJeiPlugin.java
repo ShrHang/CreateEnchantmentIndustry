@@ -19,8 +19,10 @@
 package plus.dragons.createenchantmentindustry.integration.jei.category;
 
 import com.google.common.base.Preconditions;
+import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.Create;
+import com.simibubi.create.compat.jei.ConversionRecipe;
 import com.simibubi.create.content.equipment.sandPaper.SandPaperPolishingRecipe;
 import com.simibubi.create.content.kinetics.deployer.ManualApplicationRecipe;
 import java.util.ArrayList;
@@ -87,6 +89,10 @@ public class CEIJeiPlugin implements IModPlugin {
             registration.addRecipes(PrintingCategory.TYPE, EnchantedBookPrintingRecipeJEI.listAll());
         mezz.jei.api.recipe.RecipeType<RecipeHolder<ManualApplicationRecipe>> manualApplication = mezz.jei.api.recipe.RecipeType.createRecipeHolderType(Create.asResource("item_application"));
         registration.addRecipes(manualApplication, List.of(MechanicalGrindStoneItem.createRecipe()));
+        mezz.jei.api.recipe.RecipeType<RecipeHolder<ConversionRecipe>> mysteriousConversion = mezz.jei.api.recipe.RecipeType.createRecipeHolderType(Create.asResource("mystery_conversion"));
+        registration.addRecipes(mysteriousConversion, List.of(ConversionRecipe.create(
+                AllBlocks.EXPERIENCE_BLOCK.asStack(),
+                CEIBlocks.SUPER_EXPERIENCE_BLOCK.asStack())));
         registration.addRecipes(GrindingCategory.TYPE, recipeManager
                 .getAllRecipesFor(CEIRecipes.GRINDING.getType()));
         RecipeType<SandPaperPolishingRecipe> polishing = AllRecipeTypes.SANDPAPER_POLISHING.getType();

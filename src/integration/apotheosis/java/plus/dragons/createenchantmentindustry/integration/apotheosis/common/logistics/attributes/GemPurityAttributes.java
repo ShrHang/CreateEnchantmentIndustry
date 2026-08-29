@@ -32,8 +32,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItemAttributes;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public record GemPurityAttributes(Purity purity) implements ItemAttribute {
     public static final MapCodec<GemPurityAttributes> CODEC = Purity.CODEC
@@ -55,12 +55,12 @@ public record GemPurityAttributes(Purity purity) implements ItemAttribute {
 
     @Override
     public String getTranslationKey() {
-        return CEIACommon.ID + ".gem_purity";
+        return CEICommon.ID + ".gem_purity";
     }
 
     @Override
     public Object[] getTranslationParameters() {
-        LangBuilder parameter = new LangBuilder(CEIACommon.ID).add(purity.toComponent());
+        LangBuilder parameter = new LangBuilder(CEICommon.ID).add(purity.toComponent());
         return new Object[] { parameter };
     }
 

@@ -19,17 +19,12 @@
 package plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry;
 
 import static plus.dragons.createdragonsplus.common.registry.CDPFluids.COMMON_TAGS;
-import static plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon.REGISTRATE;
+import static plus.dragons.createenchantmentindustry.common.CEICommon.REGISTRATE;
 
 import com.simibubi.create.api.effect.OpenPipeEffectHandler;
 import com.simibubi.create.api.event.PipeCollisionEvent;
-import com.simibubi.create.content.fluids.transfer.EmptyingRecipe;
-import com.simibubi.create.content.fluids.transfer.FillingRecipe;
-import com.simibubi.create.content.processing.recipe.StandardProcessingRecipe;
-import com.tterrag.registrate.providers.ProviderType;
 import com.tterrag.registrate.providers.RegistrateTagsProvider;
 import com.tterrag.registrate.util.entry.FluidEntry;
-import dev.shadowsoffire.apothic_enchanting.Ench;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.dispenser.BlockSource;
 import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
@@ -49,8 +44,10 @@ import net.minecraft.world.level.pathfinder.PathType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.common.SoundActions;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidInteractionRegistry;
 import net.neoforged.neoforge.fluids.FluidType;
@@ -59,20 +56,22 @@ import plus.dragons.createdragonsplus.common.fluids.dragonBreath.DragonBreathFlu
 import plus.dragons.createdragonsplus.common.fluids.dragonBreath.DragondBreathLiquidBlock;
 import plus.dragons.createdragonsplus.common.fluids.dragonBreath.DragonsBreathOpenPipeEffect;
 import plus.dragons.createdragonsplus.common.registry.CDPFluids;
+import plus.dragons.createdragonsplus.common.registry.CDPItems;
 import plus.dragons.createdragonsplus.data.tag.IntrinsicTagRegistry;
+import plus.dragons.createdragonsplus.data.tag.ItemTagRegistry;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
-import plus.dragons.createenchantmentindustry.integration.ModIntegration;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAFluids {
     public static final ModTags MOD_TAGS = new ModTags();
-    public static final FluidEntry<BaseFlowingFluid.Source> INFUSED_DRAGON_BREATH = new FluidEntry<>(CEIACommon.REGISTRATE,
-            DeferredHolder.create(Registries.FLUID, CEIACommon.REGISTRATE.asResource("infused_dragon_breath")));
+    public static final ModItemTags MOD_ITEM_TAGS = new ModItemTags();
+    private static boolean itemTagsRegistered;
+    public static final FluidEntry<BaseFlowingFluid.Source> INFUSED_DRAGON_BREATH = new FluidEntry<>(REGISTRATE,
+            DeferredHolder.create(Registries.FLUID, REGISTRATE.asResource("infused_dragon_breath")));
     public static final FluidEntry<BaseFlowingFluid.Flowing> INFUSED_DRAGON_BREATH_FLOWING = REGISTRATE
             .fluid("infused_dragon_breath",
-                    CEIACommon.REGISTRATE.asResource("fluid/infused_dragon_breath_still"), // TODO texture update. Also need texture of bucket.
-                    CEIACommon.REGISTRATE.asResource("fluid/infused_dragon_breath_flow"),
+                    REGISTRATE.asResource("fluid/infused_dragon_breath_still"), // TODO texture update. Also need texture of bucket.
+                    REGISTRATE.asResource("fluid/infused_dragon_breath_flow"),
                     DragonBreathFluidType.create()) // TODO need redesign fluid effect
             .asOptional()
             .lang("Infused Dragon's Breath")
@@ -103,27 +102,13 @@ public class CEIAFluids {
             .properties(properties -> properties.rarity(Rarity.EPIC))
             .lang("Infused Dragon's Breath Bucket")
             .build()
-            .setData(ProviderType.RECIPE, (ctx, prov) -> {
-                new StandardProcessingRecipe.Builder<>(EmptyingRecipe::new, ctx.getId().withPath("infused_dragon_breath"))
-                        .withCondition(ModIntegration.APOTHIC_ENCHANTING.condition())
-                        .require(Ench.Items.INFUSED_BREATH.value())
-                        .output(ctx.get(), 250)
-                        .output(Items.GLASS_BOTTLE)
-                        .build(prov);
-                new StandardProcessingRecipe.Builder<>(FillingRecipe::new, ctx.getId().withPath("infused_dragon_breath"))
-                        .withCondition(ModIntegration.APOTHIC_ENCHANTING.condition())
-                        .require(ctx.get(), 250)
-                        .require(Items.GLASS_BOTTLE)
-                        .output(Ench.Items.INFUSED_BREATH.value())
-                        .build(prov);
-            })
             .register();
 
     public static class ModTags extends IntrinsicTagRegistry<Fluid, RegistrateTagsProvider.IntrinsicImpl<Fluid>> {
         public final TagKey<Fluid> infusing_ingredients = tag("infusing/ingredients", "Infusing Reagent");
 
         public ModTags() {
-            super(CEIACommon.ID, Registries.FLUID);
+            super(CEICommon.ID, Registries.FLUID);
         }
 
         @Override
@@ -138,9 +123,25 @@ public class CEIAFluids {
         }
     }
 
+    public static class ModItemTags extends ItemTagRegistry {
+        public ModItemTags() {
+            super(CEICommon.ID);
+            addOptional(Tags.Items.BUCKETS, CEICommon.asResource("infused_dragon_breath_bucket"));
+            addOptional(CDPItems.COMMON_TAGS.dragonBreathBuckets, CEICommon.asResource("infused_dragon_breath_bucket"));
+        }
+    }
+
     public static void register(IEventBus modBus) {
         modBus.register(CEIAFluids.class);
+        NeoForge.EVENT_BUS.register(Events.class);
         REGISTRATE.registerFluidTags(MOD_TAGS);
+    }
+
+    public static synchronized void registerItemTags() {
+        if (itemTagsRegistered)
+            return;
+        itemTagsRegistered = true;
+        REGISTRATE.registerItemTags(MOD_ITEM_TAGS);
     }
 
     @SubscribeEvent

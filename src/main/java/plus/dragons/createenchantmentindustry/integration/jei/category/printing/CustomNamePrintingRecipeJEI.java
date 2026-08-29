@@ -32,6 +32,7 @@ import plus.dragons.createdragonsplus.util.Pairs;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.registry.CEIDataMaps;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
+import plus.dragons.createenchantmentindustry.util.CEIDyeFluids;
 import plus.dragons.createenchantmentindustry.util.CEILang;
 
 public enum CustomNamePrintingRecipeJEI implements PrintingRecipeJEI {
@@ -78,6 +79,8 @@ public enum CustomNamePrintingRecipeJEI implements PrintingRecipeJEI {
         var name = CEILang.translate("recipe.printing.custom_name.template").component();
         var fluidStack = fluidSlot.getDisplayedIngredient(NeoForgeTypes.FLUID_STACK).orElse(FluidStack.EMPTY);
         var style = fluidStack.getFluidHolder().getData(CEIDataMaps.PRINTING_CUSTOM_NAME_STYLE);
+        if (style == null)
+            style = CEIDyeFluids.style(fluidStack).orElse(null);
         if (style != null)
             name.withStyle(style);
         var stack = new ItemStack(Items.NAME_TAG);

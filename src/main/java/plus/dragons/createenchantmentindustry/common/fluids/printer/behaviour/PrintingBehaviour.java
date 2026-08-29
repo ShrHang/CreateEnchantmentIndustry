@@ -21,41 +21,20 @@ package plus.dragons.createenchantmentindustry.common.fluids.printer.behaviour;
 import com.mojang.serialization.DataResult;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.fluids.FluidStack;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import plus.dragons.createenchantmentindustry.common.fluids.printer.PrinterBlockEntity;
-import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 public interface PrintingBehaviour extends IHaveGoggleInformation {
-    @Internal
-    List<Provider> PROVIDERS = Util.make(new ArrayList<>(), list -> {
-        if (CEIConfig.fluids().enablePackageAddressPrinting.get()) list.add(AddressPrintingBehaviour::create);
-        if (CEIConfig.fluids().enablePackagePatternPrinting.get()) list.add(PackagePatternPrintingBehaviour::create);
-        if (CEIConfig.fluids().enableCreateCopiableItemPrinting.get()) list.add(CopyPrintingBehaviour::create);
-        if (CEIConfig.fluids().enableCustomNamePrinting.get()) list.add(CustomNamePrintingBehaviour::create);
-        if (CEIConfig.fluids().enableEnchantedBookPrinting.get()) list.add(EnchantedBookPrintingBehaviour::create);
-        if (CEIConfig.fluids().enableWrittenBookPrinting.get()) list.add(WrittenBookPrintingBehaviour::create);
-        if (CEIConfig.fluids().enableBannerPatternPrinting.get()) list.add(BannerPatternPrintingBehavior::create);
-    });
-
-    static void register(Provider provider) {
-        PROVIDERS.add(provider);
-    }
+    /** NeoForge registry used by addons to register custom Printer template behaviours. */
+    Registry<PrintingBehaviourProvider> REGISTRY = PrintingBehaviourRegistry.REGISTRY;
 
     static DataResult<PrintingBehaviour> create(Level level, SmartFluidTankBehaviour tank, ItemStack stack) {
-        for (var provider : PROVIDERS) {
-            var result = provider.create(level, tank, stack);
-            if (result.isPresent())
-                return result.get();
-        }
-        return DataResult.success(new RecipePrintingBehaviour(stack));
+        return PrintingBehaviourRegistry.create(level, tank, stack);
     }
 
     default boolean isValid() {
@@ -76,6 +55,10 @@ public interface PrintingBehaviour extends IHaveGoggleInformation {
 
     @FunctionalInterface
     interface Provider {
+        /**
+         * Returns an empty optional when this provider does not handle the template. A present result claims the
+         * template and stops provider lookup, regardless of whether that result is a success or an error.
+         */
         Optional<DataResult<PrintingBehaviour>> create(Level level, SmartFluidTankBehaviour tank, ItemStack stack);
     }
 }

@@ -69,8 +69,33 @@ public class BlazeLightningHelper {
                 strikePos,
                 128,
                 PoiManager.Occupancy.ANY).unordered().findAny();
+        if (rodPos.isEmpty())
+            rodPos = findTaggedLightningRod(level, strikePos, 128);
         lightning.moveTo(Vec3.atBottomCenterOf(rodPos.orElse(strikePos).above()));
         level.addFreshEntity(lightning);
         return rodPos.isEmpty();
+    }
+
+    private static Optional<BlockPos> findTaggedLightningRod(ServerLevel level, BlockPos center, int radius) {
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+        BlockPos closest = null;
+        int closestDistance = Integer.MAX_VALUE;
+        for (int x = center.getX() - radius; x <= center.getX() + radius; x++) {
+            for (int z = center.getZ() - radius; z <= center.getZ() + radius; z++) {
+                int distance = (x - center.getX()) * (x - center.getX())
+                        + (z - center.getZ()) * (z - center.getZ());
+                if (distance > radius * radius || distance >= closestDistance)
+                    continue;
+                mutable.set(x, center.getY(), z);
+                if (!level.hasChunkAt(mutable))
+                    continue;
+                mutable.setY(level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1);
+                if (level.getBlockState(mutable).is(LIGHTNING_ROD_BLOCKS)) {
+                    closest = mutable.immutable();
+                    closestDistance = distance;
+                }
+            }
+        }
+        return Optional.ofNullable(closest);
     }
 }

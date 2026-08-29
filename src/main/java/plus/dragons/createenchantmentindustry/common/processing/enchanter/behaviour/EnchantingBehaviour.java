@@ -33,9 +33,9 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.level.Level;
 import plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper;
+import plus.dragons.createenchantmentindustry.common.processing.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.CEIEnchantmentHelper;
 import plus.dragons.createenchantmentindustry.common.processing.enchanter.EnchantingTemplateItem;
-import plus.dragons.createenchantmentindustry.common.processing.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.registry.CEIEnchantments;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
@@ -65,9 +65,11 @@ public class EnchantingBehaviour {
         if (CEIConfig.enchantments().blazeEnchanterBlockedLightningCurseCount.get() <= 0)
             return new ArrayList<>(0);
         var possible = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT)
-                .getTag(EnchantmentTags.CURSE)
+                .getTag(CEIEnchantments.MOD_TAGS.penaltyCurses)
                 .stream()
                 .flatMap(HolderSet::stream)
+                .filter(enchantment -> enchantment.is(EnchantmentTags.CURSE))
+                .filter(enchantment -> !enchantment.is(CEIEnchantments.MOD_TAGS.penaltyCursesDeny))
                 .filter(enchantment -> stack.is(Items.BOOK) || stack.supportsEnchantment(enchantment));
         return CEIEnchantmentHelper.getAvailablePenaltyCurseResults(
                 possible,

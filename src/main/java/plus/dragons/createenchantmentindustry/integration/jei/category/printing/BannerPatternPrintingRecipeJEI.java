@@ -36,7 +36,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import net.neoforged.neoforge.fluids.FluidStack;
-import plus.dragons.createdragonsplus.common.fluids.dye.DyeFluidType;
 import plus.dragons.createdragonsplus.util.Pairs;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.common.registry.CEIDataMaps;
@@ -77,6 +76,7 @@ public enum BannerPatternPrintingRecipeJEI implements PrintingRecipeJEI {
     @Override
     public void setFluid(IRecipeSlotBuilder slot) {
         CEIDataMaps.getSourceFluidEntries(CEIDataMaps.PRINTING_BANNER_PATTERN_INGREDIENT)
+                .filter(Pairs.filterFirst(fluid -> CEIDyeFluids.color(fluid).isPresent()))
                 .forEach(Pairs.accept(slot::addFluidStack));
     }
 
@@ -102,7 +102,10 @@ public enum BannerPatternPrintingRecipeJEI implements PrintingRecipeJEI {
         var output = base.get().copy();
         ArrayList<BannerPatternLayers.Layer> l = new ArrayList<>();
         var pattern = template.get().get(DataComponents.BANNER_PATTERNS);
-        l.add(new BannerPatternLayers.Layer(pattern.layers().getFirst().pattern(), CEIDyeFluids.color((DyeFluidType) fluid.getFluidType())));
+        var color = CEIDyeFluids.color(fluid);
+        if (color.isEmpty())
+            return;
+        l.add(new BannerPatternLayers.Layer(pattern.layers().getFirst().pattern(), color.get()));
         output.set(DataComponents.BANNER_PATTERNS, new BannerPatternLayers(l));
         outputSlot.createDisplayOverrides().addItemStack(output);
     }

@@ -64,16 +64,16 @@ import plus.dragons.createdragonsplus.common.fluids.tank.ConfigurableFluidTank;
 import plus.dragons.createdragonsplus.common.fluids.tank.FluidTankBehaviour;
 import plus.dragons.createdragonsplus.common.processing.blaze.BlazeBlockEntity;
 import plus.dragons.createdragonsplus.util.FieldsNullabilityUnknownByDefault;
+import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
+import plus.dragons.createenchantmentindustry.integration.apotheosis.client.registry.CEIAXPartialModels;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template.AffixTemplateDisplay;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template.AffixTemplateItem;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.processing.affix.blazeComposer.template.AffixTemplateOps;
-import plus.dragons.createenchantmentindustry.util.BlazeLightningHelper;
-import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
-import plus.dragons.createenchantmentindustry.integration.apotheosis.client.registry.CEIAXPartialModels;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXItems;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXStats;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.config.CEIAXConfig;
+import plus.dragons.createenchantmentindustry.util.BlazeLightningHelper;
 import plus.dragons.createenchantmentindustry.util.CEILang;
 
 @FieldsNullabilityUnknownByDefault
@@ -552,7 +552,8 @@ public class BlazeComposerBlockEntity extends BlazeBlockEntity implements Cleara
     }
 
     protected int processingTime() {
-        return CEIAXConfig.server().affixes().blazeComposerProcessingTime.get();
+        int processingTime = CEIAXConfig.server().affixes().blazeComposerProcessingTime.get();
+        return isVirtual() ? Math.max(1, processingTime / 4) : processingTime;
     }
 
     @Override

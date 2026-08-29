@@ -104,9 +104,9 @@ public class AffixTemplateItem extends Item {
 
     private void addEntryTooltip(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag, AffixTemplateData data, AffixTemplateEntry entry) {
         var e = Component.translatable(
-                        "tooltip.create_enchantment_industry.affix_template.affix",
-                        AffixTemplateDisplay.affixName(entry, data.rarity(), stack),
-                        AffixTemplateDisplay.formatLevel(entry.level()))
+                "tooltip.create_enchantment_industry.affix_template.affix",
+                AffixTemplateDisplay.affixName(entry, data.rarity(), stack),
+                AffixTemplateDisplay.formatLevel(entry.level()))
                 .withStyle(entry.level() > tier.getMaxLevel() ? ChatFormatting.RED : entry.transcendent() ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GRAY);
         if (entry.transcendent()) {
             e.append(" ").append(Component.translatable("tooltip.create_enchantment_industry.affix_template.transcendent")

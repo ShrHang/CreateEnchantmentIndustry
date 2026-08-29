@@ -8,7 +8,7 @@
     "type": "create:mixing",
     "ingredients": [
         {
-            "item": "apotheosis:uncommon_material"
+            "item": "apotheosis:timeworn_fabric"
         }
     ],
     "processing_time": 6,

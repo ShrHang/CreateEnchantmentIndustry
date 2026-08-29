@@ -8,7 +8,7 @@
     "type": "create:mixing",
     "ingredients": [
         {
-            "item": "apotheosis:epic_material"
+            "item": "apotheosis:arcane_sands"
         }
     ],
     "processing_time": 8,

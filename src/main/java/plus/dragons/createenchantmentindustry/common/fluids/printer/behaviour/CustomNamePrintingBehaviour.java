@@ -35,6 +35,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import plus.dragons.createenchantmentindustry.common.fluids.printer.PrinterBlockEntity;
 import plus.dragons.createenchantmentindustry.common.registry.CEIDataMaps;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
+import plus.dragons.createenchantmentindustry.util.CEIDyeFluids;
 import plus.dragons.createenchantmentindustry.util.CEILang;
 
 public class CustomNamePrintingBehaviour implements PrintingBehaviour {
@@ -119,6 +120,8 @@ public class CustomNamePrintingBehaviour implements PrintingBehaviour {
     private MutableComponent getCustomName(FluidStack fluidStack) {
         var name = this.name.copy();
         var style = fluidStack.getFluidHolder().getData(CEIDataMaps.PRINTING_CUSTOM_NAME_STYLE);
+        if (style == null)
+            style = CEIDyeFluids.style(fluidStack).orElse(null);
         if (style != null)
             name.withStyle(style);
         return name;

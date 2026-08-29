@@ -49,6 +49,12 @@ public class CEIEnchantments {
         public final TagKey<Enchantment> superEnchantingExclusive = tag(
                 "blaze_enchanter/super_enchanting_exclusive",
                 "Blaze Enchanter Super Enchanting Exclusive Enchantments");
+        public final TagKey<Enchantment> penaltyCurses = tag(
+                "blaze_enchanter/penalty_curses",
+                "Blaze Enchanter Penalty Curses");
+        public final TagKey<Enchantment> penaltyCursesDeny = tag(
+                "blaze_enchanter/penalty_curses_deny",
+                "Blaze Enchanter Denied Penalty Curses");
         public final TagKey<Enchantment> printingDeny = tag(
                 "printer/deny",
                 "Printer-Denied Enchantments");
@@ -71,6 +77,13 @@ public class CEIEnchantments {
                     .addTag(EnchantmentTags.TREASURE)
                     .remove(EnchantmentTags.CURSE);
             provider.addTag(enchantingExclusive);
+            provider.addTag(penaltyCurses)
+                    .addTag(EnchantmentTags.IN_ENCHANTING_TABLE)
+                    .addTag(EnchantmentTags.TRADEABLE)
+                    .addTag(EnchantmentTags.ON_MOB_SPAWN_EQUIPMENT)
+                    .addTag(EnchantmentTags.ON_TRADED_EQUIPMENT)
+                    .addTag(EnchantmentTags.ON_RANDOM_LOOT);
+            provider.addTag(penaltyCursesDeny);
             provider.addTag(printingDeny);
         }
     }

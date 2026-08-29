@@ -5,7 +5,6 @@
       "id": "#friendsandfoes:lightning_rods",
       "required": false
     },
-    "minecraft:lightning_rod",
     {
       "id": "#minecraft:lightning_rods",
       "required": false

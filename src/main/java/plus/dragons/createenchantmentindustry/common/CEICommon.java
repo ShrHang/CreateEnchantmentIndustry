@@ -34,10 +34,14 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import plus.dragons.createdragonsplus.common.CDPRegistrate;
+import plus.dragons.createenchantmentindustry.common.fluids.printer.behaviour.CEIPrintingBehaviours;
 import plus.dragons.createenchantmentindustry.common.processing.EnchantmentProcessingRules;
 import plus.dragons.createenchantmentindustry.common.registry.*;
 import plus.dragons.createenchantmentindustry.common.registry.CEIAdvancements;
 import plus.dragons.createenchantmentindustry.config.CEIConfig;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
+import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIACreativeModeTabs;
+import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIAFluids;
 
 @Mod(CEICommon.ID)
 public class CEICommon {
@@ -49,6 +53,10 @@ public class CEICommon {
     public CEICommon(IEventBus modBus, ModContainer modContainer) {
         REGISTRATE.registerEventListeners(modBus);
         CEIFluids.register(modBus);
+        if (ModIntegration.APOTHIC_ENCHANTING.enabled() || ModIntegration.APOTHEOSIS.enabled()) {
+            CEIAFluids.register(modBus);
+            CEIACreativeModeTabs.register(modBus);
+        }
         CEIBlocks.register(modBus);
         CEIBlockEntities.register(modBus);
         CEIItems.register(modBus);
@@ -60,6 +68,7 @@ public class CEICommon {
         CEIStats.register(modBus);
         CEIMountedStorageTypes.register(modBus);
         CEIItemAttributes.register(modBus);
+        CEIPrintingBehaviours.register(modBus);
         modBus.register(this);
         modBus.register(new CEIConfig(modContainer));
         NeoForge.EVENT_BUS.addListener(CEICommon::serverStarted);

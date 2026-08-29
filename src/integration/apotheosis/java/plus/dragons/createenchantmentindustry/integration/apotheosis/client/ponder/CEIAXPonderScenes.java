@@ -108,7 +108,7 @@ public class CEIAXPonderScenes {
         scene.idle(60);
         scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), DepotBlockEntity.class, depot -> depot.setHeldItem(new ItemStack(Apoth.Items.GEM_DUST, 8)));
         scene.idle(3);
-        scene.world().modifyBlockEntity(util.grid().at(2, 1, 1), DepotBlockEntity.class, depot -> depot.setHeldItem(new ItemStack(Apoth.Items.MYTHIC_MATERIAL, 2)));
+        scene.world().modifyBlockEntity(util.grid().at(2, 1, 1), DepotBlockEntity.class, depot -> depot.setHeldItem(new ItemStack(Apoth.Items.GODFORGED_PEARL, 2)));
         scene.idle(3);
         scene.world().modifyBlockEntity(util.grid().at(2, 1, 0), DepotBlockEntity.class, depot -> depot.setHeldItem(new ItemStack(Items.LEATHER, 4)));
         scene.idle(20);
@@ -146,7 +146,7 @@ public class CEIAXPonderScenes {
             var as = (ArmorStand) it;
             as.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
         });
-        scene.world().createItemEntity(util.vector().centerOf(2, 2, 0), new Vec3(0, -0.1, -1), new ItemStack(Apoth.Items.RARE_MATERIAL, 2));
+        scene.world().createItemEntity(util.vector().centerOf(2, 2, 0), new Vec3(0, -0.1, -1), new ItemStack(Apoth.Items.LUMINOUS_CRYSTAL_SHARD, 2));
         scene.idle(20);
     }
 

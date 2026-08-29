@@ -30,7 +30,7 @@ import plus.dragons.createenchantmentindustry.integration.sable_apotheosis.commo
 @Mod(CEICommon.ID)
 public class CEISAXCommon {
     public CEISAXCommon(IEventBus modBus, ModContainer modContainer) {
-        if (ModIntegration.APOTHIC_ENCHANTING.enabled() && ModIntegration.APOTHEOSIS.enabled() && ModIntegration.SABLE.enabled()) {
+        if (ModIntegration.APOTHEOSIS.enabled() && ModIntegration.SABLE.enabled()) {
             modBus.register(new Common());
         }
     }

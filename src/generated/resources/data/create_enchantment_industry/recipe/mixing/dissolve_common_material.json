@@ -8,7 +8,7 @@
     "type": "create:mixing",
     "ingredients": [
         {
-            "item": "apotheosis:common_material"
+            "item": "apotheosis:mysterious_scrap_metal"
         }
     ],
     "processing_time": 5,

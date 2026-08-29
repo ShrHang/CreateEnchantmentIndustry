@@ -47,10 +47,14 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.SmithingTransformRecipeBuilder;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.conditions.NotCondition;
+import plus.dragons.createdragonsplus.common.registry.CDPFluids;
 import plus.dragons.createdragonsplus.data.recipe.CreateRecipeBuilders;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.common.registry.CEIFluids;
 import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXFluids;
+import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIAFluids;
 
 public class CEIAXRecipeProvider extends RecipeProvider {
     public CEIAXRecipeProvider(PackOutput output, CompletableFuture<Provider> registries) {
@@ -59,37 +63,45 @@ public class CEIAXRecipeProvider extends RecipeProvider {
 
     @Override
     protected void buildRecipes(RecipeOutput output) {
+        CreateRecipeBuilders.mixing(CEICommon.asResource("infused_dragon_breath"))
+                .withCondition(ModIntegration.APOTHEOSIS.condition())
+                .withCondition(new NotCondition(ModIntegration.APOTHIC_ENCHANTING.condition()))
+                .require(CDPFluids.DRAGON_BREATH.get(), 250)
+                .require(CEIFluids.EXPERIENCE.get(), 552)
+                .output(CEIAFluids.INFUSED_DRAGON_BREATH.get(), 750)
+                .build(output);
+
         CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_common_material"))
                 .withCondition(ModIntegration.APOTHEOSIS.condition())
-                .require(Apoth.Items.COMMON_MATERIAL.value())
+                .require(Apoth.Items.MYSTERIOUS_SCRAP_METAL.value())
                 .output(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 1)
                 .duration(5)
                 .build(output);
 
         CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_uncommon_material"))
                 .withCondition(ModIntegration.APOTHEOSIS.condition())
-                .require(Apoth.Items.UNCOMMON_MATERIAL.value())
+                .require(Apoth.Items.TIMEWORN_FABRIC.value())
                 .output(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 3)
                 .duration(6)
                 .build(output);
 
         CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_rare_material"))
                 .withCondition(ModIntegration.APOTHEOSIS.condition())
-                .require(Apoth.Items.RARE_MATERIAL.value())
+                .require(Apoth.Items.LUMINOUS_CRYSTAL_SHARD.value())
                 .output(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 9)
                 .duration(7)
                 .build(output);
 
         CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_epic_material"))
                 .withCondition(ModIntegration.APOTHEOSIS.condition())
-                .require(Apoth.Items.EPIC_MATERIAL.value())
+                .require(Apoth.Items.ARCANE_SANDS.value())
                 .output(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 27)
                 .duration(8)
                 .build(output);
 
         CreateRecipeBuilders.mixing(CEICommon.asResource("dissolve_mythic_material"))
                 .withCondition(ModIntegration.APOTHEOSIS.condition())
-                .require(Apoth.Items.MYTHIC_MATERIAL.value())
+                .require(Apoth.Items.GODFORGED_PEARL.value())
                 .output(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 81)
                 .duration(8)
                 .build(output);
@@ -105,7 +117,7 @@ public class CEIAXRecipeProvider extends RecipeProvider {
                 .define('=', ORANGE_NIXIE_TUBE)
                 .define('o', BRASS_SHEET)
                 .define('x', AMETHYST_SHARD)
-                .define('S', Apoth.Items.MYTHIC_MATERIAL.value())
+                .define('S', Apoth.Items.GODFORGED_PEARL.value())
                 .pattern("oxo")
                 .pattern(" - ")
                 .pattern("S=S")
@@ -130,8 +142,8 @@ public class CEIAXRecipeProvider extends RecipeProvider {
                 .transitionTo(INCOMPLETE_BRASS_AFFIX_TEMPLATE)
                 .addOutput(BRASS_AFFIX_TEMPLATE, 1)
                 .loops(1)
-                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(BRASS_SHEET))
-                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(Apoth.Items.COMMON_MATERIAL.value()))
+                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(COPPER_SHEET))
+                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(Apoth.Items.MYSTERIOUS_SCRAP_METAL.value()))
                 .addStep(PressingRecipe::new, rb -> rb)
                 .build(output.withConditions(ModIntegration.APOTHEOSIS.condition()));
 
@@ -151,9 +163,9 @@ public class CEIAXRecipeProvider extends RecipeProvider {
                 .transitionTo(INCOMPLETE_APOTHEOTIC_AFFIX_TEMPLATE)
                 .addOutput(APOTHEOTIC_AFFIX_TEMPLATE, 1)
                 .loops(1)
-                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(BRASS_SHEET))
+                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(STURDY_SHEET))
                 .addStep(FillingRecipe::new, rb -> rb.require(CEIAXFluids.APOTHEOTIC_ESSENCE.get(), 50))
-                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(Apoth.Items.MYTHIC_MATERIAL.value()))
+                .addStep(DeployerApplicationRecipe::new, rb -> rb.require(Apoth.Items.GODFORGED_PEARL.value()))
                 .addStep(PressingRecipe::new, rb -> rb)
                 .build(output.withConditions(ModIntegration.APOTHEOSIS.condition()));
 

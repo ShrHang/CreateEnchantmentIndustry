@@ -180,9 +180,6 @@ public class CEIDataMaps {
                 .add(ResourceLocation.fromNamespaceAndPath("mob_grinding_utils", "fluid_xp"),
                         20, false,
                         new ModLoadedCondition("mob_grinding_utils"))
-                .add(ResourceLocation.fromNamespaceAndPath("industrialforegoing", "essence"),
-                        20, false,
-                        new ModLoadedCondition("industrialforegoing"))
                 .add(ResourceLocation.fromNamespaceAndPath("pneumaticcraft", "memory_essence"),
                         20, false,
                         new ModLoadedCondition("pneumaticcraft"))
@@ -211,6 +208,8 @@ public class CEIDataMaps {
                 .add(CDPFluids.COMMON_TAGS.dyes, 100, false);
         var customNameStyles = provider.builder(PRINTING_CUSTOM_NAME_STYLE);
         for (var color : DyeColor.values()) {
+            if (color.getId() > DyeColor.BLACK.getId())
+                continue;
             customNameStyles.add(CEIDyeFluids.tag(color), Style.EMPTY.withColor(color.getTextColor()), false);
         }
         provider.builder(PRINTING_ENCHANTED_BOOK_COST);

@@ -19,35 +19,42 @@
 package plus.dragons.createenchantmentindustry.integration.apotheosis.client.ponder;
 
 import com.simibubi.create.AllBlocks;
+import com.simibubi.create.infrastructure.ponder.AllCreatePonderTags;
 import com.tterrag.registrate.util.entry.ItemProviderEntry;
 import com.tterrag.registrate.util.entry.RegistryEntry;
+import net.createmod.ponder.api.registration.PonderPlugin;
 import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper;
 import net.createmod.ponder.api.registration.PonderTagRegistrationHelper;
 import net.minecraft.resources.ResourceLocation;
 import plus.dragons.createenchantmentindustry.common.CEICommon;
+import plus.dragons.createenchantmentindustry.integration.ModIntegration;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.registry.CEIAXBlocks;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.client.ponder.CEIAPonderPlugin;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.registry.CEIABlocks;
 
-public class CEIAXPonderPlugin {
+public class CEIAXPonderPlugin implements PonderPlugin {
     public static final ResourceLocation APOTHEOTIC_CREATION_COMPONENTS = CEICommon.asResource("apotheotic_creation_components");
 
-    public static void register() {
-        CEIAPonderPlugin.SCENES.add(CEIAXPonderPlugin::registerScenes);
-        CEIAPonderPlugin.TAGS.add(CEIAXPonderPlugin::registerTags);
+    @Override
+    public String getModId() {
+        return CEICommon.ID;
     }
 
-    private static void registerScenes(PonderSceneRegistrationHelper<ResourceLocation> helper) {
+    @Override
+    public void registerScenes(PonderSceneRegistrationHelper<ResourceLocation> helper) {
         var registration = helper.<ItemProviderEntry<?, ?>>withKeyFunction(RegistryEntry::getId);
         registration.forComponents(CEIAXBlocks.GEM_CUTTER)
                 .addStoryBoard("gem_cutter", CEIAXPonderScenes::gemCutter, APOTHEOTIC_CREATION_COMPONENTS);
         registration.forComponents(CEIAXBlocks.AFFIX_AUGMENTOR)
                 .addStoryBoard("affix_augmentor", CEIAXPonderScenes::affixAugmentor, APOTHEOTIC_CREATION_COMPONENTS);
+        registration.forComponents(CEIAXBlocks.BLAZE_COMPOSER)
+                .addStoryBoard("blaze_composer", BlazeComposerScene::basic, APOTHEOTIC_CREATION_COMPONENTS)
+                .addStoryBoard("blaze_composer", BlazeComposerScene::superComposing, APOTHEOTIC_CREATION_COMPONENTS)
+                .addStoryBoard("automate_blaze_composer", BlazeComposerScene::automate, AllCreatePonderTags.ARM_TARGETS);
         registration.forComponents(AllBlocks.ENCASED_FAN)
                 .addStoryBoard("bulk_salvaging", CEIAXPonderScenes::bulkSalvaging, APOTHEOTIC_CREATION_COMPONENTS);
     }
 
-    private static void registerTags(PonderTagRegistrationHelper<ResourceLocation> helper) {
+    @Override
+    public void registerTags(PonderTagRegistrationHelper<ResourceLocation> helper) {
         PonderTagRegistrationHelper<RegistryEntry<?, ?>> entryHelper = helper.withKeyFunction(RegistryEntry::getId);
 
         helper.registerTag(APOTHEOTIC_CREATION_COMPONENTS)
@@ -58,10 +65,12 @@ public class CEIAXPonderPlugin {
                 .register();
 
         entryHelper.addToTag(APOTHEOTIC_CREATION_COMPONENTS)
-                .add(CEIABlocks.INFUSER)
                 .add(CEIAXBlocks.GEM_CUTTER)
                 .add(CEIAXBlocks.AFFIX_AUGMENTOR)
                 .add(CEIAXBlocks.BLAZE_COMPOSER)
                 .add(AllBlocks.ENCASED_FAN);
+
+        if (ModIntegration.APOTHIC_ENCHANTING.enabled())
+            helper.addToTag(APOTHEOTIC_CREATION_COMPONENTS).add(CEICommon.asResource("infuser"));
     }
 }

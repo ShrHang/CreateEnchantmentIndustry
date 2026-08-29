@@ -50,8 +50,11 @@ public class ExperienceLightningCharger {
 
     public static Optional<BlockPos> findLightningRodTarget(Level level, BlockPos pos) {
         BlockState blockstate = level.getBlockState(pos);
-        if (blockstate.is(BlazeExperienceBlockEntity.LIGHTNING_ROD_BLOCKS))
-            return Optional.of(pos.relative(blockstate.getValue(LightningRodBlock.FACING).getOpposite()));
+        if (blockstate.is(BlazeExperienceBlockEntity.LIGHTNING_ROD_BLOCKS)) {
+            if (blockstate.hasProperty(LightningRodBlock.FACING))
+                return Optional.of(pos.relative(blockstate.getValue(LightningRodBlock.FACING).getOpposite()));
+            return Optional.of(pos.below());
+        }
         return Optional.empty();
     }
 

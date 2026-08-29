@@ -23,12 +23,12 @@ import com.simibubi.create.content.kinetics.fan.processing.FanProcessingType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import plus.dragons.createenchantmentindustry.common.CEICommon;
 import plus.dragons.createenchantmentindustry.integration.apotheosis.common.kinetics.fan.salvaging.SalvagingFanProcessingType;
-import plus.dragons.createenchantmentindustry.integration.apothic_enchanting.common.CEIACommon;
 
 public class CEIAXFanProcessingTypes {
     private static final DeferredRegister<FanProcessingType> TYPES = DeferredRegister
-            .create(CreateRegistries.FAN_PROCESSING_TYPE, CEIACommon.ID);
+            .create(CreateRegistries.FAN_PROCESSING_TYPE, CEICommon.ID);
     public static final DeferredHolder<FanProcessingType, SalvagingFanProcessingType> SALVAGING = TYPES
             .register("salvaging", SalvagingFanProcessingType::new);
 

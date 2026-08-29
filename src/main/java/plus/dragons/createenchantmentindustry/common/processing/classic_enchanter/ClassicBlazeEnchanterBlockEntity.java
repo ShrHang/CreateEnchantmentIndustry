@@ -67,6 +67,7 @@ public class ClassicBlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity
     protected boolean cursed;
     protected ClassicEnchanterBehaviour enchanter;
     protected AdvancementBehaviour advancement;
+    protected DirectBeltInputBehaviour beltInput;
     float flip;
     float oFlip;
     float flipT;
@@ -105,9 +106,11 @@ public class ClassicBlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity
         advancement = new AdvancementBehaviour(this);
         behaviours.add(enchanter);
         behaviours.add(advancement);
-        behaviours.add(new DirectBeltInputBehaviour(this)
+        beltInput = new DirectBeltInputBehaviour(this)
                 .onlyInsertWhen(side -> heldItem.isEmpty())
-                .setInsertionHandler(((transportedItemStack, side, simulate) -> this.insertItem(transportedItemStack.stack, simulate))));
+                .setInsertionHandler(((transportedItemStack, side, simulate) -> this.insertItem(transportedItemStack.stack, simulate)))
+                .allowingBeltFunnels();
+        behaviours.add(beltInput);
     }
 
     @Override
@@ -143,7 +146,7 @@ public class ClassicBlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity
     public ItemStack extractItem(boolean forced, boolean simulate) {
         assert level != null;
         ItemStack extracted = ItemStack.EMPTY;
-        if (forced || processingTime <= 0) {
+        if (forced || isOutputReady()) {
             extracted = heldItem.copy();
             if (!simulate) {
                 heldItem = ItemStack.EMPTY;
@@ -152,6 +155,10 @@ public class ClassicBlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity
             }
         }
         return extracted;
+    }
+
+    public boolean isOutputReady() {
+        return !heldItem.isEmpty() && processingTime <= 0 && !enchanter.canProcess(heldItem);
     }
 
     @Override
@@ -231,6 +238,14 @@ public class ClassicBlazeEnchanterBlockEntity extends BlazeExperienceBlockEntity
     }
 
     protected void tryExport() {
+        ItemStack funnelRemainder = beltInput.tryExportingToBeltFunnel(heldItem, null, false);
+        if (funnelRemainder != null) {
+            if (funnelRemainder.getCount() != heldItem.getCount()) {
+                heldItem = funnelRemainder;
+                notifyUpdate();
+            }
+            return;
+        }
         for (var side : Direction.Plane.HORIZONTAL) {
             BlockPos nextPosition = worldPosition.relative(side);
             DirectBeltInputBehaviour directBeltInputBehaviour = BlockEntityBehaviour.get(level, nextPosition, DirectBeltInputBehaviour.TYPE);
