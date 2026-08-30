@@ -228,7 +228,7 @@ public class InfuserBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     }
 
     protected boolean updateInfusionStats() {
-        var newStats = EnchantmentTableStats.gatherStats(level, getBlockPos().below(), 0);
+        var newStats = EnchantmentTableStats.gatherStats(level, getBlockPos().below());
         boolean changed = newStats.arcana() != infusionStats.arcana() || newStats.eterna() != infusionStats.eterna() || newStats.quanta() != infusionStats.quanta();
         if (changed) infusionStats = new InfusionStats(newStats.eterna(), newStats.quanta(), newStats.arcana());
         return changed;
