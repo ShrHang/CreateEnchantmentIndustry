@@ -18,6 +18,7 @@
 
 package plus.dragons.createenchantmentindustry.integration.jei.category.printing;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
@@ -50,26 +51,33 @@ import plus.dragons.createenchantmentindustry.config.CEIConfig;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 public class EnchantedBookPrintingRecipeJEI implements PrintingRecipeJEI {
+    private static final int LEVELS_PER_PAGE = 100;
     public static final PrintingRecipeJEI.Type TYPE = PrintingRecipeJEI
             .register(CEICommon.asResource("enchanted_book"), EnchantedBookPrintingRecipeJEI::createCodec);
     private final ResourceLocation id;
     private final ResourceKey<Enchantment> enchantmentKey;
+    private final int page;
 
-    public EnchantedBookPrintingRecipeJEI(ResourceKey<Enchantment> enchantmentKey) {
-        this.id = PrintingRecipeJEI.super.getRegistryName().withSuffix("/" +
+    private EnchantedBookPrintingRecipeJEI(ResourceKey<Enchantment> enchantmentKey, int page) {
+        var baseId = PrintingRecipeJEI.super.getRegistryName().withSuffix("/" +
                 enchantmentKey.location().getNamespace() + "/" +
                 enchantmentKey.location().getPath());
+        this.id = page == 0 ? baseId : baseId.withSuffix("/page_" + page);
         this.enchantmentKey = enchantmentKey;
+        this.page = page;
     }
 
     public static MapCodec<EnchantedBookPrintingRecipeJEI> createCodec(ICodecHelper codecHelper, IRecipeManager recipeManager) {
         return RecordCodecBuilder.mapCodec(instance -> instance.group(
                         ResourceLocation.CODEC.fieldOf("enchantment")
-                                .forGetter((EnchantedBookPrintingRecipeJEI recipe) -> recipe.enchantmentKey.location()))
-                .apply(instance, enchantment ->
-                        new EnchantedBookPrintingRecipeJEI(ResourceKey.create(Registries.ENCHANTMENT, enchantment))));
+                                .forGetter((EnchantedBookPrintingRecipeJEI recipe) -> recipe.enchantmentKey.location()),
+                        Codec.INT.optionalFieldOf("page", 0)
+                                .forGetter(recipe -> recipe.page))
+                .apply(instance, (enchantment, page) -> new EnchantedBookPrintingRecipeJEI(
+                        ResourceKey.create(Registries.ENCHANTMENT, enchantment), page)));
     }
 
     public static List<PrintingRecipeJEI> listAll() {
@@ -80,9 +88,25 @@ public class EnchantedBookPrintingRecipeJEI implements PrintingRecipeJEI {
                 .lookupOrThrow(Registries.ENCHANTMENT)
                 .listElements()
                 .filter(enchantment -> !enchantment.is(CEIEnchantments.MOD_TAGS.printingDeny))
-                .flatMap(enchantment -> enchantment.unwrapKey().stream())
-                .map(key -> (PrintingRecipeJEI) new EnchantedBookPrintingRecipeJEI(key))
+                .flatMap(enchantment -> enchantment.unwrapKey().stream()
+                        .flatMap(key -> IntStream.range(0, getPageCount(enchantment))
+                                .mapToObj(page -> (PrintingRecipeJEI) new EnchantedBookPrintingRecipeJEI(key, page))))
                 .toList();
+    }
+
+    private static int getPageCount(Holder.Reference<Enchantment> enchantment) {
+        int minLevel = enchantment.value().getMinLevel();
+        int maxLevel = CEIEnchantmentHelper.maxLevel(enchantment);
+        return Math.max(1, (maxLevel - minLevel) / LEVELS_PER_PAGE + 1);
+    }
+
+    private int getFirstLevel(Holder.Reference<Enchantment> enchantment) {
+        return enchantment.value().getMinLevel() + page * LEVELS_PER_PAGE;
+    }
+
+    private int getLastLevel(Holder.Reference<Enchantment> enchantment) {
+        return Math.min(getFirstLevel(enchantment) + LEVELS_PER_PAGE - 1,
+                CEIEnchantmentHelper.maxLevel(enchantment));
     }
 
     private Optional<Holder.Reference<Enchantment>> resolveEnchantment() {
@@ -112,7 +136,7 @@ public class EnchantedBookPrintingRecipeJEI implements PrintingRecipeJEI {
 
     private void addAllLevels(IRecipeSlotBuilder slot) {
         resolveEnchantment().ifPresent(enchantment -> {
-            for (int level = enchantment.value().getMinLevel(); level <= CEIEnchantmentHelper.maxLevel(enchantment); level++) {
+            for (int level = getFirstLevel(enchantment); level <= getLastLevel(enchantment); level++) {
                 slot.addItemStack(createEnchantmentBook(enchantment, level));
             }
         });
@@ -131,7 +155,7 @@ public class EnchantedBookPrintingRecipeJEI implements PrintingRecipeJEI {
     @Override
     public void setFluid(IRecipeSlotBuilder slot) {
         resolveEnchantment().ifPresent(enchantment -> {
-            for (int level = enchantment.value().getMinLevel(); level <= CEIEnchantmentHelper.maxLevel(enchantment); level++) {
+            for (int level = getFirstLevel(enchantment); level <= getLastLevel(enchantment); level++) {
                 int cost = getCost(enchantment, level);
                 slot.addFluidStack(CEIFluids.EXPERIENCE.get(), cost);
                 CEIDataMaps.getSourceFluidEntries(CEIDataMaps.FLUID_UNIT_EXPERIENCE)
@@ -162,7 +186,7 @@ public class EnchantedBookPrintingRecipeJEI implements PrintingRecipeJEI {
             ItemStack displayed = (hasOutputFocus ? outputSlot : templateSlot).getDisplayedItemStack().orElse(ItemStack.EMPTY);
 
             int level = EnchantmentHelper.getEnchantmentsForCrafting(displayed).getLevel(enchantment);
-            if (level <= 0) level = enchantment.value().getMinLevel();
+            if (level <= 0) level = getFirstLevel(enchantment);
 
             var stack = createEnchantmentBook(enchantment, level);
             if (hasOutputFocus) templateSlot.createDisplayOverrides().addItemStack(stack);

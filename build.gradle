@@ -185,6 +185,7 @@ enabledIntegrationSourceSets.each { name ->
 
 repositories {
     mavenLocal()
+    flatDir {dirs 'libs'}
     maven { url "https://maven.dragons.plus/releases" } // Create: Dragons Plus
     maven { url "https://maven.createmod.net" } // Ponder, Flywheel
     maven { url "https://mvn.devos.one/snapshots" } // Registrate
